@@ -1,0 +1,123 @@
+'use client';
+
+import { useState, useMemo, useEffect } from 'react';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import EventCard from '@/components/ideofest/EventCard';
+import FilterBar, { type FilterState } from '@/components/ideofest/FilterBar';
+import type { IEvent } from '@/lib/ideofest/types';
+
+export default function EventsPage() {
+  const [filters, setFilters] = useState<FilterState>({ search: '', category: '', sort: 'date' });
+  const [events, setEvents] = useState<IEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const res = await fetch('/api/ideofest/events?status=all');
+        const json = await res.json();
+        if (active && json.success && Array.isArray(json.data)) {
+          setEvents(json.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch events:', err);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    load();
+    return () => { active = false; };
+  }, []);
+
+  const filtered = useMemo(() => {
+    let evts = events.filter((e) => e.status !== 'cancelled' && e.status !== 'draft');
+
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      evts = evts.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          e.city.toLowerCase().includes(q) ||
+          (e.tagline || '').toLowerCase().includes(q) ||
+          (e.tags || []).some((t) => t.toLowerCase().includes(q))
+      );
+    }
+
+    if (filters.category) {
+      evts = evts.filter((e) => e.category === filters.category);
+    }
+
+    evts = [...evts].sort((a, b) => {
+      if (filters.sort === 'date') return new Date(a.date).getTime() - new Date(b.date).getTime();
+      if (filters.sort === 'price') {
+        const minA = Math.min(...(a.ticket_tiers || []).map((t: { price: number }) => t.price || 0));
+        const minB = Math.min(...(b.ticket_tiers || []).map((t: { price: number }) => t.price || 0));
+        return minA - minB;
+      }
+      if (filters.sort === 'popularity') {
+        const soldA = (a.ticket_tiers || []).reduce((s: number, t: { sold: number }) => s + (t.sold || 0), 0);
+        const soldB = (b.ticket_tiers || []).reduce((s: number, t: { sold: number }) => s + (t.sold || 0), 0);
+        return soldB - soldA;
+      }
+      return 0;
+    });
+
+    return evts;
+  }, [filters, events]);
+
+  return (
+    <div className="container-layout py-10 px-4 sm:px-6 lg:px-8">
+      {/* Back Button */}
+      <div className="mb-6">
+        <Link
+          href="/ideofest"
+          className="inline-flex items-center gap-2 text-xs font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-full transition-all"
+        >
+          <ArrowLeft className="w-4 h-4 text-signal-lime" />
+          <span>Back to Home</span>
+        </Link>
+      </div>
+
+      {/* Header */}
+      <div className="mb-10">
+        <span className="text-xs font-bold text-creative-flame tracking-widest uppercase">Live Festival Catalog</span>
+        <h1 className="text-4xl md:text-5xl font-black mt-2 mb-2">
+          Find your next <span className="text-creative-flame">experience.</span>
+        </h1>
+        <p className="text-white/50 text-base">
+          {events.length} event{events.length !== 1 ? 's' : ''} available · Sri Lanka & beyond
+        </p>
+      </div>
+
+      {/* Filter bar */}
+      <div className="mb-8">
+        <FilterBar filters={filters} onChange={setFilters} />
+      </div>
+
+      {/* Results */}
+      {loading ? (
+        <div className="py-24 text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-creative-flame border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-white/50 text-sm">Loading live events from Supabase...</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-24 text-center bg-white/3 border border-white/5 rounded-2xl">
+          <p className="text-4xl mb-4">🎪</p>
+          <h3 className="text-xl font-bold text-white mb-2">No events found</h3>
+          <p className="text-white/50 text-sm">No live events match your search. Try clearing filters or check back soon!</p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-white/40 mb-6">{filtered.length} live event{filtered.length !== 1 ? 's' : ''} found</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filtered.map((event) => (
+              <EventCard key={event.id || event.slug} event={event} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

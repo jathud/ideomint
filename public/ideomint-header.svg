@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120">
+  <g transform="translate(20, 20)">
+    <!-- Logo Square (60x60) -->
+    <g fill="none" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter">
+      <path d="M 4 24 L 4 4 L 24 4" stroke="#FF5A3C" />
+      <path d="M 36 4 L 56 4 L 56 24" stroke="#05070D" />
+      <path d="M 4 36 L 4 56 L 24 56" stroke="#05070D" />
+      <path d="M 56 36 L 56 56 L 36 56" stroke="#FF5A3C" />
+    </g>
+
+    <!-- IDEOMINT Text -->
+    <text x="80" y="48" font-family="'Arial Black', Arial, sans-serif" font-weight="900" font-size="42" letter-spacing="3">
+      <tspan fill="#05070D">IDEO</tspan><tspan fill="#FF5A3C">MINT</tspan>
+    </text>
+
+    <!-- Vertical Line -->
+    <line x1="360" y1="12" x2="360" y2="48" stroke="#05070D" stroke-width="1.5" />
+
+    <!-- Subtitle Text -->
+    <text x="82" y="80" font-family="'Segoe UI', Arial, sans-serif" font-weight="600" font-size="14" letter-spacing="2.5" fill="#999999">
+      CREATIVE EXPERIENCE COMPANY
+    </text>
+  </g>
+</svg>

@@ -1,0 +1,243 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Satoshi', var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  
+  --color-section-ink: #05070D;
+  --color-creative-flame: #FF5A3C;
+  --color-human-canvas: #F6F1E8;
+  --color-signal-lime: #C7F36B;
+  --color-digital-pulse: #5B5AF7;
+  --color-white: #FFFFFF;
+}
+
+@layer base {
+  html, body {
+    overflow-x: hidden;
+  }
+  body {
+    @apply font-sans bg-human-canvas text-section-ink antialiased selection:bg-creative-flame selection:text-white;
+    width: 100%;
+    position: relative;
+  }
+}
+
+@layer utilities {
+  .hero-title {
+    font-size: clamp(36px, 10vw, 64px);
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.04em;
+  }
+  
+  @media (min-width: 768px) {
+    .hero-title {
+      font-size: clamp(40px, 4.5vw, 76px);
+    }
+  }
+
+  .container-layout {
+    width: 100%;
+    max-width: 1440px;
+    margin-inline: auto;
+    padding-inline: clamp(20px, 5vw, 80px);
+  }
+  .section-spacing {
+    padding-block: clamp(48px, 9vw, 140px);
+  }
+
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .noise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-section-ink);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-creative-flame);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E54D30;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-creative-flame) var(--color-section-ink);
+}
+
+/* === LOADING SCREEN ANIMATIONS === */
+@keyframes loadingFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loadingProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@keyframes loadingFadeOut {
+  from { opacity: 1; }
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* === LOADING SCREEN STYLES === */
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0a0a0a;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  animation: loadingFadeUp 0.8s ease-out forwards;
+}
+
+.loading-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 0.15em;
+  user-select: none;
+}
+
+.loading-logo-text {
+  font-family: 'Satoshi', var(--font-manrope), sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+}
+
+.loading-logo-accent {
+  font-family: 'Satoshi', var(--font-manrope), sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--color-creative-flame, #FF5A3C);
+  letter-spacing: -0.03em;
+}
+
+.loading-bar-track {
+  width: 180px;
+  height: 3px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.loading-bar-fill {
+  height: 100%;
+  background-color: var(--color-creative-flame, #FF5A3C);
+  border-radius: 999px;
+  animation: loadingProgress 2s ease-in-out forwards;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* === PERFORMANCE OPTIMIZATION === */
+/* Hardware accelerate ambient glows to prevent scroll jank */
+.blur-\[80px\],
+.blur-\[100px\],
+.blur-\[120px\] {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Contain layout thrashing in sections */
+.section-spacing {
+  contain: layout style paint;
+}
+
+/* === CLEAN PRINT STYLING === */
+@media print {
+  html, body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide EVERYTHING on the page by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Show ONLY the printable ticket card and its contents */
+  .printable-ticket-card,
+  .printable-ticket-card * {
+    visibility: visible !important;
+  }
+
+  /* Position printable ticket card at top-center of page */
+  .printable-ticket-card {
+    position: absolute !important;
+    left: 50% !important;
+    top: 10px !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+    max-width: 480px !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 16px !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Completely hide buttons during print */
+  .print-hide,
+  .print-hide * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}

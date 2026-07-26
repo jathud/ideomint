@@ -1,0 +1,154 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Ideomint Web Design System</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; }
+  h1 { color: #05070D; font-size: 32px; font-weight: 900; margin-bottom: 10px; }
+  h2 { color: #05070D; font-size: 20px; font-weight: 700; margin-top: 35px; margin-bottom: 10px; border-bottom: 1px solid #EEEEEE; padding-bottom: 8px; }
+  h3 { color: #FF5A3C; font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; margin-top: 25px; }
+  p { margin-top: 0; margin-bottom: 15px; font-size: 14px; }
+  ul { margin-top: 0; margin-bottom: 15px; font-size: 14px; }
+  table.content-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; margin-top: 10px; }
+  table.content-table th, table.content-table td { border: 1px solid #E5E5E5; padding: 10px; text-align: left; font-size: 13px; }
+  table.content-table th { background-color: #F8F8F8; color: #05070D; font-weight: bold; }
+  .document-title { font-size: 36px; color: #05070D; margin-bottom: 10px; letter-spacing: -1px; font-weight: 900; }
+  .accent-bar { width: 60px; height: 4px; background-color: #FF5A3C; margin-bottom: 30px; }
+  .code { font-family: 'Courier New', monospace; background: #EEEEEE; padding: 2px 6px; border-radius: 4px; color: #05070D; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- Dark Image Header -->
+<div style="background-color: #05070D; padding: 40px 20px 20px 20px; margin-bottom: 50px; border-bottom: 6px solid #FF5A3C;">
+  <img src="public/ideomint-header-white.svg" width="600" height="120" alt="Ideomint Brand Logo" />
+</div>
+
+<h1 class="document-title">Web Design System</h1>
+<div class="accent-bar"></div>
+<p style="color: #666666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px;">Master UI/UX Specifications</p>
+
+<h2>1. The Core Philosophy</h2>
+<p>As co-founders, our goal for the Ideomint digital experience is to bridge the gap between high-end editorial design and modern web technology. Every pixel, margin, and animation must be meticulously calculated to fulfill our psychological brand promise. The website must feel "minted"—flawless, expensive, and perfectly engineered.</p>
+
+<h2>2. Typography Specifications (Inch by Inch)</h2>
+<h3>Master Brand Fonts</h3>
+<ul>
+  <li><strong>Display / Headlines:</strong> <span class="code">Satoshi</span>. A highly geometric, bold sans-serif that commands authority.</li>
+  <li><strong>Body / Data:</strong> <span class="code">Manrope</span>. Exceptionally readable on all screen sizes, perfect for long-form content and UI labels.</li>
+</ul>
+
+<h3>Fluid Typography Scale (CSS Clamp)</h3>
+<p>We use fluid typography (<code>clamp</code>) so the text perfectly scales to every screen size without hard breakpoints. This guarantees a mathematically perfect layout on mobile, tablet, and ultra-wide monitors.</p>
+<table class="content-table">
+  <tr>
+    <th>Element</th>
+    <th>Font Family</th>
+    <th>Weight</th>
+    <th>Scale Formula (Min / Fluid / Max)</th>
+    <th>Line Height</th>
+    <th>Letter Spacing</th>
+  </tr>
+  <tr>
+    <td>Hero Title (Desktop)</td>
+    <td>Satoshi</td>
+    <td>Black (900)</td>
+    <td><span class="code">clamp(40px, 4.5vw, 76px)</span></td>
+    <td>1.15 (Tight)</td>
+    <td>-0.04em</td>
+  </tr>
+  <tr>
+    <td>Hero Title (Mobile)</td>
+    <td>Satoshi</td>
+    <td>Black (900)</td>
+    <td><span class="code">clamp(44px, 12vw, 64px)</span></td>
+    <td>1.15 (Tight)</td>
+    <td>-0.04em</td>
+  </tr>
+  <tr>
+    <td>Section H2</td>
+    <td>Satoshi</td>
+    <td>Black (900)</td>
+    <td><span class="code">4rem</span> to <span class="code">6rem</span></td>
+    <td>1.1 (Tight)</td>
+    <td>Tight</td>
+  </tr>
+  <tr>
+    <td>Body Text (Large)</td>
+    <td>Manrope</td>
+    <td>Regular (400)</td>
+    <td><span class="code">18px</span></td>
+    <td>1.6 (Relaxed)</td>
+    <td>Normal</td>
+  </tr>
+  <tr>
+    <td>Overlines / Tags</td>
+    <td>Manrope</td>
+    <td>Bold (700)</td>
+    <td><span class="code">12px</span></td>
+    <td>Normal</td>
+    <td>0.1em (Wide)</td>
+  </tr>
+</table>
+
+<h2>3. Color Distribution & UI Application</h2>
+<h3>The 70-20-10 Rule</h3>
+<p>To maintain our premium aesthetic, we follow a strict mathematical distribution of color across the interface.</p>
+<ul>
+  <li><strong>70% Foundation (<span class="code">#05070D</span> Midnight Ink):</strong> Dominates the screen real estate. It creates cinematic depth.</li>
+  <li><strong>20% Canvas (<span class="code">#F6F1E8</span> Human Canvas):</strong> Used as an alternating background to create light/dark tension when scrolling, giving the eye a rest.</li>
+  <li><strong>10% Accents:</strong> Used specifically for active UI states, buttons, and visual cues.</li>
+</ul>
+
+<h3>Color Application Rules</h3>
+<table class="content-table">
+  <tr>
+    <th>UI Element</th>
+    <th>Applied Color</th>
+    <th>Interaction Rule</th>
+  </tr>
+  <tr>
+    <td>Main Backgrounds</td>
+    <td>Midnight Ink / Human Canvas</td>
+    <td>Static. Used to alternate pacing between sections.</td>
+  </tr>
+  <tr>
+    <td>Primary Text (on Dark)</td>
+    <td>Pure White (<span class="code">#FFFFFF</span>)</td>
+    <td>Headings are 100% opacity. Body text is 70% opacity to reduce eye strain.</td>
+  </tr>
+  <tr>
+    <td>Primary Text (on Light)</td>
+    <td>Midnight Ink (<span class="code">#05070D</span>)</td>
+    <td>Used for maximum readability on Human Canvas backgrounds.</td>
+  </tr>
+  <tr>
+    <td>Call to Action Buttons</td>
+    <td>Creative Flame (<span class="code">#FF5A3C</span>)</td>
+    <td>Hover state deepens to <span class="code">#E54D30</span>. Text inside is always Pure White.</td>
+  </tr>
+  <tr>
+    <td>Scrollbar Thumb</td>
+    <td>Creative Flame (<span class="code">#FF5A3C</span>)</td>
+    <td>Custom webkit scrollbar. Track is Midnight Ink.</td>
+  </tr>
+</table>
+
+<h2>4. Spatial Architecture (Layout)</h2>
+<h3>The Grid</h3>
+<p>We do not use standard full-width containers. Our content is highly curated inside a premium editorial grid.</p>
+<ul>
+  <li><strong>Max Container Width:</strong> <span class="code">1440px</span>. This ensures the site never stretches too wide on massive monitors.</li>
+  <li><strong>Container Padding:</strong> <span class="code">clamp(24px, 5vw, 80px)</span>. Gives the content massive breathing room on the sides.</li>
+  <li><strong>Section Vertical Spacing:</strong> <span class="code">clamp(80px, 9vw, 140px)</span>. The massive whitespace between sections is what makes the brand feel expensive. "Cheap brands crowd the screen. Luxury brands own the whitespace."</li>
+</ul>
+
+<h2>5. UI Enhancements & Micro-Interactions</h2>
+<ul>
+  <li><strong>Scroll Tracking Navigation:</strong> The header utilizes an IntersectionObserver to dynamically underline the active section in Creative Flame as the user scrolls.</li>
+  <li><strong>Cinematic Noise Overlay:</strong> A microscopic SVG grain sits on top of the entire website. This breaks up "flat" digital pixels and makes the Midnight Ink background feel like rich matte paper or film stock.</li>
+  <li><strong>Hover States:</strong> All interactive elements (cards, arrows) feature a smooth easing transition to feel heavy and deliberate, never instant or jittery.</li>
+</ul>
+
+</body>
+</html>

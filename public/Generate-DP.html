@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ideomint Logo PNG Generator</title>
+  <style>
+    body { background-color: #f0f0f0; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; padding: 40px; margin: 0; }
+    h1 { color: #05070D; margin-bottom: 10px; font-weight: 900; }
+    p { color: #666; margin-bottom: 40px; text-align: center; max-width: 700px; line-height: 1.6; font-size: 16px; }
+    .gallery { display: flex; gap: 40px; flex-wrap: wrap; justify-content: center; }
+    .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; }
+    canvas { display: none; }
+    img { border-radius: 12px; width: 400px; height: 400px; border: 1px solid #eee; background: #05070D; }
+    .card h3 { margin-top: 0; color: #05070D; font-size: 20px; }
+    .instruction { font-weight: bold; color: #FF5A3C; margin-top: 20px; padding: 10px 20px; background: #FF5A3C15; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Your High-Quality PNG Images</h1>
+  <p>I have built an image generator for you. I included the exact <strong>side-by-side layout</strong> you requested. However, because Instagram forces your profile picture into a <strong>tiny circle</strong>, placing the text on the side will make the logo look very small. So, I also created a <strong>stacked layout</strong> which is highly recommended for Instagram DPs.</p>
+  
+  <div class="gallery">
+    <!-- Side-by-Side -->
+    <div class="card">
+      <h3>Layout 1: Side-by-Side</h3>
+      <p style="margin-top:0; font-size: 14px; margin-bottom: 20px;">(As requested, Logo + Text horizontally)</p>
+      <canvas id="canvas1" width="1080" height="1080"></canvas>
+      <img id="result1" alt="Ideomint DP Side" />
+      <div class="instruction">Right-click the image above &rarr; "Save image as..."</div>
+    </div>
+
+    <!-- Stacked -->
+    <div class="card">
+      <h3>Layout 2: Stacked</h3>
+      <p style="margin-top:0; font-size: 14px; margin-bottom: 20px;">(Highly Recommended for Instagram)</p>
+      <canvas id="canvas2" width="1080" height="1080"></canvas>
+      <img id="result2" alt="Ideomint DP Stacked" />
+      <div class="instruction">Right-click the image above &rarr; "Save image as..."</div>
+    </div>
+  </div>
+
+  <script>
+    // SVG 1: Side by Side
+    const svg1 = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+      <rect width="1080" height="1080" fill="#05070D" />
+      <g transform="translate(60, 400) scale(0.44)">
+        <g fill="none" stroke-width="50" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M 25 150 L 25 25 L 150 25" stroke="#FF5A3C" />
+          <path d="M 250 25 L 375 25 L 375 150" stroke="#FFFFFF" />
+          <path d="M 25 250 L 25 375 L 150 375" stroke="#FFFFFF" />
+          <path d="M 375 250 L 375 375 L 250 375" stroke="#FF5A3C" />
+        </g>
+        <text x="480" y="290" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="280" letter-spacing="12" text-anchor="start">
+          <tspan fill="#FFFFFF">IDEO</tspan><tspan fill="#FF5A3C">MINT</tspan>
+        </text>
+      </g>
+    </svg>`;
+
+    // SVG 2: Stacked
+    const svg2 = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" width="1080" height="1080">
+      <rect width="1080" height="1080" fill="#05070D" />
+      <g transform="translate(340, 240)">
+        <g fill="none" stroke-width="50" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M 25 150 L 25 25 L 150 25" stroke="#FF5A3C" />
+          <path d="M 250 25 L 375 25 L 375 150" stroke="#FFFFFF" />
+          <path d="M 25 250 L 25 375 L 150 375" stroke="#FFFFFF" />
+          <path d="M 375 250 L 375 375 L 250 375" stroke="#FF5A3C" />
+        </g>
+      </g>
+      <text x="540" y="800" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="120" letter-spacing="10" text-anchor="middle">
+        <tspan fill="#FFFFFF">IDEO</tspan><tspan fill="#FF5A3C">MINT</tspan>
+      </text>
+    </svg>`;
+
+    function renderSvgToPng(svgData, canvasId, imgId) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      const encodedData = encodeURIComponent(svgData);
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodedData;
+      img.onload = function() {
+        ctx.drawImage(img, 0, 0);
+        const pngUrl = canvas.toDataURL('image/png');
+        document.getElementById(imgId).src = pngUrl;
+      };
+    }
+
+    renderSvgToPng(svg1, 'canvas1', 'result1');
+    renderSvgToPng(svg2, 'canvas2', 'result2');
+  </script>
+</body>
+</html>

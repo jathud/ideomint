@@ -1,0 +1,50 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="utf-8">
+<title>Ideomint Document Template</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; }
+  h1 { color: #05070D; font-size: 32px; font-weight: 800; margin-bottom: 10px; }
+  h2 { color: #05070D; font-size: 22px; font-weight: 700; margin-top: 30px; margin-bottom: 10px; }
+  h3 { color: #FF5A3C; font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+  p { margin-top: 0; margin-bottom: 15px; }
+  .document-title { font-size: 42px; color: #05070D; border-bottom: 2px solid #EEEEEE; padding-bottom: 20px; margin-bottom: 30px; }
+  .accent-bar { width: 60px; height: 4px; background-color: #FF5A3C; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<!-- Dark Image Header -->
+<div style="background-color: #05070D; padding: 40px 20px 20px 20px; margin-bottom: 50px; border-bottom: 6px solid #FF5A3C;">
+  <img src="public/ideomint-header-white.svg" width="600" height="120" alt="Ideomint Brand Logo" />
+</div>
+
+<!-- Document Content -->
+<h1 class="document-title">[Document Title Here]</h1>
+<div class="accent-bar"></div>
+
+<p><strong>Date:</strong> [Insert Date]</p>
+<p><strong>Prepared for:</strong> [Client / Recipient Name]</p>
+
+<h2>1. Heading Example</h2>
+<p>This is a blank corporate template. You can use this file as the starting point for any future proposals, strategy documents, invoices, or letters. The typography and colors are already set to match the Ideomint brand.</p>
+
+<h3>Subheading Accent</h3>
+<p>Notice how the subheadings use the <strong>Creative Flame</strong> color to provide a minimalistic but premium brand touch without overwhelming the document.</p>
+
+<ul>
+  <li>Clean, modern typography.</li>
+  <li>Subtle use of the master brand colors.</li>
+  <li>Professional letterhead layout.</li>
+</ul>
+
+<br><br><br><br><br><br>
+
+<!-- Footer -->
+<div style="border-top: 1px solid #EEEEEE; padding-top: 15px; margin-top: 50px; font-size: 10px; color: #999999; text-align: center;">
+  IDEOMINT &bull; STRATEGY &bull; CULTURE &bull; EXPERIENCE<br>
+  hello@ideomint.com &bull; www.ideomint.com
+</div>
+
+</body>
+</html>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 500" width="2000" height="500">
+  <!-- Background (Transparent, but we add a dark rect for visibility if opened directly) -->
+  <rect width="2000" height="500" fill="#05070D" />
+  
+  <g transform="translate(150, 50)">
+    <!-- Ideomint Minting Frame Logo (Scaled to 400x400) -->
+    <g fill="none" stroke-width="50" stroke-linecap="square" stroke-linejoin="miter">
+      <!-- Top Left (Creative Flame) -->
+      <path d="M 25 150 L 25 25 L 150 25" stroke="#FF5A3C" />
+      
+      <!-- Top Right (White) -->
+      <path d="M 250 25 L 375 25 L 375 150" stroke="#FFFFFF" />
+      
+      <!-- Bottom Left (White) -->
+      <path d="M 25 250 L 25 375 L 150 375" stroke="#FFFFFF" />
+      
+      <!-- Bottom Right (Creative Flame) -->
+      <path d="M 375 250 L 375 375 L 250 375" stroke="#FF5A3C" />
+    </g>
+    
+    <!-- IdeoMint Wordmark -->
+    <text x="500" y="275" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="220" letter-spacing="10" text-anchor="start">
+      <tspan fill="#FFFFFF">IDEO</tspan><tspan fill="#FF5A3C">MINT</tspan>
+    </text>
+  </g>
+</svg>
