@@ -35,8 +35,10 @@ export default function AdminScannerPage() {
   const animFrameIdRef = useRef<number | null>(null);
   const isScanningRef = useRef<boolean>(false);
   const cooldownRef = useRef<boolean>(false);
+  const cameraActiveRef = useRef<boolean>(false); // ref so tick() never captures stale closure
 
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [checkInQty, setCheckInQty] = useState<number>(1);
   const [scanning, setScanning] = useState(false);
@@ -81,9 +83,14 @@ export default function AdminScannerPage() {
 
   // Continuous QR Code Frame Reader Loop using jsQR
   const tick = () => {
-    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
-      const canvas = canvasRef.current || document.createElement('canvas');
-      canvasRef.current = canvas;
+    if (!cameraActiveRef.current) return; // stop if camera was deactivated
+
+    if (videoRef.current && videoRef.current.readyState >= videoRef.current.HAVE_ENOUGH_DATA) {
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        animFrameIdRef.current = requestAnimationFrame(tick);
+        return;
+      }
       const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
       if (ctx) {
@@ -103,28 +110,69 @@ export default function AdminScannerPage() {
       }
     }
 
-    if (cameraActive) {
-      animFrameIdRef.current = requestAnimationFrame(tick);
-    }
+    animFrameIdRef.current = requestAnimationFrame(tick);
   };
 
   const startCamera = async () => {
+    setCameraError(null);
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setCameraError('Camera API not available. Make sure this page is loaded over HTTPS or localhost.');
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+        // play() can throw NotAllowedError if browser blocks autoplay — catch separately
+        try {
+          await videoRef.current.play();
+        } catch (playErr: any) {
+          // Some browsers need a user gesture to play; stream is fine, just try muted play
+          videoRef.current.muted = true;
+          await videoRef.current.play();
+        }
+        cameraActiveRef.current = true;
         setCameraActive(true);
+        animFrameIdRef.current = requestAnimationFrame(tick);
       }
-    } catch (err) {
-      console.error('Camera error:', err);
-      alert('Camera access denied or unavailable. Use manual code entry below.');
+    } catch (err: any) {
+      const name = err?.name || '';
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
+        setCameraError(
+          'Camera permission was denied. Please click the camera icon in your browser\'s address bar, allow camera access, then try again.'
+        );
+      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+        setCameraError('No camera found on this device. Use manual ticket entry below.');
+      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
+        setCameraError('Camera is already in use by another app. Close other apps using the camera and try again.');
+      } else if (name === 'OverconstrainedError') {
+        // Retry with relaxed constraints
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+            videoRef.current.muted = true;
+            await videoRef.current.play();
+            cameraActiveRef.current = true;
+            setCameraActive(true);
+            animFrameIdRef.current = requestAnimationFrame(tick);
+          }
+          return;
+        } catch {
+          setCameraError('Camera constraints not supported. Try a different browser or device.');
+        }
+      } else {
+        setCameraError(`Camera error: ${err?.message || 'Unknown error'}. Use manual ticket entry below.`);
+      }
+      console.error('[Camera Error]', err);
     }
   };
 
   const stopCamera = () => {
+    cameraActiveRef.current = false;
+    setCameraActive(false);
     if (animFrameIdRef.current) {
       cancelAnimationFrame(animFrameIdRef.current);
       animFrameIdRef.current = null;
@@ -132,21 +180,15 @@ export default function AdminScannerPage() {
     const stream = videoRef.current?.srcObject as MediaStream;
     stream?.getTracks().forEach((t) => t.stop());
     if (videoRef.current) videoRef.current.srcObject = null;
-    setCameraActive(false);
   };
 
+  // cameraActive state just drives the UI; actual loop control is via cameraActiveRef
   useEffect(() => {
-    if (cameraActive) {
-      animFrameIdRef.current = requestAnimationFrame(tick);
-    } else {
-      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
-    }
     return () => {
+      cameraActiveRef.current = false;
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
     };
-  }, [cameraActive]);
-
-  useEffect(() => () => stopCamera(), []);
+  }, []);
 
   const handleManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,7 +297,6 @@ export default function AdminScannerPage() {
         )}
       </div>
 
-      {/* Camera Toggle Button */}
       <button
         onClick={cameraActive ? stopCamera : startCamera}
         className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg ${
@@ -270,6 +311,32 @@ export default function AdminScannerPage() {
           <><Camera className="w-5 h-5" /> Start Live Camera Scanner</>
         )}
       </button>
+
+      {/* Camera Permission Error Card */}
+      {cameraError && !cameraActive && (
+        <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+          <div className="p-2 bg-red-500/20 rounded-xl shrink-0 mt-0.5">
+            <CameraOff className="w-4 h-4 text-red-400" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-red-400 mb-1">Camera Unavailable</p>
+            <p className="text-xs text-white/60 leading-relaxed">{cameraError}</p>
+            {cameraError.includes('permission') && (
+              <ol className="mt-2 text-[10px] text-white/40 space-y-0.5 list-decimal list-inside">
+                <li>Click the 🔒 lock / camera icon in your browser address bar</li>
+                <li>Set Camera to <strong className="text-white/60">Allow</strong></li>
+                <li>Refresh the page and try again</li>
+              </ol>
+            )}
+            <button
+              onClick={startCamera}
+              className="mt-3 flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
+            >
+              <RefreshCw className="w-3 h-3" /> Retry Camera
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Scan Result Feedback Card */}
       {result && (

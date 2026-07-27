@@ -26,20 +26,38 @@ export async function GET(request: NextRequest) {
       .range(from, to);
 
     if (slug) {
-      query = query.eq('slug', slug);
-    } else {
-      if (status && status !== 'all') query = query.eq('status', status);
-      if (category) query = query.eq('category', category);
-      if (featured === 'true') query = query.eq('featured', true);
+      const cleanSlug = decodeURIComponent(slug).toLowerCase().trim();
+      const { data: slugData } = await supabase
+        .from('events')
+        .select('*, ticket_tiers(*)')
+        .ilike('slug', cleanSlug)
+        .maybeSingle();
+
+      if (slugData) {
+        return Response.json({ success: true, data: slugData } satisfies ApiResponse<IEvent>);
+      }
+
+      return Response.json({ success: true, data: null } satisfies ApiResponse<null>);
     }
 
+    // Default public filter: only show published/active/upcoming events
+    // Admin pages must pass ?status=all to bypass this filter
+    if (status === 'all') {
+      // Admin: return all statuses, no filter
+    } else if (status) {
+      query = query.eq('status', status);
+    } else {
+      // Public default: only published and sold_out events are visible
+      // (event_status enum: draft, published, sold_out, cancelled, completed)
+      query = query.in('status', ['published', 'sold_out']);
+    }
+    if (category) query = query.eq('category', category);
+    if (featured === 'true') query = query.eq('featured', true);
+
     const { data, error, count } = await query;
-
-    if (error) throw error;
-
-    if (slug && data) {
-      const event = data[0] ?? null;
-      return Response.json({ success: true, data: event } satisfies ApiResponse<IEvent | null>);
+    if (error) {
+      console.error('[Events GET Supabase Error]:', JSON.stringify(error));
+      throw error;
     }
 
     return Response.json({
@@ -48,16 +66,32 @@ export async function GET(request: NextRequest) {
       meta: { total: count ?? 0, page, limit },
     } satisfies ApiResponse<IEvent[]>);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : typeof err === 'object' && err !== null && 'message' in err ? String((err as any).message) : 'Failed to fetch events from database';
+    const msg = err instanceof Error ? err.message
+      : typeof err === 'object' && err !== null && 'message' in err
+        ? String((err as any).message)
+        : 'Failed to fetch events from database';
+    console.error('[Events GET Error]:', msg, err);
     return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
   }
 }
 
 // ── POST: Create event ──────────────────────────────────────
 export async function POST(request: NextRequest) {
+  // Guard: reject oversized JSON payloads (64KB max) to prevent memory exhaustion
+  const contentType = request.headers.get('content-type') || '';
+  if (!contentType.includes('multipart/form-data')) {
+    const contentLength = Number(request.headers.get('content-length') || '0');
+    if (contentLength > 64 * 1024) {
+      return Response.json(
+        { success: false, error: 'Request payload too large (max 64KB)' },
+        { status: 413 }
+      );
+    }
+  }
+
   try {
     let body: Record<string, any> = {};
-    const contentType = request.headers.get('content-type') || '';
+
 
     if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
@@ -295,8 +329,14 @@ export async function DELETE(request: NextRequest) {
 
     const supabase = createAdminClient();
 
-    // Delete ticket_tiers first, then event
+    // Delete all child records first to prevent foreign key constraint violations (code 23503)
+    await supabase.from('attendance_logs').delete().eq('event_id', id);
+    await supabase.from('attendees').delete().eq('event_id', id);
+    await supabase.from('tickets').delete().eq('event_id', id);
+    await supabase.from('bookings').delete().eq('event_id', id);
     await supabase.from('ticket_tiers').delete().eq('event_id', id);
+
+    // Delete parent event from Supabase
     const { error } = await supabase.from('events').delete().eq('id', id);
 
     if (error) {

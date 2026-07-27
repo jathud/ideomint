@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Ticket, Zap, ShieldCheck, Sparkles, Calendar, MapPin, CheckCircle2, Clock } from 'lucide-react';
-import { MOCK_EVENTS, getEventStats, CATEGORY_LABELS } from '@/lib/ideofest/mock-data';
 import EventCard from '@/components/ideofest/EventCard';
-import StatsBar from '@/components/ideofest/StatsBar';
 import CountdownTimer from '@/components/ideofest/CountdownTimer';
 import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 import type { IEvent } from '@/lib/ideofest/types';
+import { MOCK_EVENTS, CATEGORY_LABELS } from '@/lib/ideofest/mock-data';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'Ideofest — Live Events & Experiences',
@@ -21,8 +23,12 @@ export default async function IdeofestPage() {
     const { data, error } = await supabase
       .from('events')
       .select('*, ticket_tiers(*)')
-      .eq('status', 'published')
+      .in('status', ['published', 'sold_out'])
       .order('date', { ascending: true });
+
+    if (error) {
+      console.error('[Supabase Query Error in page.tsx]:', error);
+    }
 
     if (!error && data) {
       events = data as IEvent[];
@@ -31,23 +37,24 @@ export default async function IdeofestPage() {
     console.error('Failed to fetch events for landing page from Supabase:', err);
   }
 
-  const featuredEvents = events.filter((e) => e.featured && e.status === 'published');
-  const displayFeatured = featuredEvents.length > 0 ? featuredEvents : events.slice(0, 3);
-  const upcomingEvents = events.filter((e) => e.status === 'published').slice(0, 4);
+  const activeEvents = events;
+  const featuredEvents = activeEvents.filter((e) => e.featured);
+  const displayFeatured = featuredEvents.length > 0 ? featuredEvents : activeEvents.slice(0, 3);
+  const upcomingEvents = activeEvents.slice(0, 6);
 
   // Find nearest upcoming future event
   const now = new Date();
-  const futureEvents = events
-    .filter((e) => e.status === 'published' && new Date(e.date) > now)
+  const futureEvents = [...activeEvents]
+    .filter((e) => new Date(e.date) >= new Date(now.getTime() - 86400000))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const nextEvent = futureEvents[0] || displayFeatured[0];
 
-  const totalCount = events.length;
+  const totalCount = activeEvents.length;
 
   return (
     <div className="relative overflow-hidden bg-section-ink text-white">
       {/* ── HERO SECTION ── */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-20">
+      <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden pt-10">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -55,7 +62,7 @@ export default async function IdeofestPage() {
             alt="Hero Background"
             fill
             priority
-            className="object-cover object-center opacity-20 scale-105 transition-transform duration-1000"
+            className="object-cover object-center opacity-50 scale-100 transition-transform duration-1000"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-section-ink/60 via-section-ink/80 to-section-ink" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-section-ink/40 to-section-ink" />
@@ -86,7 +93,7 @@ export default async function IdeofestPage() {
           </h1>
 
           <p className="max-w-2xl mx-auto text-lg sm:text-xl text-white/70 font-normal leading-relaxed mb-10">
-            Music. Tech. Art. Culture. Curated live events across Sri Lanka with instant encrypted QR pass delivery and verified Sri Lankan payment gateways.
+            Music. Tech. Art. Culture. Curated live events across Sri Lanka with instant encrypted QR pass delivery.
           </p>
 
           {/* Action CTAs */}
@@ -156,8 +163,7 @@ export default async function IdeofestPage() {
         </section>
       )}
 
-
-      {/* ── FEATURED EVENTS ── */}
+      {/* ── FEATURED / CURRENT EVENTS ── */}
       <section className="section-spacing">
         <div className="container-layout px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">

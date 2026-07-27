@@ -19,6 +19,10 @@ const securityHeaders = [
     value: 'SAMEORIGIN',
   },
   {
+    key: 'X-XSS-Protection',
+    value: '1; mode=block',
+  },
+  {
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
@@ -41,6 +45,30 @@ const securityHeaders = [
   {
     key: 'Cross-Origin-Embedder-Policy',
     value: 'credentialless',
+  },
+  {
+    // Content-Security-Policy:
+    // - default-src 'self'          → only load resources from own domain by default
+    // - script-src  'self' 'unsafe-inline' 'unsafe-eval' → Next.js requires these for hydration
+    // - style-src   'self' 'unsafe-inline' fonts.googleapis.com
+    // - img-src     allows own domain, data URIs, Cloudinary, Unsplash, PayHere CDN
+    // - connect-src allows Supabase API, PayHere, Cloudinary API calls from browser
+    // - frame-ancestors 'none' → stronger than X-Frame-Options (prevents clickjacking)
+    key: 'Content-Security-Policy',
+    value: [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.payhere.lk",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://www.payhere.lk",
+      "media-src 'self'",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudinary.com https://www.payhere.lk",
+      "frame-src 'self' https://www.payhere.lk",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self' https://www.payhere.lk",
+      "upgrade-insecure-requests",
+    ].join('; '),
   },
 ];
 

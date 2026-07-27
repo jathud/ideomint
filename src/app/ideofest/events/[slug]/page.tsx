@@ -7,6 +7,9 @@ import type { Metadata } from 'next';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 import type { IEvent } from '@/lib/ideofest/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface Props {
   params: Promise<{ slug: string }>;
 }

@@ -1,5 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import {
+  globalApiLimiter,
+  bookingLimiter,
+  uploadLimiter,
+  adminLoginLimiter,
+  scanLimiter,
+  getClientIp,
+  rateLimitResponse,
+} from '@/lib/ideofest/rate-limit';
 
 // NOTE: middleware runs in Edge Runtime — no Node.js modules allowed.
 // We use the Web Crypto API (available in all Edge environments) for HMAC.
@@ -61,6 +70,41 @@ export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const host = request.headers.get('host') || '';
   const pathname = url.pathname;
+  const method = request.method;
+
+  // ── DoS / Rate Limit Protection ──────────────────────────────────────────
+  // All checks run before any route handler. Keyed by real client IP.
+  // Skip in development — dev server has no real IPs and hot-reloads would
+  // trigger false positives on the 'unknown' IP bucket.
+  if (pathname.startsWith('/api/') && process.env.NODE_ENV === 'production') {
+    const ip = getClientIp(request);
+
+    // 1. Strict per-endpoint limits (checked first, more restrictive)
+    if (method === 'POST' && pathname === '/api/ideofest/bookings') {
+      const r = bookingLimiter.check(ip);
+      if (!r.success) return rateLimitResponse(r);
+    }
+
+    if (method === 'POST' && pathname === '/api/ideofest/upload') {
+      const r = uploadLimiter.check(ip);
+      if (!r.success) return rateLimitResponse(r);
+    }
+
+    if (method === 'POST' && pathname === '/api/ideofest/admin/login') {
+      const r = adminLoginLimiter.check(ip);
+      if (!r.success) return rateLimitResponse(r);
+    }
+
+    if (method === 'POST' && pathname === '/api/ideofest/scan') {
+      const r = scanLimiter.check(ip);
+      if (!r.success) return rateLimitResponse(r);
+    }
+
+    // 2. Global API flood cap (60 req / 60s across all endpoints)
+    const global = globalApiLimiter.check(ip);
+    if (!global.success) return rateLimitResponse(global);
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   // Pass through static assets and API routes
   if (

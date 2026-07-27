@@ -40,22 +40,44 @@ export async function POST(request: NextRequest) {
 
     const searchTerm = extractedRef || rawPayload;
 
-    // 2. Query ticket by ticket_number OR qr_token OR booking_ref
-    let { data: tickets } = await supabase
-      .from('tickets')
-      .select(`
-        *,
-        booking:bookings(
-          id, booking_ref, event_id, event_title, event_slug, event_date, venue,
-          attendee_name, attendee_email, attendee_nic,
-          tier_label, quantity, payment_status, status
-        )
-      `)
-      .or(`ticket_number.eq.${searchTerm},qr_token.eq.${rawPayload},qr_token.eq.${searchTerm}`);
+    // 2. Query ticket by ticket_number (from decrypted ref) first
+    let ticket: any = null;
 
-    let ticket = tickets && tickets.length > 0 ? tickets[0] : null;
+    if (extractedRef) {
+      // We successfully decrypted the QR — look up by the embedded ticket number
+      const { data: byRef } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          booking:bookings(
+            id, booking_ref, event_id, event_title, event_slug, event_date, venue,
+            attendee_name, attendee_email, attendee_nic,
+            tier_label, quantity, payment_status, status
+          )
+        `)
+        .eq('ticket_number', extractedRef)
+        .maybeSingle();
+      ticket = byRef || null;
+    }
 
-    // 3. Fallback: Search by booking reference
+    // 3. If not found by decrypted ref, try matching the raw payload as a ticket number or booking ref directly
+    if (!ticket) {
+      const { data: byTicketNum } = await supabase
+        .from('tickets')
+        .select(`
+          *,
+          booking:bookings(
+            id, booking_ref, event_id, event_title, event_slug, event_date, venue,
+            attendee_name, attendee_email, attendee_nic,
+            tier_label, quantity, payment_status, status
+          )
+        `)
+        .eq('ticket_number', rawPayload)
+        .maybeSingle();
+      ticket = byTicketNum || null;
+    }
+
+    // 4. Fallback: Search by booking reference (ilike for case-insensitive match)
     if (!ticket) {
       const { data: bookingData } = await supabase
         .from('bookings')
@@ -78,12 +100,13 @@ export async function POST(request: NextRequest) {
           .order('pass_index', { ascending: true });
 
         if (bkgTickets && bkgTickets.length > 0) {
-          // Select first un-used ticket if available
+          // Prefer first un-used ticket
           const unused = bkgTickets.find((t: any) => t.status !== 'used');
           ticket = unused || bkgTickets[0];
         }
       }
     }
+
 
     if (!ticket) {
       return Response.json({

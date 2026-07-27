@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import IdeofestHeader from '@/components/ideofest/IdeofestHeader';
 
 export const metadata: Metadata = {
   title: {
@@ -10,10 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function PublicIdeofestLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="min-h-screen bg-section-ink text-white">
-      <IdeofestHeader />
-      <main className="pt-28">{children}</main>
-    </div>
-  );
+  return <>{children}</>;
 }

@@ -13,6 +13,15 @@ function normalisePhone(raw: string): string {
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
 
+  // Guard: reject oversized payloads (32KB max) to prevent memory exhaustion
+  const contentLength = Number(request.headers.get('content-length') || '0');
+  if (contentLength > 32 * 1024) {
+    return Response.json(
+      { success: false, error: 'Request payload too large (max 32KB)' },
+      { status: 413 }
+    );
+  }
+
   try {
     const body = await request.json();
     const {

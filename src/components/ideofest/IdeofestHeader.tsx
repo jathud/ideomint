@@ -2,36 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Ticket, LayoutDashboard, CalendarDays, Menu, X, ShieldCheck, ArrowLeft } from 'lucide-react';
-import { useState } from 'react';
+import { Ticket, CalendarDays, Menu, X, ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import CountdownTimer from './CountdownTimer';
 import IdeofestLogo from './IdeofestLogo';
+import type { IEvent } from '@/lib/ideofest/types';
 
-const NEXT_EVENT_DATE = new Date('2026-10-24T19:00:00+05:30').toISOString();
-
-function getAdminUrl(path = '') {
-  if (typeof window === 'undefined') return `/ideofest/admin${path}`;
-  const { hostname, protocol, port } = window.location;
-  const portSuffix = port ? `:${port}` : '';
-
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//ideofest.localhost${portSuffix}${path}`;
-  }
-
-  if (hostname.startsWith('ideofest.')) {
-    return path || '/';
-  }
-
-  if (hostname.endsWith('ideomint.com')) {
-    return `${protocol}//ideofest.ideomint.com${path}`;
-  }
-
-  return `/ideofest/admin${path}`;
-}
 
 export default function IdeofestHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [nextEvent, setNextEvent] = useState<IEvent | null>(null);
 
   const navItems = [
     { href: '/ideofest/events', label: 'Events', icon: CalendarDays },
@@ -40,57 +21,83 @@ export default function IdeofestHeader() {
 
   const isAdminArea = pathname.startsWith('/ideofest/dashboard') || pathname.startsWith('/ideofest/admin');
 
+  useEffect(() => {
+    let active = true;
+    async function loadNextEvent() {
+      try {
+        const res = await fetch('/api/ideofest/events');
+        const json = await res.json();
+        if (active && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const now = new Date();
+          const upcoming = (json.data as IEvent[])
+            .filter((e) => new Date(e.date) >= new Date(now.getTime() - 86400000))
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          setNextEvent(upcoming[0] || json.data[0]);
+        }
+      } catch (err) {
+        console.error('Failed to load next event for banner:', err);
+      }
+    }
+    loadNextEvent();
+    return () => { active = false; };
+  }, []);
+
+  const eventTitle = nextEvent?.title || 'Ideofest Live Experiences';
+  const eventDateFormatted = nextEvent?.date
+    ? new Date(nextEvent.date).toLocaleDateString('en-LK', { month: 'short', day: 'numeric', year: 'numeric' })
+    : '';
+  const countdownTarget = nextEvent?.date || '2026-10-24T19:00:00+05:30';
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-50 bg-section-ink/95 backdrop-blur-xl border-b border-white/8">
 
-        {/* ── Countdown strip ── */}
-        <div className="bg-signal-lime/10 border-b border-signal-lime/20 py-2 px-6">
+        {/* ── Dynamic Top Announcement Banner Strip ── */}
+        <div className="bg-gradient-to-r from-[#c1e527]/15 via-white/5 to-[#c1e527]/15 border-b border-[#c1e527]/20 py-1.5 px-4 text-xs font-semibold backdrop-blur-md">
           <div className="container-layout flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-signal-lime animate-pulse inline-block" />
-              <span className="text-[10px] text-white/50 tracking-widest uppercase font-bold hidden sm:inline">
-                Next event in
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#c1e527] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#c1e527]"></span>
+              </span>
+              <span className="text-[#c1e527] font-black tracking-wider uppercase text-[10px] shrink-0">
+                Ideofest Live
+              </span>
+              <span className="text-white/40 hidden sm:inline">•</span>
+              <span className="text-white/70 hidden sm:inline text-[10px] font-medium truncate">
+                {eventTitle}{eventDateFormatted ? ` • ${eventDateFormatted}` : ''}
               </span>
             </div>
-            <div className="hidden md:flex items-center gap-2 text-white/50 text-[11px] font-medium">
-              Next event in:&nbsp;
-              <CountdownTimer targetDate={NEXT_EVENT_DATE} compact />
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="hidden md:flex items-center gap-2 text-white/60 text-[10px] font-bold">
+                <span>Starts in:</span>
+                <CountdownTimer targetDate={countdownTarget} compact />
+              </div>
             </div>
-            {/* Admin shortcut in strip */}
-            <a
-              href={getAdminUrl()}
-              className={`flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors ${
-                isAdminArea
-                  ? 'text-signal-lime'
-                  : 'text-white/40 hover:text-signal-lime'
-              }`}
-            >
-              <ShieldCheck className="w-3 h-3" />
-              {isAdminArea ? 'Admin Panel' : 'Organizer Gateway'}
-            </a>
           </div>
         </div>
 
-        {/* ── Main nav ── */}
-        <div className="container-layout flex items-center justify-between py-3 gap-6">
+        {/* ── Main Nav Bar ── */}
+        <div className="container-layout flex items-center justify-between py-3 gap-4">
 
-          {/* Logo & Ideomint link */}
+          {/* Left: Back + Logo */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <a
               href="/"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white/70 hover:text-white bg-white/6 hover:bg-white/12 border border-white/12 transition-all"
-              title="Return to main Ideomint studio website"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black text-white bg-[#FF5A3C]/15 hover:bg-[#FF5A3C]/30 border border-[#FF5A3C]/40 hover:border-[#FF5A3C]/70 transition-all group"
+              title="Return to Ideomint Main Website"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-signal-lime" />
-              <span className="hidden sm:inline">Ideomint Studio</span>
+              <ArrowLeft className="w-3.5 h-3.5 text-[#FF5A3C] group-hover:-translate-x-0.5 transition-transform" />
+              <span>Ideomint</span>
             </a>
-            <Link href="/ideofest" className="hover:opacity-85 transition-opacity">
-              <IdeofestLogo width={150} height={44} />
-            </Link>
+
+            {/* <Link href="/ideofest" className="hover:opacity-85 transition-opacity">
+              <IdeofestLogo width={140} height={40} />
+            </Link> */}
           </div>
 
-          {/* Desktop nav */}
+          {/* Center: Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
             {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + '/');
@@ -98,11 +105,10 @@ export default function IdeofestHeader() {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all ${
-                    active
+                  className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all ${active
                       ? 'bg-white/10 text-white border border-white/15'
-                      : 'text-white/60 hover:text-white hover:bg-white/6'
-                  }`}
+                      : 'text-white/60 hover:text-white hover:bg-white/8'
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {label}
@@ -111,43 +117,24 @@ export default function IdeofestHeader() {
             })}
           </nav>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {/* My Tickets Button */}
-            <Link
-              href="/ideofest/my-tickets"
-              className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-xs font-bold transition-all"
-            >
-              <Ticket className="w-3.5 h-3.5 text-signal-lime" />
-              <span>My Tickets</span>
-            </Link>
-
-            {/* Admin Portal button */}
-            <a
-              href={getAdminUrl()}
-              className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                isAdminArea
-                  ? 'bg-signal-lime text-section-ink'
-                  : 'bg-white/5 border border-white/12 text-white/70 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-signal-lime" />
-              <span>Organizer Portal</span>
-            </a>
+          {/* Right: Action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
 
             {/* Get Tickets CTA */}
             <Link
               href="/ideofest/events"
-              className="hidden sm:flex items-center gap-2 bg-[#c1e527] text-section-ink px-5 py-2 rounded-full text-sm font-black tracking-wide hover:bg-[#b0d420] transition-all"
+              className="flex items-center gap-2 bg-[#c1e527] text-section-ink px-4 py-2 rounded-full text-sm font-black tracking-wide hover:bg-[#b0d420] transition-all shadow-[0_0_20px_rgba(193,229,39,0.25)]"
             >
-              Get Tickets
+              <Ticket className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Get Tickets</span>
+              <span className="sm:hidden">Tickets</span>
             </Link>
 
-            {/* Mobile toggle */}
+            {/* Mobile Hamburger */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 text-white/70 hover:text-white transition-colors"
-              aria-label="Toggle menu"
+              className="md:hidden p-2 text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Toggle navigation menu"
             >
               {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -155,54 +142,42 @@ export default function IdeofestHeader() {
         </div>
       </header>
 
-      {/* ── Mobile menu ── */}
-      <div className={`fixed inset-0 z-40 bg-section-ink flex flex-col pt-28 px-6 pb-8 transition-all duration-300 md:hidden ${menuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        {/* Logo in mobile menu */}
-        <div className="mb-8">
-          <IdeofestLogo width={140} height={42} />
-        </div>
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 bg-section-ink/98 backdrop-blur-2xl md:hidden pt-28 px-6">
+          <nav className="flex flex-col gap-1">
+            {navItems.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 py-4 border-b border-white/8 text-lg font-bold text-white hover:text-[#c1e527] transition-colors"
+              >
+                <Icon className="w-5 h-5 text-[#c1e527]" />
+                {label}
+              </Link>
+            ))}
+          </nav>
 
-        <nav className="flex flex-col gap-2">
-          {navItems.map(({ href, label, icon: Icon }) => (
+          <div className="flex flex-col gap-3 mt-8">
             <Link
-              key={href}
-              href={href}
+              href="/ideofest/events"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 py-4 border-b border-white/10 text-xl font-bold text-white/80 hover:text-white transition-colors"
+              className="w-full text-center bg-[#c1e527] text-section-ink py-4 rounded-xl font-black text-base"
             >
-              <Icon className="w-5 h-5 text-[#c1e527]" />
-              {label}
+              Get Tickets Now
             </Link>
-          ))}
-
-          {/* Admin link in mobile */}
-          <a
-            href={getAdminUrl()}
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-3 py-4 border-b border-white/10 text-xl font-bold text-[#c1e527]"
-          >
-            <ShieldCheck className="w-5 h-5 text-[#c1e527]" />
-            Organizer Portal
-          </a>
-        </nav>
-
-        <div className="flex flex-col gap-3 mt-6">
-          <Link
-            href="/ideofest/events"
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center justify-center bg-[#c1e527] text-section-ink px-6 py-4 rounded-2xl font-black text-base"
-          >
-            Get Tickets
-          </Link>
-          <a
-            href={getAdminUrl('/login')}
-            onClick={() => setMenuOpen(false)}
-            className="flex items-center justify-center bg-white/8 border border-white/15 text-white px-6 py-4 rounded-2xl font-bold text-base gap-2"
-          >
-            <ShieldCheck className="w-5 h-5 text-signal-lime" /> Admin Security Portal
-          </a>
+            <a
+              href="/"
+              onClick={() => setMenuOpen(false)}
+              className="w-full text-center bg-white/8 text-white py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4 text-[#FF5A3C]" />
+              Back to Ideomint
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }

@@ -3,5 +3,13 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "regions": ["sin1"]
+  "regions": ["sin1"],
+  "functions": {
+    "src/app/api/ideofest/upload/route.ts": {
+      "maxDuration": 15
+    },
+    "src/app/api/ideofest/**/*.ts": {
+      "maxDuration": 10
+    }
+  }
 }

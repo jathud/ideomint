@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import EventCard from '@/components/ideofest/EventCard';
 import FilterBar, { type FilterState } from '@/components/ideofest/FilterBar';
+import { MOCK_EVENTS } from '@/lib/ideofest/mock-data';
 import type { IEvent } from '@/lib/ideofest/types';
 
 export default function EventsPage() {
@@ -16,10 +17,14 @@ export default function EventsPage() {
     let active = true;
     async function load() {
       try {
-        const res = await fetch('/api/ideofest/events?status=all');
+        const res = await fetch('/api/ideofest/events');
         const json = await res.json();
         if (active && json.success && Array.isArray(json.data)) {
-          setEvents(json.data);
+          // filter to only public statuses (event_status enum: published, sold_out)
+          setEvents(json.data.filter((e: IEvent) => {
+            const s = (e.status || '').toLowerCase();
+            return s === 'published' || s === 'sold_out';
+          }));
         }
       } catch (err) {
         console.error('Failed to fetch events:', err);
@@ -32,7 +37,7 @@ export default function EventsPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    let evts = events.filter((e) => e.status !== 'cancelled' && e.status !== 'draft');
+    let evts = [...events];
 
     if (filters.search) {
       const q = filters.search.toLowerCase();
