@@ -45,10 +45,10 @@ async function verifyAdminCookie(value: string): Promise<boolean> {
   }
 }
 
-/** Only true on dev localhost subdomain */
+/** Returns true when the request is coming from an admin subdomain (e.g. ideofest.localhost, ideofest.ideomint.com) */
 function isIdeofestSubdomain(host: string): boolean {
   const hostname = host.split(':')[0].toLowerCase();
-  return hostname === 'ideofest.localhost';
+  return hostname === 'ideofest.localhost' || hostname.startsWith('ideofest.');
 }
 
 /** True only on plain localhost / 127.0.0.1 */
@@ -77,8 +77,8 @@ export async function proxy(request: NextRequest) {
     : false;
 
   // ════════════════════════════════════════════════════════════
-  // CASE A: ideofest.localhost (dev-only subdomain)
-  // Every path on this host maps to the Admin Portal.
+  // CASE A: Admin Subdomain (ideofest.ideomint.com / ideofest.localhost)
+  // Every request on this subdomain is mapped strictly to the Admin Portal ONLY.
   // ════════════════════════════════════════════════════════════
   if (isIdeofestSubdomain(host)) {
     let subPath = pathname;
