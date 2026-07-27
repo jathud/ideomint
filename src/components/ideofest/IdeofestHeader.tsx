@@ -13,13 +13,17 @@ function getAdminUrl(path = '') {
   if (typeof window === 'undefined') return `/ideofest/admin${path}`;
   const { hostname, protocol, port } = window.location;
   const portSuffix = port ? `:${port}` : '';
-  
+
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return `${protocol}//ideofest.localhost${portSuffix}${path}`;
   }
-  
+
   if (hostname.startsWith('ideofest.')) {
     return path || '/';
+  }
+
+  if (hostname.endsWith('ideomint.com')) {
+    return `${protocol}//ideofest.ideomint.com${path}`;
   }
 
   return `/ideofest/admin${path}`;

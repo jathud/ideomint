@@ -76,7 +76,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
   const [selectedTier, setSelectedTier] = useState<ITicketTier | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  // Step 2 — Full attendee form
+  // Step 2 — Full attendee form (lead booker)
   const [form, setForm] = useState({
     name: '', email: '', phone: '', nic: '',
     address1: '', address2: '', city: '', district: '', postal: '', country: 'Sri Lanka',
@@ -85,6 +85,21 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showOptional, setShowOptional] = useState(false);
+
+  // Additional attendees (attendee 2, 3, … quantity)
+  type ExtraAttendee = { name: string; nic: string; phone: string };
+  const [additionalAttendees, setAdditionalAttendees] = useState<ExtraAttendee[]>([]);
+
+  // Sync additional attendees array length when quantity changes
+  useEffect(() => {
+    setAdditionalAttendees((prev) => {
+      const needed = quantity - 1; // slot 0 is the lead booker
+      if (needed <= 0) return [];
+      const next = [...prev];
+      while (next.length < needed) next.push({ name: '', nic: '', phone: '' });
+      return next.slice(0, needed);
+    });
+  }, [quantity]);
 
   // Step 3 — Payment
   const [booking, setBooking] = useState<IBooking | null>(null);
@@ -162,6 +177,12 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
     if (!form.district) e.district = 'District is required';
     if (!form.emergencyName.trim()) e.emergencyName = 'Emergency contact name is required';
     if (!form.emergencyPhone.trim()) e.emergencyPhone = 'Emergency contact phone is required';
+    // Validate additional attendees
+    additionalAttendees.forEach((a, i) => {
+      if (!a.name.trim()) e[`extra_name_${i}`] = 'Name is required';
+      if (!a.nic.trim()) e[`extra_nic_${i}`] = 'NIC is required';
+      if (!a.phone.trim()) e[`extra_phone_${i}`] = 'Phone is required';
+    });
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -195,6 +216,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           job_title: form.jobTitle,
           special_notes: form.notes,
           quantity,
+          additional_attendees: additionalAttendees,
         }),
       });
       const data = await res.json();
@@ -409,12 +431,21 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           <h2 className="text-lg font-bold mb-6 flex items-center gap-2">
             <User className="w-5 h-5 text-signal-lime" />
             <span>Attendee Registration</span>
+            {quantity > 1 && (
+              <span className="ml-auto text-xs font-bold text-signal-lime bg-signal-lime/10 px-2.5 py-1 rounded-full border border-signal-lime/30">
+                {quantity} Tickets
+              </span>
+            )}
           </h2>
 
           <div className="flex flex-col gap-4 mb-4">
-            {/* Personal Info */}
+
+            {/* ─── Lead Booker (Attendee 1) ─── */}
             <div className="bg-white/3 border border-white/8 rounded-2xl p-5">
-              <p className="text-xs font-extrabold text-white/40 uppercase tracking-widest mb-4">Personal Information</p>
+              <p className="text-xs font-extrabold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-signal-lime text-section-ink text-[10px] font-black flex items-center justify-center">1</span>
+                {quantity > 1 ? 'Lead Booker — Personal Information' : 'Personal Information'}
+              </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
                   <FormField id="name" label="Full Name" required error={errors.name}>
@@ -436,6 +467,60 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
                 </FormField>
               </div>
             </div>
+
+            {/* ─── Additional Attendees (2, 3, … qty) ─── */}
+            {additionalAttendees.map((attendee, idx) => (
+              <div key={idx} className="bg-white/3 border border-white/8 rounded-2xl p-5">
+                <p className="text-xs font-extrabold text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-signal-lime/20 border border-signal-lime/40 text-signal-lime text-[10px] font-black flex items-center justify-center">{idx + 2}</span>
+                  Attendee {idx + 2} — Personal Information
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <FormField id={`extra_name_${idx}`} label="Full Name" required error={errors[`extra_name_${idx}`]}>
+                      <InputField
+                        id={`extra_name_${idx}`}
+                        placeholder="Full legal name"
+                        value={attendee.name}
+                        onChange={(v) => {
+                          const next = [...additionalAttendees];
+                          next[idx] = { ...next[idx], name: v };
+                          setAdditionalAttendees(next);
+                        }}
+                        error={errors[`extra_name_${idx}`]}
+                      />
+                    </FormField>
+                  </div>
+                  <FormField id={`extra_nic_${idx}`} label="NIC Number" required error={errors[`extra_nic_${idx}`]}>
+                    <InputField
+                      id={`extra_nic_${idx}`}
+                      placeholder="200012345678 or 123456789V"
+                      value={attendee.nic}
+                      onChange={(v) => {
+                        const next = [...additionalAttendees];
+                        next[idx] = { ...next[idx], nic: v };
+                        setAdditionalAttendees(next);
+                      }}
+                      error={errors[`extra_nic_${idx}`]}
+                    />
+                  </FormField>
+                  <FormField id={`extra_phone_${idx}`} label="Phone Number" required error={errors[`extra_phone_${idx}`]}>
+                    <InputField
+                      id={`extra_phone_${idx}`}
+                      type="tel"
+                      placeholder="+94 77 123 4567"
+                      value={attendee.phone}
+                      onChange={(v) => {
+                        const next = [...additionalAttendees];
+                        next[idx] = { ...next[idx], phone: v };
+                        setAdditionalAttendees(next);
+                      }}
+                      error={errors[`extra_phone_${idx}`]}
+                    />
+                  </FormField>
+                </div>
+              </div>
+            ))}
 
             {/* Address */}
             <div className="bg-white/3 border border-white/8 rounded-2xl p-5">
