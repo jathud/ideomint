@@ -29,12 +29,35 @@ function pad(n: number) {
 }
 
 export default function CountdownTimer({ targetDate, compact = false }: CountdownTimerProps) {
-  const [time, setTime] = useState<TimeLeft>(calcTimeLeft(targetDate));
+  const [time, setTime] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setTime(calcTimeLeft(targetDate));
     const id = setInterval(() => setTime(calcTimeLeft(targetDate)), 1000);
     return () => clearInterval(id);
   }, [targetDate]);
+
+  if (!mounted) {
+    return compact ? (
+      <span className="font-black text-white tabular-nums">00d 00h 00m</span>
+    ) : (
+      <div className="flex items-end gap-3 md:gap-4 opacity-50">
+        {['Days', 'Hours', 'Min', 'Sec'].map((label, i) => (
+          <div key={label} className="flex items-end gap-3 md:gap-4">
+            <div className="flex flex-col items-center">
+              <div className="relative bg-white/8 border border-white/12 rounded-xl w-16 h-16 md:w-20 md:h-20 flex items-center justify-center overflow-hidden">
+                <span className="text-3xl md:text-4xl font-black text-white tabular-nums leading-none">00</span>
+              </div>
+              <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase mt-2">{label}</span>
+            </div>
+            {i < 3 && <span className="text-2xl font-black text-white/30 mb-5">:</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   if (compact) {
     return (
@@ -60,7 +83,6 @@ export default function CountdownTimer({ targetDate, compact = false }: Countdow
               <span className="text-3xl md:text-4xl font-black text-white tabular-nums leading-none">
                 {pad(value)}
               </span>
-              {/* Flip line */}
               <div className="absolute left-0 right-0 top-1/2 h-px bg-black/30 pointer-events-none" />
             </div>
             <span className="text-[10px] font-bold text-white/40 tracking-widest uppercase mt-2">

@@ -25,7 +25,24 @@ export async function POST(request: NextRequest) {
       emergency_contact_name, emergency_contact_phone,
       company, job_title, special_notes,
       quantity,
+      additional_attendees,
+      special_event_request,
     } = body;
+
+    // Combine special notes with special event request (Cake Cutting, Birthday Surprise, etc.) for admin visibility
+    let combinedNotes = special_notes || '';
+    if (special_event_request?.enabled) {
+      const celebrationStr = `[🎉 SPECIAL EVENT CELEBRATION REQUEST]\nType: ${special_event_request.type || 'Custom Request'}\nDetails: ${special_event_request.details || 'None provided'}\n(NOTE: Team will contact customer directly)`;
+      combinedNotes = combinedNotes ? `${combinedNotes}\n\n${celebrationStr}` : celebrationStr;
+    }
+
+    if (Array.isArray(additional_attendees) && additional_attendees.length > 0) {
+      const extraAttendeesStr = `[👥 ADDITIONAL ATTENDEES (${additional_attendees.length})]\n` +
+        additional_attendees.map((a: { name?: string; nic?: string; phone?: string }, i: number) =>
+          `Attendee ${i + 2}: ${a.name || 'N/A'} | NIC: ${a.nic || 'N/A'} | Phone: ${a.phone || 'N/A'}`
+        ).join('\n');
+      combinedNotes = combinedNotes ? `${combinedNotes}\n\n${extraAttendeesStr}` : extraAttendeesStr;
+    }
 
     // ── Validation ────────────────────────────────────────────
     if (!event_id && !event_slug) {
@@ -147,7 +164,8 @@ export async function POST(request: NextRequest) {
         city, district, postal_code,
         country: country || 'Sri Lanka',
         emergency_contact_name, emergency_contact_phone,
-        company, job_title, special_notes,
+        company, job_title, special_notes: combinedNotes,
+        additional_attendees: additional_attendees || [],
         // Ticket
         tier_name: tier.name,
         tier_label: tier.label,
@@ -170,27 +188,51 @@ export async function POST(request: NextRequest) {
 
     if (bookingError) throw bookingError;
 
-    // ── For free tickets: issue ticket immediately ────────────
+    // ── For free tickets: issue individual ticket passes & attendee records ──
     if (isFree && booking) {
       const expiresAt = qrExpiryFromEventDate(event.date);
-      const qrToken = generateSecureQRToken('PENDING', event.slug, expiresAt);
+      const extras = Array.isArray(additional_attendees) ? additional_attendees : [];
 
-      const { data: ticket } = await supabase
-        .from('tickets')
-        .insert({
-          booking_id: booking.id,
-          customer_id: customerId,
-          qr_token: qrToken,
-          qr_expires_at: expiresAt.toISOString(),
-          status: 'issued',
-        })
-        .select()
-        .single();
+      for (let i = 0; i < qty; i++) {
+        const passIndex = i + 1;
+        const attendeeName = i === 0 ? attendee_name.trim() : (extras[i - 1]?.name || `Attendee ${passIndex}`);
+        const attendeeNic = i === 0 ? attendee_nic?.trim() : (extras[i - 1]?.nic || attendee_nic?.trim());
+        const attendeePhone = i === 0 ? normalisePhone(attendee_phone) : (extras[i - 1]?.phone || normalisePhone(attendee_phone));
 
-      // Update QR token with actual ticket number
-      if (ticket) {
-        const finalQR = generateSecureQRToken(ticket.ticket_number, event.slug, expiresAt);
-        await supabase.from('tickets').update({ qr_token: finalQR }).eq('id', ticket.id);
+        const tempToken = generateSecureQRToken(`TEMP-${booking.booking_ref}-${passIndex}`, event.slug, expiresAt);
+
+        const { data: ticket } = await supabase
+          .from('tickets')
+          .insert({
+            booking_id: booking.id,
+            customer_id: customerId,
+            qr_token: tempToken,
+            qr_expires_at: expiresAt.toISOString(),
+            status: 'issued',
+            attendee_name: attendeeName,
+            attendee_nic: attendeeNic,
+            attendee_phone: attendeePhone,
+            pass_index: passIndex,
+          })
+          .select()
+          .single();
+
+        if (ticket) {
+          const finalQR = generateSecureQRToken(ticket.ticket_number || `${booking.booking_ref}-${passIndex}`, event.slug, expiresAt);
+          await supabase.from('tickets').update({ qr_token: finalQR }).eq('id', ticket.id);
+
+          await supabase.from('attendees').insert({
+            booking_id: booking.id,
+            ticket_id: ticket.id,
+            event_id: event.id,
+            pass_index: passIndex,
+            full_name: attendeeName,
+            nic_number: attendeeNic,
+            phone: attendeePhone,
+            email: attendee_email.toLowerCase(),
+            status: 'issued',
+          });
+        }
       }
 
       // Update sold count

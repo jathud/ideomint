@@ -1,100 +1,153 @@
 import { type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
-import { isAdminAuthenticated } from '@/lib/ideofest/auth';
-import type { ApiResponse, IBooking } from '@/lib/ideofest/types';
+import { generateSecureQRToken, qrExpiryFromEventDate } from '@/lib/ideofest/qr-security';
+import { sendPaymentApprovedEmail, sendPaymentRejectedEmail } from '@/lib/ideofest/email';
+import type { ApiResponse, IBooking, ITicket } from '@/lib/ideofest/types';
 
-async function requireAdmin(): Promise<Response | null> {
-  const authed = await isAdminAuthenticated();
-  if (!authed) {
-    return Response.json(
-      { success: false, error: 'Unauthorized — admin session required' } satisfies ApiResponse,
-      { status: 401 }
-    );
-  }
-  return null;
-}
-
-export async function GET(request: NextRequest) {
-  const unauthed = await requireAdmin();
-  if (unauthed) return unauthed;
-
-  const statusParam = request.nextUrl.searchParams.get('status') || 'pending_verification';
-
+// ── POST: Admin verify slip (Approve / Reject) ────────────────
+export async function POST(request: NextRequest) {
   try {
     const supabase = createAdminClient();
-    let query = supabase
-      .from('bookings')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const body = await request.json();
 
-    if (statusParam !== 'all') {
-      query = query.eq('status', statusParam);
-    }
+    const bookingId = body.booking_id || body.bookingId;
+    const action = body.action as 'approve' | 'reject';
+    const rejectionReason = body.admin_notes || body.notes || body.reason || '';
 
-    const { data: bookings, error } = await query;
-    if (error) throw error;
-
-    return Response.json({ success: true, data: bookings as IBooking[] } satisfies ApiResponse<IBooking[]>);
-  } catch (error) {
-    console.error('[GET /api/ideofest/admin/verifications]', error);
-    return Response.json(
-      { success: false, error: 'Failed to fetch verifications' } satisfies ApiResponse,
-      { status: 500 }
-    );
-  }
-}
-
-export async function PATCH(request: NextRequest) {
-  const unauthed = await requireAdmin();
-  if (unauthed) return unauthed;
-
-  try {
-    const { bookingId, booking_ref, action, rejectionReason } = await request.json();
-    const targetRef = booking_ref || bookingId;
-
-    if (!targetRef || !['approve', 'reject'].includes(action)) {
+    if (!bookingId || !['approve', 'reject'].includes(action)) {
       return Response.json(
-        { success: false, error: 'booking_ref and valid action (approve/reject) required' } satisfies ApiResponse,
+        { success: false, error: 'booking_id and action (approve/reject) are required' } satisfies ApiResponse,
         { status: 400 }
       );
     }
 
-    const isApprove = action === 'approve';
-    const updatedStatus = isApprove ? 'confirmed' : 'rejected';
-    const updatedPaymentStatus = isApprove ? 'paid' : 'rejected';
-
-    const supabase = createAdminClient();
-    const { data: booking, error } = await supabase
+    // 1. Fetch booking
+    const { data: booking, error: fetchError } = await supabase
       .from('bookings')
-      .update({
-        status: updatedStatus,
-        payment_status: updatedPaymentStatus,
-        paid_at: isApprove ? new Date().toISOString() : null,
-        admin_notes: rejectionReason || null,
-      })
-      .or(`booking_ref.eq.${targetRef},id.eq.${targetRef}`)
-      .select()
+      .select('*, events(*)')
+      .eq('id', bookingId)
       .single();
 
-    if (error || !booking) {
+    if (fetchError || !booking) {
       return Response.json(
-        { success: false, error: 'Booking record not found' } satisfies ApiResponse,
+        { success: false, error: 'Booking not found' } satisfies ApiResponse,
         { status: 404 }
+      );
+    }
+
+    const isApprove = action === 'approve';
+    const newStatus = isApprove ? 'confirmed' : 'payment_rejected';
+    const newPaymentStatus = isApprove ? 'paid' : 'rejected';
+
+    // 2. Update booking status
+    const { error: updateError } = await supabase
+      .from('bookings')
+      .update({
+        status: newStatus,
+        payment_status: newPaymentStatus,
+        admin_notes: rejectionReason || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', bookingId);
+
+    if (updateError) {
+      throw new Error(`Failed to update booking: ${updateError.message}`);
+    }
+
+    let issuedTicket: ITicket | undefined;
+
+    // 3. If Approved: Issue individual passes & save every attendee detail into Supabase
+    if (isApprove) {
+      try {
+        const eventDate = booking.events?.date || booking.event_date || new Date().toISOString();
+        const eventSlug = booking.event_slug || 'event';
+        const expiresAt = qrExpiryFromEventDate(eventDate);
+        const qty = Math.max(1, booking.quantity || 1);
+
+        const extras = Array.isArray(booking.additional_attendees) ? booking.additional_attendees : [];
+
+        for (let i = 0; i < qty; i++) {
+          const passIndex = i + 1;
+          const attendeeName = i === 0 ? booking.attendee_name : (extras[i - 1]?.name || `Attendee ${passIndex}`);
+          const attendeeNic = i === 0 ? booking.attendee_nic : (extras[i - 1]?.nic || booking.attendee_nic);
+          const attendeePhone = i === 0 ? booking.attendee_phone : (extras[i - 1]?.phone || booking.attendee_phone);
+
+          const tempToken = generateSecureQRToken(`TEMP-${booking.booking_ref}-${passIndex}`, eventSlug, expiresAt);
+
+          // Insert individual ticket pass into tickets table
+          const { data: ticket } = await supabase
+            .from('tickets')
+            .insert({
+              booking_id: booking.id,
+              customer_id: booking.customer_id,
+              qr_token: tempToken,
+              qr_expires_at: expiresAt.toISOString(),
+              status: 'issued',
+              attendee_name: attendeeName,
+              attendee_nic: attendeeNic,
+              attendee_phone: attendeePhone,
+              pass_index: passIndex,
+            })
+            .select()
+            .single();
+
+          if (ticket) {
+            const finalQR = generateSecureQRToken(ticket.ticket_number || `${booking.booking_ref}-${passIndex}`, eventSlug, expiresAt);
+            await supabase.from('tickets').update({ qr_token: finalQR }).eq('id', ticket.id);
+
+            // Also insert into dedicated attendees table
+            await supabase.from('attendees').insert({
+              booking_id: booking.id,
+              ticket_id: ticket.id,
+              event_id: booking.event_id,
+              pass_index: passIndex,
+              full_name: attendeeName,
+              nic_number: attendeeNic,
+              phone: attendeePhone,
+              email: booking.attendee_email,
+              status: 'issued',
+            });
+
+            if (i === 0) issuedTicket = ticket as ITicket;
+          }
+        }
+
+        // Update sold count on tier
+        if (booking.ticket_tier_id) {
+          const { data: tier } = await supabase
+            .from('ticket_tiers')
+            .select('sold')
+            .eq('id', booking.ticket_tier_id)
+            .single();
+          if (tier) {
+            await supabase
+              .from('ticket_tiers')
+              .update({ sold: (tier.sold || 0) + qty })
+              .eq('id', booking.ticket_tier_id);
+          }
+        }
+
+        // Send Email for Approved Booking
+        sendPaymentApprovedEmail(booking as IBooking, issuedTicket, rejectionReason).catch((err) =>
+          console.error('[sendPaymentApprovedEmail Error]:', err)
+        );
+      } catch (issueErr) {
+        console.error('[Ticket Issuance Error]:', issueErr);
+      }
+    } else {
+      // Send Rejection Email
+      sendPaymentRejectedEmail(booking as IBooking, rejectionReason).catch((err) =>
+        console.error('[sendPaymentRejectedEmail Error]:', err)
       );
     }
 
     return Response.json({
       success: true,
-      data: booking,
-      message: isApprove
-        ? 'Payment slip verified & ticket confirmed!'
-        : `Booking rejected: ${rejectionReason || 'Invalid payment slip'}`,
+      message: `Booking ${booking.booking_ref} ${isApprove ? 'approved & tickets issued' : 'rejected'} successfully`,
+      data: { booking_ref: booking.booking_ref, action, ticket: issuedTicket },
     } satisfies ApiResponse);
-  } catch (error) {
-    console.error('[PATCH /api/ideofest/admin/verifications]', error);
-    return Response.json(
-      { success: false, error: 'Failed to process payment slip verification' } satisfies ApiResponse,
-      { status: 500 }
-    );
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Admin verification failed';
+    return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
   }
 }

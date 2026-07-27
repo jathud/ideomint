@@ -18,16 +18,16 @@ export default function AdminAttendeesPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const [evtRes, bkgRes] = await Promise.all([
+        const [evtRes, attRes] = await Promise.all([
           fetch('/api/ideofest/events?status=all'),
-          fetch('/api/ideofest/bookings?limit=200'),
+          fetch('/api/ideofest/attendees'),
         ]);
 
-        const [evtData, bkgData] = await Promise.all([evtRes.json(), bkgRes.json()]);
+        const [evtData, attData] = await Promise.all([evtRes.json(), attRes.json()]);
 
         if (active) {
           if (evtData.success && Array.isArray(evtData.data)) setEvents(evtData.data);
-          if (bkgData.success && Array.isArray(bkgData.data)) setBookings(bkgData.data);
+          if (attData.success && Array.isArray(attData.data)) setBookings(attData.data);
         }
       } catch (err) {
         console.error('Failed to load attendee data:', err);

@@ -42,10 +42,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const event = await fetchEvent(slug);
   if (!event) return { title: 'Event Not Found' };
+  const canonicalUrl = `https://ideomint.com/ideofest/events/${event.slug}`;
   return {
-    title: event.title,
-    description: event.tagline,
-    openGraph: { images: [event.image_url] },
+    title: `${event.title} | Ideofest`,
+    description: event.tagline || event.description?.slice(0, 160),
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title: `${event.title} | Ideofest`,
+      description: event.tagline,
+      url: canonicalUrl,
+      siteName: 'Ideofest by Ideomint',
+      type: 'article',
+      images: [{ url: event.image_url, width: 1200, height: 630, alt: event.title }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: event.title,
+      description: event.tagline,
+      images: [event.image_url],
+    },
   };
 }
 
@@ -77,8 +92,49 @@ export default async function EventDetailPage({ params }: Props) {
 
   const paymentMethods = event.payment_methods || ['bank_transfer'];
 
+  // Schema.org Event JSON-LD for Google Rich Results & AEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: event.title,
+    description: event.description || event.tagline,
+    startDate: event.date,
+    endDate: event.end_date || event.date,
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: {
+      '@type': 'Place',
+      name: event.venue,
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: event.city,
+        addressCountry: 'LK',
+      },
+    },
+    image: [event.image_url],
+    organizer: {
+      '@type': 'Organization',
+      name: 'Ideomint',
+      url: 'https://ideomint.com',
+    },
+    offers: tiers.map((t) => ({
+      '@type': 'Offer',
+      name: t.label,
+      price: t.price,
+      priceCurrency: 'LKR',
+      availability: (t.capacity - (t.sold || 0)) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      url: `https://ideomint.com/ideofest/events/${event.slug}/book`,
+    })),
+  };
+
   return (
     <div className="relative">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       {/* Hero */}
       <div className="relative h-[55vh] min-h-[360px] overflow-hidden">
         <Image
@@ -216,7 +272,7 @@ export default async function EventDetailPage({ params }: Props) {
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TIER_BADGE[tier.name]}`}>
                           {tier.label}
                         </span>
-                        <p className="text-xs text-white/40 mt-1.5">{avail > 0 ? `${avail} left` : 'Sold out'}</p>
+                        {soldOut && <p className="text-xs text-red-400 mt-1.5 font-bold">Sold out</p>}
                       </div>
                       <span className="font-black text-white">
                         {tier.price === 0 ? 'Free' : `LKR ${tier.price.toLocaleString('en-LK')}`}

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Ticket, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
@@ -16,9 +16,8 @@ export default function Header() {
     { label: 'Services', id: 'services' },
     { label: 'Case Studies', id: 'teardown' },
     { label: 'The Lab', id: 'sandbox' },
-
+    { label: 'Ideofest', href: '/ideofest', badge: 'Live Events' },
     { label: 'Contact', id: 'contact' },
-
   ];
 
   useEffect(() => {
@@ -32,7 +31,6 @@ export default function Header() {
       let current = '';
       sections.forEach((section) => {
         const rect = section.getBoundingClientRect();
-        // A section is considered active if it occupies the middle of the viewport
         if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 3) {
           current = section.id;
         }
@@ -44,7 +42,6 @@ export default function Header() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Call once to set initial state
     handleScroll();
 
     return () => {
@@ -52,7 +49,6 @@ export default function Header() {
     };
   }, []);
 
-  // Prevent scrolling when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
       document.body.style.overflow = 'hidden';
@@ -78,7 +74,6 @@ export default function Header() {
             }}
           >
             <div className="relative w-8 h-8 flex items-center justify-center">
-              {/* Geometric Open Frame Icon */}
               <div className="absolute top-0 left-0 w-[14px] h-[14px] border-t-[4px] border-l-[4px] border-creative-flame transition-colors" />
               <div className="absolute top-0 right-0 w-[14px] h-[14px] border-t-[4px] border-r-[4px] border-white transition-colors" />
               <div className="absolute bottom-0 left-0 w-[14px] h-[14px] border-b-[4px] border-l-[4px] border-white transition-colors" />
@@ -91,29 +86,59 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-6">
-            {navItems.map(({ label, id }) => {
-              const hash = `#${id}`;
+            {navItems.map((item) => {
+              if (item.href) {
+                const isActive = pathname.startsWith('/ideofest');
+                return (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    className={`text-sm font-extrabold transition-all relative pb-1 flex items-center gap-1.5 ${isActive
+                      ? 'text-[#c1e527] before:absolute before:bottom-0 before:left-0 before:w-full before:h-0.5 before:bg-[#c1e527]'
+                      : 'text-white/90 hover:text-[#c1e527]'
+                      }`}
+                  >
+
+                    <span>{item.label}</span>
+
+                  </Link>
+                );
+              }
+
+              const hash = `#${item.id}`;
               const href = isHome ? hash : `/${hash}`;
               return (
                 <Link
-                  key={id}
+                  key={item.id}
                   href={href}
-                  className={`text-sm font-semibold transition-colors relative pb-1 ${(isHome && activeSection === id) || (!isHome && pathname === href)
+                  className={`text-sm font-semibold transition-colors relative pb-1 ${(isHome && activeSection === item.id) || (!isHome && pathname === href)
                     ? 'text-creative-flame before:absolute before:bottom-0 before:left-0 before:w-full before:h-0.5 before:bg-creative-flame'
-                    : 'text-white hover:text-creative-flame'
+                    : 'text-white/80 hover:text-white'
                     }`}
                 >
-                  {label}
+                  {item.label}
                 </Link>
               );
             })}
           </nav>
 
+          <div className="flex items-center gap-3 relative z-50">
+            {/* Graceful Ideofest CTA Button */}
+            <Link
+              href="/ideofest"
+              className="relative group inline-flex items-center gap-2.5 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-5 py-2.5 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-300 shadow-[0_0_20px_rgba(193,229,39,0.25)] hover:shadow-[0_0_30px_rgba(193,229,39,0.5)] hover:scale-105 active:scale-95"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-section-ink opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-section-ink"></span>
+              </span>
+              <Ticket />
+              <span>Book Tickets</span>
+            </Link>
 
-          <div className="flex items-center gap-4 relative z-50">
             <Link
               href={isHome ? '#contact' : '/#contact'}
-              className="hidden md:flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-white px-6 py-3 rounded-full text-sm font-bold transition-all"
+              className="hidden md:flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-all"
             >
               Let's work together
             </Link>
@@ -140,32 +165,58 @@ export default function Header() {
           }`}
       >
         <nav aria-label="Mobile navigation" className="flex flex-col gap-6 mt-12 pl-2">
-          {navItems.map(({ label, id }) => {
-            const hash = `#${id}`;
+          {navItems.map((item) => {
+            if (item.href) {
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-2xl sm:text-3xl font-black tracking-wider uppercase transition-colors text-[#c1e527] flex items-center gap-3"
+                >
+                  <Ticket className="w-7 h-7" />
+                  <span>{item.label}</span>
+                  <span className="text-xs bg-[#c1e527]/20 text-[#c1e527] px-2.5 py-0.5 rounded-full font-extrabold border border-[#c1e527]/40">
+                    Live Events
+                  </span>
+                </Link>
+              );
+            }
+
+            const hash = `#${item.id}`;
             const href = isHome ? hash : `/${hash}`;
             return (
               <Link
-                key={id}
+                key={item.id}
                 href={href}
                 onClick={(e) => {
                   setIsMobileMenuOpen(false);
                   if (isHome) {
                     e.preventDefault();
                     setTimeout(() => {
-                      const element = document.getElementById(id);
+                      const element = document.getElementById(item.id!);
                       if (element) element.scrollIntoView({ behavior: 'smooth' });
                     }, 50);
                   }
                 }}
-                className={`text-2xl sm:text-3xl font-semibold tracking-wider uppercase transition-colors ${activeSection === id ? 'text-creative-flame' : 'text-white/80 hover:text-white'
+                className={`text-2xl sm:text-3xl font-semibold tracking-wider uppercase transition-colors ${activeSection === item.id ? 'text-creative-flame' : 'text-white/80 hover:text-white'
                   }`}
               >
-                {label}
+                {item.label}
               </Link>
             );
           })}
 
-          <div className="mt-8 pt-8 border-t border-white/10">
+          <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-4">
+            <Link
+              href="/ideofest"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-8 py-4 rounded-full text-base font-black shadow-lg shadow-[#c1e527]/20 w-full"
+            >
+              <Ticket className="w-5 h-5" />
+              <span>Explore & Book Event Tickets</span>
+            </Link>
+
             <Link
               href={isHome ? '#contact' : '/#contact'}
               onClick={(e) => {
@@ -178,7 +229,7 @@ export default function Header() {
                   }, 50);
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 bg-creative-flame text-white px-8 py-4 rounded-full text-base font-bold w-full md:w-auto"
+              className="inline-flex items-center justify-center gap-2 bg-creative-flame text-white px-8 py-4 rounded-full text-base font-bold w-full"
             >
               Let's work together
             </Link>

@@ -5,32 +5,43 @@ import type { ApiResponse } from '@/lib/ideofest/types';
 
 /**
  * POST /api/ideofest/scan
- * QR code scan endpoint for gate staff.
- * Supports partial group check-in (e.g. 3 of 4 arrive first, 1 arrives later).
- * Body: { qr_token?: string, qrPayload?: string, check_in_qty?: number, gate?: string, scanner_name?: string }
+ * Gate QR Code scanning endpoint.
+ * Supports:
+ * - Encrypted & HMAC-signed QR Tokens
+ * - Plain Ticket Numbers (IDF-TKT-XXXXXXXX)
+ * - Booking References (IDF-XXXXXXXX)
+ * - Partial group check-in
  */
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
 
   try {
     const body = await request.json();
-    const rawPayload = (body.qr_token || body.qrPayload || body.token || body.code || '').trim();
+    const rawPayload = (body.qr_token || body.qrPayload || body.token || body.code || body.raw || '').trim();
     const requestedCheckInQty = Math.max(1, parseInt(body.check_in_qty || body.count || '1'));
     const gate = body.gate || 'Main Gate';
-    const scanner_name = body.scanner_name || 'Staff';
+    const scanner_name = body.scanner_name || 'Gate Staff';
 
     if (!rawPayload) {
-      return Response.json({ success: false, error: 'QR token or payload code is required', result: 'invalid' } satisfies ApiResponse, { status: 400 });
+      return Response.json(
+        { success: false, error: 'QR token or payload code is required', result: 'invalid' } satisfies ApiResponse,
+        { status: 400 }
+      );
     }
 
-    let ticketNumber = '';
-    const validation = validateQRToken(rawPayload);
-    if (validation.valid && validation.payload?.ref) {
-      ticketNumber = validation.payload.ref;
+    let extractedRef = '';
+    // 1. Attempt decrypting signed QR token
+    if (rawPayload.includes('.')) {
+      const validation = validateQRToken(rawPayload);
+      if (validation.valid && validation.payload?.ref) {
+        extractedRef = validation.payload.ref;
+      }
     }
 
-    // 1. Query ticket from Supabase PostgreSQL
-    let ticketQuery = supabase
+    const searchTerm = extractedRef || rawPayload;
+
+    // 2. Query ticket by ticket_number OR qr_token OR booking_ref
+    let { data: tickets } = await supabase
       .from('tickets')
       .select(`
         *,
@@ -39,26 +50,21 @@ export async function POST(request: NextRequest) {
           attendee_name, attendee_email, attendee_nic,
           tier_label, quantity, payment_status, status
         )
-      `);
+      `)
+      .or(`ticket_number.eq.${searchTerm},qr_token.eq.${rawPayload},qr_token.eq.${searchTerm}`);
 
-    if (ticketNumber) {
-      ticketQuery = ticketQuery.eq('ticket_number', ticketNumber);
-    } else {
-      ticketQuery = ticketQuery.or(`ticket_number.ilike.%${rawPayload}%,qr_token.ilike.%${rawPayload}%`);
-    }
+    let ticket = tickets && tickets.length > 0 ? tickets[0] : null;
 
-    let { data: ticket } = await ticketQuery.maybeSingle();
-
-    // 2. If not found directly, search by booking_ref
+    // 3. Fallback: Search by booking reference
     if (!ticket) {
       const { data: bookingData } = await supabase
         .from('bookings')
         .select('id')
-        .ilike('booking_ref', rawPayload)
+        .ilike('booking_ref', searchTerm)
         .maybeSingle();
 
       if (bookingData?.id) {
-        const { data: tkt } = await supabase
+        const { data: bkgTickets } = await supabase
           .from('tickets')
           .select(`
             *,
@@ -69,25 +75,29 @@ export async function POST(request: NextRequest) {
             )
           `)
           .eq('booking_id', bookingData.id)
-          .maybeSingle();
+          .order('pass_index', { ascending: true });
 
-        if (tkt) ticket = tkt;
+        if (bkgTickets && bkgTickets.length > 0) {
+          // Select first un-used ticket if available
+          const unused = bkgTickets.find((t: any) => t.status !== 'used');
+          ticket = unused || bkgTickets[0];
+        }
       }
     }
 
     if (!ticket) {
       return Response.json({
         success: false,
-        error: 'Invalid QR Code or Ticket Not Found',
+        error: `Invalid QR Code or Ticket Not Found (${searchTerm})`,
         result: 'not_found',
       } satisfies ApiResponse, { status: 404 });
     }
 
     const booking = ticket.booking;
-    const finalTicketNumber = ticket.ticket_number || ticketNumber || rawPayload;
+    const ticketNumber = ticket.ticket_number || ticket.qr_token || searchTerm;
     const totalQty = booking?.quantity || 1;
 
-    // 3. Check ticket status
+    // 4. Check ticket status
     if (ticket.status === 'cancelled') {
       return Response.json({ success: false, error: 'Ticket is cancelled', result: 'invalid' } satisfies ApiResponse, { status: 400 });
     }
@@ -95,7 +105,7 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Ticket has expired', result: 'expired' } satisfies ApiResponse, { status: 400 });
     }
 
-    // 4. Calculate previous check-ins for this booking
+    // 5. Check attendance logs for previous check-ins
     const { data: logs } = await supabase
       .from('attendance_logs')
       .select('id, scanned_at, gate')
@@ -103,82 +113,81 @@ export async function POST(request: NextRequest) {
       .eq('result', 'success');
 
     const previousCheckIns = logs ? logs.length : (ticket.status === 'used' ? totalQty : 0);
-    const remaining = totalQty - previousCheckIns;
+    const remaining = Math.max(0, totalQty - previousCheckIns);
 
-    if (remaining <= 0) {
+    if (remaining <= 0 || ticket.status === 'used') {
       const lastScan = logs?.[logs.length - 1];
       return Response.json({
         success: false,
-        error: `Duplicate Scan — All ${totalQty}/${totalQty} tickets for this booking have already been checked in.`,
+        error: `Duplicate Scan — Pass #${ticket.pass_index || 1} for ${ticket.attendee_name || booking?.attendee_name} has already been scanned.`,
         result: 'duplicate',
         data: {
-          attendee_name: booking?.attendee_name || 'Attendee',
+          attendee_name: ticket.attendee_name || booking?.attendee_name || 'Attendee',
           scanned_at: lastScan?.scanned_at || ticket.used_at || new Date().toISOString(),
-          ticket_number: finalTicketNumber,
+          ticket_number: ticketNumber,
           totalQty,
           checkedIn: totalQty,
           remaining: 0,
+          pass_index: ticket.pass_index || 1,
         },
       } satisfies ApiResponse, { status: 409 });
     }
 
-    // 5. Calculate new check-in batch count
-    const checkInCount = Math.min(requestedCheckInQty, remaining);
-    const newTotalCheckedIn = previousCheckIns + checkInCount;
-    const remainingAfterScan = totalQty - newTotalCheckedIn;
+    // 6. Perform check-in
+    const actualCheckInQty = Math.min(requestedCheckInQty, remaining);
+    const now = new Date().toISOString();
 
-    // If all tickets in booking are now checked in, update ticket status to used
-    if (remainingAfterScan <= 0) {
-      await supabase.from('tickets').update({
-        status: 'used',
-        used_at: new Date().toISOString(),
-      }).eq('id', ticket.id);
-    }
+    // Mark ticket used
+    await supabase
+      .from('tickets')
+      .update({ status: 'used', used_at: now, updated_at: now })
+      .eq('id', ticket.id);
 
-    // 6. Record attendance log entries for each attendee checked in
-    const logInserts = Array.from({ length: checkInCount }).map(() => ({
-      ticket_id: ticket.id,
+    // Update attendee status in attendees table
+    await supabase
+      .from('attendees')
+      .update({ checked_in: true, checked_in_at: now, status: 'checked_in' })
+      .eq('ticket_id', ticket.id);
+
+    // Insert attendance log
+    await supabase.from('attendance_logs').insert({
       booking_id: ticket.booking_id,
+      ticket_id: ticket.id,
       event_id: booking?.event_id,
-      customer_id: ticket.customer_id,
+      scanned_by: scanner_name,
       gate,
-      scanner_name,
-      ip_address: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-      user_agent: request.headers.get('user-agent'),
       result: 'success',
-    }));
+      quantity_checked_in: actualCheckInQty,
+      scanned_at: now,
+    });
 
-    await supabase.from('attendance_logs').insert(logInserts);
-
-    const message = remainingAfterScan > 0
-      ? `✓ Checked in ${checkInCount} attendee(s). (${newTotalCheckedIn}/${totalQty} checked in, ${remainingAfterScan} remaining)`
-      : `✓ All ${totalQty} attendee(s) checked in successfully!`;
+    const newCheckedInCount = previousCheckIns + actualCheckInQty;
+    const newRemaining = totalQty - newCheckedInCount;
 
     return Response.json({
       success: true,
-      result: 'success',
+      message: `VALID TICKET — Welcome ${ticket.attendee_name || booking?.attendee_name}! Pass #${ticket.pass_index || 1} Checked In`,
+      result: 'valid',
       data: {
-        ticket_number: finalTicketNumber,
-        attendeeName: booking?.attendee_name || 'Attendee',
-        attendee_name: booking?.attendee_name || 'Attendee',
-        attendee_nic: booking?.attendee_nic,
-        tier_label: booking?.tier_label || 'Standard',
-        ticketTierLabel: booking?.tier_label || 'Standard',
-        quantity: totalQty,
-        checkInCount,
-        newTotalCheckedIn,
-        remainingAfterScan,
-        eventTitle: booking?.event_title || 'Ideofest Event',
-        event_title: booking?.event_title || 'Ideofest Event',
-        event_date: booking?.event_date,
-        venue: booking?.venue,
+        attendee_name: ticket.attendee_name || booking?.attendee_name,
+        attendee_email: booking?.attendee_email,
+        attendee_nic: ticket.attendee_nic || booking?.attendee_nic,
+        attendee_phone: ticket.attendee_phone || booking?.attendee_phone,
+        ticket_number: ticketNumber,
         booking_ref: booking?.booking_ref,
-        checked_in_at: new Date().toISOString(),
+        event_title: booking?.event_title,
+        tier_label: booking?.tier_label,
+        quantity_checked_in: actualCheckInQty,
+        totalQty,
+        checkedIn: newCheckedInCount,
+        remaining: newRemaining,
+        pass_index: ticket.pass_index || 1,
+        scanned_at: now,
+        gate,
       },
-      message,
     } satisfies ApiResponse);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Scan failed';
+    const msg = err instanceof Error ? err.message : 'QR Scan failed';
     return Response.json({ success: false, error: msg, result: 'invalid' } satisfies ApiResponse, { status: 500 });
   }
 }

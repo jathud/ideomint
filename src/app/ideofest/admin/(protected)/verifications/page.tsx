@@ -355,6 +355,18 @@ export default function AdminVerificationsPage() {
                 ))}
               </div>
 
+              {/* Special Notes & Celebration Requests */}
+              {selectedBooking.special_notes && (
+                <div className="bg-white/4 border border-white/10 rounded-xl p-4 mb-5">
+                  <p className="text-[10px] font-black text-[#c1e527] uppercase tracking-wider mb-2">
+                    📋 Special Notes & Celebration Requests
+                  </p>
+                  <pre className="text-xs text-white/90 whitespace-pre-wrap font-sans leading-relaxed">
+                    {selectedBooking.special_notes}
+                  </pre>
+                </div>
+              )}
+
               {/* Payment slip */}
               <div className="mb-5">
                 <p className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Payment Receipt</p>

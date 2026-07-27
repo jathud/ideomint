@@ -144,8 +144,13 @@ export interface IBooking {
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
   company?: string;
-  job_title?: string;
   special_notes?: string;
+  additional_attendees?: Array<{ name: string; nic: string; phone: string }>;
+  special_event_request?: {
+    enabled: boolean;
+    type?: string;
+    details?: string;
+  };
   // Ticket
   tier_name: TicketTierName;
   tier_label: string;
