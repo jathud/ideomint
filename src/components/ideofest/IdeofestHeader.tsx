@@ -85,10 +85,10 @@ export default function IdeofestHeader() {
           <div className="flex items-center gap-3 flex-shrink-0">
             <a
               href="/"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black text-white bg-[#FF5A3C]/15 hover:bg-[#FF5A3C]/30 border border-[#FF5A3C]/40 hover:border-[#FF5A3C]/70 transition-all group"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black text-white bg-[#c1e527]/15 hover:bg-[#c1e527]/30 border border-[#c1e527]/40 hover:border-[#c1e527]/70 transition-all group"
               title="Return to Ideomint Main Website"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#FF5A3C] group-hover:-translate-x-0.5 transition-transform" />
+              <ArrowLeft className="w-3.5 h-3.5 text-[#c1e527] group-hover:-translate-x-0.5 transition-transform" />
               <span>Ideomint</span>
             </a>
 
@@ -106,8 +106,8 @@ export default function IdeofestHeader() {
                   key={href}
                   href={href}
                   className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all ${active
-                      ? 'bg-white/10 text-white border border-white/15'
-                      : 'text-white/60 hover:text-white hover:bg-white/8'
+                    ? 'bg-white/10 text-white border border-white/15'
+                    : 'text-white/60 hover:text-white hover:bg-white/8'
                     }`}
                 >
                   <Icon className="w-4 h-4" />

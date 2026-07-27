@@ -256,7 +256,9 @@ export async function POST(request: NextRequest) {
       ...booking,
       booking_ref: booking.booking_ref,
     };
-    sendBookingConfirmationEmail(bookingForEmail).catch(console.error);
+    sendBookingConfirmationEmail(bookingForEmail)
+      .then((res) => console.log(`[Booking Email Dispatch Result]:`, res))
+      .catch((err) => console.error('[Booking Email Dispatch Error]:', err));
 
     return Response.json(
       {

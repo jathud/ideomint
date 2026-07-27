@@ -119,8 +119,18 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [slipUploaded, setSlipUploaded] = useState(false);
+  const [payLater, setPayLater] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  // WhatsApp environment number (defaults to +94771234567 if not set in env)
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_ORGANIZER_WHATSAPP || '+94771234567';
+  const cleanWhatsapp = whatsappNumber.replace(/[^\d]/g, '');
+
+  const getWhatsAppUrl = (b: IBooking) => {
+    const text = `Hi Ideofest Team 👋\n\nI have reserved a ticket for *${b.event_title}*.\n\n📌 *Booking Ref:* ${b.booking_ref}\n👤 *Lead Attendee:* ${b.attendee_name}\n🎟️ *Pass Tier:* ${b.tier_label} × ${b.quantity}\n💰 *Total Amount:* LKR ${b.total_amount.toLocaleString('en-LK')}\n\nHere is my payment transfer receipt attached:`;
+    return `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(text)}`;
+  };
 
   // Load event
   useEffect(() => {
@@ -960,6 +970,29 @@ Ideomint — Perfectly Minted Events.
               <>Submit Payment Receipt <ArrowRight className="w-5 h-5" /></>
             )}
           </button>
+
+          {/* Pay Later / Send via WhatsApp Informational Message Card */}
+          <div className="bg-gradient-to-r from-emerald-500/12 via-white/5 to-amber-500/12 border border-emerald-500/30 rounded-2xl p-5 text-left text-xs text-white/80 space-y-2 backdrop-blur-xl">
+            <div className="flex items-center gap-2 text-[#c1e527] font-black uppercase tracking-wider text-[11px]">
+              <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>Booking Issued — Not Confirmed (Email Sent)</span>
+            </div>
+            <p className="leading-relaxed text-white/80">
+              Your booking reference <strong className="font-mono text-[#c1e527]">{booking.booking_ref}</strong> is reserved, but <strong>not confirmed</strong> until your payment transfer slip is verified. A confirmation email with bank details has been sent to <strong>{booking.attendee_email}</strong>.
+            </p>
+            <p className="text-white/60 leading-relaxed pt-2 border-t border-white/8 flex items-center flex-wrap gap-1">
+              <span>📱 <strong>Prefer to send your payment slip via WhatsApp?</strong> Send your transfer receipt directly to</span>
+              <a
+                href={getWhatsAppUrl(booking)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#25D366] font-bold underline hover:text-emerald-300 transition-colors inline-flex items-center gap-1"
+              >
+                <span>{whatsappNumber}</span>
+                <Share2 className="w-3.5 h-3.5 shrink-0" />
+              </a>
+            </p>
+          </div>
         </div>
       )}
 
@@ -981,20 +1014,71 @@ Ideomint — Perfectly Minted Events.
             </>
           ) : (
             <>
-              <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.3)]">
-                <FileText className="w-10 h-10 text-amber-400" />
+              <div className="w-20 h-20 rounded-full bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.35)]">
+                <Clock className="w-10 h-10 text-amber-400" />
               </div>
               <div>
-                <h2 className="text-3xl font-black text-white">Booking Received ⏳</h2>
-                <p className="text-white/60 text-sm mt-2">
-                  Your booking reference is <span className="font-mono text-[#c1e527] font-extrabold text-base">{booking.booking_ref}</span>
-                </p>
-                <p className="text-white/50 text-sm mt-2 max-w-sm mx-auto">
-                  {slipUploaded
-                    ? 'Your payment receipt has been submitted. Our team will verify and issue your ticket pass within 24 hours.'
-                    : 'Complete your bank transfer and upload your receipt to issue your pass.'}
+                <span className="inline-block text-[11px] font-black text-amber-400 bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-full uppercase tracking-widest mb-2">
+                  Booking Issued — Not Confirmed ⏳
+                </span>
+                <h2 className="text-3xl font-black text-white">Payment Verification Pending</h2>
+                <p className="text-white/60 text-xs sm:text-sm mt-2 max-w-md mx-auto">
+                  Your booking reference is <span className="font-mono text-[#c1e527] font-extrabold text-base">{booking.booking_ref}</span>. Your seat is reserved for 24 hours while payment is being processed.
                 </p>
               </div>
+
+              {/* ── WHATSAPP SLIP SUBMISSION CARD ── */}
+              <div className="w-full bg-gradient-to-r from-emerald-500/15 via-white/5 to-emerald-500/10 border border-emerald-500/35 rounded-3xl p-6 text-left backdrop-blur-xl shadow-xl space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-500/40 text-emerald-400">
+                    <Phone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-white text-base">Send Payment Receipt via WhatsApp</h3>
+                    <p className="text-xs text-white/60">Fastest verification — send your transfer slip directly to our team on WhatsApp</p>
+                  </div>
+                </div>
+
+                <a
+                  href={getWhatsAppUrl(booking)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-black font-black py-4 px-6 rounded-2xl text-sm sm:text-base transition-all shadow-[0_0_25px_rgba(37,211,102,0.3)] hover:scale-[1.02]"
+                >
+                  <Share2 className="w-5 h-5 shrink-0" />
+                  <span>Send Slip via WhatsApp ({whatsappNumber})</span>
+                </a>
+              </div>
+
+              {/* ── INLINE PAYMENT SLIP UPLOAD (IF NOT YET UPLOADED) ── */}
+              {!slipUploaded && (
+                <div className="w-full bg-white/4 border border-white/10 rounded-3xl p-6 text-left backdrop-blur-xl space-y-4">
+                  <p className="text-xs font-black text-white/70 uppercase tracking-wider flex items-center gap-2">
+                    <Upload className="w-4 h-4 text-[#c1e527]" /> Or Upload Transfer Receipt Here
+                  </p>
+                  <div className="relative border-2 border-dashed border-white/15 hover:border-[#c1e527] rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-colors bg-white/3 hover:bg-white/5">
+                    <input
+                      type="file"
+                      accept="image/*,.pdf"
+                      onChange={(e) => setSlipFile(e.target.files?.[0] || null)}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Upload className="w-8 h-8 text-[#c1e527] mb-2 opacity-80" />
+                    {slipFile ? (
+                      <p className="text-xs font-black text-[#c1e527]">{slipFile.name}</p>
+                    ) : (
+                      <p className="text-xs text-white/50">Click or drop transfer receipt here (PNG, JPG, PDF)</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleSlipUpload}
+                    disabled={!slipFile || uploadingSlip}
+                    className="w-full flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black py-3.5 rounded-xl text-xs sm:text-sm transition-all"
+                  >
+                    {uploadingSlip ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Upload Payment Receipt →</>}
+                  </button>
+                </div>
+              )}
             </>
           )}
 
@@ -1017,10 +1101,10 @@ Ideomint — Perfectly Minted Events.
             </div>
 
             {/* Email Notification Notice */}
-            <div className="flex items-start gap-3 bg-white/3 border border-white/8 rounded-2xl p-4 mb-4 text-xs text-white/70">
-              <Mail className="w-4 h-4 text-[#c1e527] shrink-0 mt-0.5" />
+            <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 mb-4 text-xs text-amber-200">
+              <Mail className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>
-                A copy of your ticket confirmation & reference ID has been sent to <strong>{booking.attendee_email}</strong>.
+                A confirmation email with your booking reference ID (<strong>{booking.booking_ref}</strong>) and bank details has been sent to <strong>{booking.attendee_email}</strong>.
               </span>
             </div>
 
