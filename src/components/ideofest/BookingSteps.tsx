@@ -27,7 +27,7 @@ export default function BookingSteps({ steps, currentStep }: BookingStepsProps) 
                 done
                   ? 'bg-signal-lime text-section-ink'
                   : active
-                  ? 'bg-creative-flame text-white ring-4 ring-creative-flame/25'
+                  ? 'bg-signal-lime text-section-ink ring-4 ring-signal-lime/25'
                   : 'bg-white/8 text-white/30 border border-white/12'
               }`}>
                 {done ? <Check className="w-4 h-4" /> : step.id}

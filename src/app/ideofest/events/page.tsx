@@ -82,9 +82,9 @@ export default function EventsPage() {
 
       {/* Header */}
       <div className="mb-10">
-        <span className="text-xs font-bold text-creative-flame tracking-widest uppercase">Live Festival Catalog</span>
+        <span className="text-xs font-bold text-[#c1e527] tracking-widest uppercase">Live Festival Catalog</span>
         <h1 className="text-4xl md:text-5xl font-black mt-2 mb-2">
-          Find your next <span className="text-creative-flame">experience.</span>
+          Find your next <span className="text-[#c1e527]">experience.</span>
         </h1>
         <p className="text-white/50 text-base">
           {events.length} event{events.length !== 1 ? 's' : ''} available · Sri Lanka & beyond
@@ -99,7 +99,7 @@ export default function EventsPage() {
       {/* Results */}
       {loading ? (
         <div className="py-24 text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-creative-flame border-t-transparent rounded-full mx-auto mb-4" />
+          <div className="animate-spin w-8 h-8 border-4 border-[#c1e527] border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-white/50 text-sm">Loading live events from Supabase...</p>
         </div>
       ) : filtered.length === 0 ? (

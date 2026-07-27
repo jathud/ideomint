@@ -9,6 +9,22 @@ import IdeofestLogo from './IdeofestLogo';
 
 const NEXT_EVENT_DATE = new Date('2026-10-24T19:00:00+05:30').toISOString();
 
+function getAdminUrl(path = '') {
+  if (typeof window === 'undefined') return `/ideofest/admin${path}`;
+  const { hostname, protocol, port } = window.location;
+  const portSuffix = port ? `:${port}` : '';
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//ideofest.localhost${portSuffix}${path}`;
+  }
+  
+  if (hostname.startsWith('ideofest.')) {
+    return path || '/';
+  }
+
+  return `/ideofest/admin${path}`;
+}
+
 export default function IdeofestHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,7 +34,7 @@ export default function IdeofestHeader() {
     { href: '/ideofest/my-tickets', label: 'My Tickets', icon: Ticket },
   ];
 
-  const isAdminArea = pathname.startsWith('/ideofest/dashboard');
+  const isAdminArea = pathname.startsWith('/ideofest/dashboard') || pathname.startsWith('/ideofest/admin');
 
   return (
     <>
@@ -39,7 +55,7 @@ export default function IdeofestHeader() {
             </div>
             {/* Admin shortcut in strip */}
             <a
-              href="http://ideofest.localhost:3000/"
+              href={getAdminUrl()}
               className={`flex items-center gap-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors ${
                 isAdminArea
                   ? 'text-signal-lime'
@@ -94,7 +110,7 @@ export default function IdeofestHeader() {
 
             {/* Admin Portal button */}
             <a
-              href="http://ideofest.localhost:3000/"
+              href={getAdminUrl()}
               className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all ${
                 isAdminArea
                   ? 'bg-signal-lime text-section-ink'
@@ -108,7 +124,7 @@ export default function IdeofestHeader() {
             {/* Get Tickets CTA */}
             <Link
               href="/ideofest/events"
-              className="hidden sm:flex items-center gap-2 bg-[#C7F36B] text-section-ink px-5 py-2 rounded-full text-sm font-black tracking-wide hover:bg-[#b8e85a] transition-all"
+              className="hidden sm:flex items-center gap-2 bg-[#c1e527] text-section-ink px-5 py-2 rounded-full text-sm font-black tracking-wide hover:bg-[#b0d420] transition-all"
             >
               Get Tickets
             </Link>
@@ -140,18 +156,18 @@ export default function IdeofestHeader() {
               onClick={() => setMenuOpen(false)}
               className="flex items-center gap-3 py-4 border-b border-white/10 text-xl font-bold text-white/80 hover:text-white transition-colors"
             >
-              <Icon className="w-5 h-5 text-[#C7F36B]" />
+              <Icon className="w-5 h-5 text-[#c1e527]" />
               {label}
             </Link>
           ))}
 
           {/* Admin link in mobile */}
           <a
-            href="http://ideofest.localhost:3000/"
+            href={getAdminUrl()}
             onClick={() => setMenuOpen(false)}
-            className="flex items-center gap-3 py-4 border-b border-white/10 text-xl font-bold text-[#C7F36B]"
+            className="flex items-center gap-3 py-4 border-b border-white/10 text-xl font-bold text-[#c1e527]"
           >
-            <ShieldCheck className="w-5 h-5 text-[#C7F36B]" />
+            <ShieldCheck className="w-5 h-5 text-[#c1e527]" />
             Organizer Portal
           </a>
         </nav>
@@ -160,12 +176,12 @@ export default function IdeofestHeader() {
           <Link
             href="/ideofest/events"
             onClick={() => setMenuOpen(false)}
-            className="flex items-center justify-center bg-[#C7F36B] text-section-ink px-6 py-4 rounded-2xl font-black text-base"
+            className="flex items-center justify-center bg-[#c1e527] text-section-ink px-6 py-4 rounded-2xl font-black text-base"
           >
             Get Tickets
           </Link>
           <a
-            href="http://ideofest.localhost:3000/login"
+            href={getAdminUrl('/login')}
             onClick={() => setMenuOpen(false)}
             className="flex items-center justify-center bg-white/8 border border-white/15 text-white px-6 py-4 rounded-2xl font-bold text-base gap-2"
           >

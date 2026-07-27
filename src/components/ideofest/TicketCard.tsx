@@ -15,14 +15,14 @@ const TIER_ACCENT: Record<string, string> = {
   free: 'border-signal-lime bg-signal-lime/10',
   early_bird: 'border-digital-pulse bg-digital-pulse/10',
   standard: 'border-white/30 bg-white/5',
-  vip: 'border-creative-flame bg-creative-flame/10',
+  vip: 'border-signal-lime bg-signal-lime/10',
 };
 
 const TIER_BADGE: Record<string, string> = {
   free: 'bg-signal-lime text-section-ink',
   early_bird: 'bg-digital-pulse text-white',
   standard: 'bg-white/20 text-white',
-  vip: 'bg-creative-flame text-white',
+  vip: 'bg-signal-lime text-section-ink',
 };
 
 export default function TicketCard({ tier, selected, quantity, onSelect, onQuantityChange }: TicketCardProps) {
@@ -33,12 +33,12 @@ export default function TicketCard({ tier, selected, quantity, onSelect, onQuant
     <div
       onClick={() => !isSoldOut && onSelect(tier)}
       className={`relative rounded-2xl border-2 p-6 transition-all duration-300 cursor-pointer select-none
-        ${isSoldOut ? 'opacity-50 cursor-not-allowed border-white/10 bg-white/3' : selected ? TIER_ACCENT[tier.name] + ' ring-2 ring-offset-2 ring-offset-section-ink ring-creative-flame' : TIER_ACCENT[tier.name] + ' hover:opacity-90'}`}
+        ${isSoldOut ? 'opacity-50 cursor-not-allowed border-white/10 bg-white/3' : selected ? TIER_ACCENT[tier.name] + ' ring-2 ring-offset-2 ring-offset-section-ink ring-signal-lime' : TIER_ACCENT[tier.name] + ' hover:opacity-90'}`}
     >
       {/* Selected check */}
       {selected && (
-        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-creative-flame flex items-center justify-center">
-          <Check className="w-4 h-4 text-white" />
+        <div className="absolute top-4 right-4 w-6 h-6 rounded-full bg-signal-lime flex items-center justify-center">
+          <Check className="w-4 h-4 text-section-ink stroke-[3]" />
         </div>
       )}
 

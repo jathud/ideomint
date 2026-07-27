@@ -30,8 +30,8 @@ function StatItem({ value, label, suffix, icon: Icon, active }: (typeof stats)[0
   const count = useCountUp(value, active);
   return (
     <div className="flex flex-col items-center gap-2 p-6 rounded-2xl bg-white/5 border border-white/8 hover:bg-white/8 transition-colors">
-      <div className="w-10 h-10 rounded-full bg-creative-flame/15 flex items-center justify-center mb-1">
-        <Icon className="w-5 h-5 text-creative-flame" />
+      <div className="w-10 h-10 rounded-full bg-signal-lime/15 flex items-center justify-center mb-1">
+        <Icon className="w-5 h-5 text-signal-lime" />
       </div>
       <span className="text-4xl font-black text-white tabular-nums">
         {count.toLocaleString('en-IN')}{suffix}

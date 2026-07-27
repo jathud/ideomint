@@ -160,7 +160,7 @@ export default function QRTicket({ booking }: QRTicketProps) {
         <button
           onClick={handlePrintPdf}
           disabled={!isConfirmed}
-          className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-3 rounded-xl transition-all text-xs shadow-lg shadow-signal-lime/10"
+          className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-3 rounded-xl transition-all text-xs shadow-lg shadow-signal-lime/10"
         >
           <Printer className="w-4 h-4" />
           {isConfirmed ? 'Print / Save PDF Bill Pass' : 'Awaiting Approval'}

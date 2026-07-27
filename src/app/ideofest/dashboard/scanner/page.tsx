@@ -92,11 +92,11 @@ export default function ScannerPage() {
         {/* Corner brackets */}
         {cameraActive && (
           <>
-            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-creative-flame rounded-tl-xl" />
-            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-creative-flame rounded-tr-xl" />
-            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-creative-flame rounded-bl-xl" />
-            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-creative-flame rounded-br-xl" />
-            <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-creative-flame/60 animate-pulse" />
+            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-[#c1e527] rounded-tl-xl" />
+            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-[#c1e527] rounded-tr-xl" />
+            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-[#c1e527] rounded-bl-xl" />
+            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-[#c1e527] rounded-br-xl" />
+            <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-[#c1e527]/60 animate-pulse" />
           </>
         )}
       </div>
@@ -104,10 +104,10 @@ export default function ScannerPage() {
       {/* Camera toggle */}
       <button
         onClick={cameraActive ? stopCamera : startCamera}
-        className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-bold text-base transition-all mb-6 ${
+        className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-base transition-all mb-6 ${
           cameraActive
             ? 'bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25'
-            : 'bg-creative-flame hover:bg-[#E54D30] text-white'
+            : 'bg-[#c1e527] hover:bg-[#b0d420] text-section-ink'
         }`}
       >
         {cameraActive ? <><CameraOff className="w-5 h-5" /> Stop Camera</> : <><Camera className="w-5 h-5" /> Start Camera</>}
@@ -121,12 +121,12 @@ export default function ScannerPage() {
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value)}
             placeholder="IDEOFEST:IDF-XXXXXXXX:slug:tier"
-            className="flex-1 bg-white/5 border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-creative-flame transition-colors font-mono"
+            className="flex-1 bg-white/5 border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-signal-lime transition-colors font-mono"
           />
           <button
             type="submit"
             disabled={scanning || !manualCode.trim()}
-            className="px-5 py-3 bg-creative-flame hover:bg-[#E54D30] disabled:opacity-40 text-white font-bold rounded-xl transition-colors flex items-center gap-2"
+            className="px-5 py-3 bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors flex items-center gap-2"
           >
             {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan'}
           </button>

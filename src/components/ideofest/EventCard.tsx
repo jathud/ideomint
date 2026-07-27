@@ -12,7 +12,7 @@ const TIER_COLORS: Record<string, string> = {
   free: 'bg-signal-lime text-section-ink',
   early_bird: 'bg-digital-pulse text-white',
   standard: 'bg-white/20 text-white',
-  vip: 'bg-creative-flame text-white',
+  vip: 'bg-signal-lime text-section-ink',
 };
 
 function getLowestPrice(event: IEvent): ITicketTier | null {
@@ -54,7 +54,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Category badge */}
         <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-section-ink/80 backdrop-blur-sm px-2.5 py-1 rounded-full">
-          <Tag className="w-3 h-3 text-creative-flame" />
+          <Tag className="w-3 h-3 text-signal-lime" />
           <span className="text-[10px] font-bold text-white/80 tracking-widest uppercase">
             {CATEGORY_LABELS[event.category] || event.category}
           </span>
@@ -69,7 +69,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Featured badge */}
         {event.featured && !isSoldOut && !isCompleted && (
-          <div className="absolute top-3 right-3 bg-creative-flame px-2.5 py-1 rounded-full text-[10px] font-bold text-white tracking-widest uppercase">
+          <div className="absolute top-3 right-3 bg-signal-lime text-section-ink px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
             Featured
           </div>
         )}
@@ -79,11 +79,11 @@ export default function EventCard({ event }: EventCardProps) {
       <div className="p-5 flex flex-col flex-grow">
         {/* Date */}
         <div className="flex items-center gap-1.5 mb-3">
-          <Calendar className="w-3.5 h-3.5 text-creative-flame shrink-0" />
+          <Calendar className="w-3.5 h-3.5 text-signal-lime shrink-0" />
           <span className="text-xs text-white/50 font-medium">{formatDate(event.date)}</span>
         </div>
 
-        <h3 className="text-base font-bold text-white leading-snug mb-1.5 group-hover:text-creative-flame transition-colors">
+        <h3 className="text-base font-bold text-white leading-snug mb-1.5 group-hover:text-signal-lime transition-colors">
           {event.title}
         </h3>
         <p className="text-xs text-white/50 mb-4 line-clamp-2 leading-relaxed">{event.tagline}</p>

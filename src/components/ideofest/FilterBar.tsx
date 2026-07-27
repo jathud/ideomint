@@ -43,7 +43,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
           placeholder="Search events…"
           value={filters.search}
           onChange={(e) => onChange({ ...filters, search: e.target.value })}
-          className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-creative-flame transition-colors"
+          className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-signal-lime transition-colors"
         />
         {filters.search && (
           <button
@@ -70,7 +70,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
               <button
                 key={c.value}
                 onClick={() => { onChange({ ...filters, category: c.value }); setCatOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${filters.category === c.value ? 'text-creative-flame bg-creative-flame/10' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${filters.category === c.value ? 'text-signal-lime bg-signal-lime/10' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
               >
                 {c.label}
               </button>
@@ -94,7 +94,7 @@ export default function FilterBar({ filters, onChange }: FilterBarProps) {
               <button
                 key={s.value}
                 onClick={() => { onChange({ ...filters, sort: s.value }); setSortOpen(false); }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${filters.sort === s.value ? 'text-creative-flame bg-creative-flame/10' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${filters.sort === s.value ? 'text-signal-lime bg-signal-lime/10' : 'text-white/70 hover:text-white hover:bg-white/8'}`}
               >
                 {s.label}
               </button>

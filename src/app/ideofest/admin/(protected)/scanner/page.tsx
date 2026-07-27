@@ -178,7 +178,7 @@ export default function AdminScannerPage() {
         className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-base transition-all mb-6 ${
           cameraActive
             ? 'bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25'
-            : 'bg-signal-lime hover:bg-[#b8e85a] text-section-ink'
+            : 'bg-signal-lime hover:bg-[#b0d420] text-section-ink'
         }`}
       >
         {cameraActive ? <><CameraOff className="w-5 h-5" /> Stop Terminal Camera</> : <><Camera className="w-5 h-5" /> Start Gate Camera</>}
@@ -197,7 +197,7 @@ export default function AdminScannerPage() {
           <button
             type="submit"
             disabled={scanning || !manualCode.trim()}
-            className="px-5 py-3 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors flex items-center gap-2"
+            className="px-5 py-3 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors flex items-center gap-2"
           >
             {scanning ? <Loader2 className="w-4 h-4 animate-spin text-section-ink" /> : 'Validate'}
           </button>

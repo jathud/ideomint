@@ -291,7 +291,7 @@ export default function AdminCreateEventPage() {
           <button
             onClick={() => setStep(2)}
             disabled={!form.title || !form.description || !form.date || !form.venue || !form.city}
-            className="w-full mt-2 py-4 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors"
+            className="w-full mt-2 py-4 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors"
           >
             Next: Ticket Tiers & Payment Options →
           </button>
@@ -509,7 +509,7 @@ export default function AdminCreateEventPage() {
             </button>
             <button
               onClick={() => setStep(3)}
-              className="flex-1 py-4 bg-signal-lime hover:bg-[#b8e85a] text-section-ink font-black rounded-xl transition-colors"
+              className="flex-1 py-4 bg-signal-lime hover:bg-[#b0d420] text-section-ink font-black rounded-xl transition-colors"
             >
               Next: Banner Media →
             </button>
@@ -562,7 +562,7 @@ export default function AdminCreateEventPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 py-4 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-60 text-section-ink font-black rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-60 text-section-ink font-black rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

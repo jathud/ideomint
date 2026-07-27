@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen bg-section-ink text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Ambient background glows */}
-      <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-creative-flame/15 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/4 left-1/3 w-[500px] h-[500px] bg-signal-lime/15 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/3 w-[450px] h-[450px] bg-signal-lime/15 rounded-full blur-[140px] pointer-events-none" />
 
       {/* Main card */}
@@ -105,7 +105,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-3 flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-50 text-section-ink font-black py-4 rounded-xl text-base transition-all shadow-lg shadow-signal-lime/10"
+            className="w-full mt-3 flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-50 text-section-ink font-black py-4 rounded-xl text-base transition-all shadow-lg shadow-signal-lime/10"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin text-section-ink" />

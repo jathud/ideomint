@@ -71,7 +71,7 @@ export default async function AdminDashboardPage() {
           )}
           <Link
             href="/ideofest/admin/events/create"
-            className="inline-flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] text-section-ink px-5 py-3 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
+            className="inline-flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] text-section-ink px-5 py-3 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
           >
             <PlusCircle className="w-4 h-4" /> Create Event
           </Link>

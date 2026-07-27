@@ -102,7 +102,16 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
       try {
         const res = await fetch(`/api/ideofest/events?slug=${slug}`);
         const json = await res.json();
-        if (active && json.success) setEvent(json.data);
+        if (active && json.success) {
+          const ev = json.data as IEvent;
+          setEvent(ev);
+          // Auto-select if only one tier available
+          const tiers: ITicketTier[] = ev.ticket_tiers || [];
+          const available = tiers.filter(t => t.capacity - t.sold > 0);
+          if (available.length === 1) {
+            setSelectedTier(available[0]);
+          }
+        }
       } catch (err) {
         console.error('Failed to load event:', err);
       } finally {
@@ -387,7 +396,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           <button
             onClick={() => { if (selectedTier) setStep(2); }}
             disabled={!selectedTier}
-            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4 rounded-xl text-base transition-colors shadow-lg shadow-signal-lime/10"
+            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4 rounded-xl text-base transition-colors shadow-lg shadow-signal-lime/10"
           >
             Continue to Attendee Details <ArrowRight className="w-4 h-4" />
           </button>
@@ -549,7 +558,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           <button
             onClick={handleDetailsNext}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-60 text-section-ink font-black py-4 rounded-xl text-base transition-colors shadow-lg shadow-signal-lime/10"
+            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-60 text-section-ink font-black py-4 rounded-xl text-base transition-colors shadow-lg shadow-signal-lime/10"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <>{isFreeEvent ? 'Confirm Free Booking' : 'Continue to Payment'} <ArrowRight className="w-4 h-4" /></>
@@ -605,7 +614,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
                   <button
                     onClick={handlePayHere}
                     disabled={loading}
-                    className="mt-4 w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-60 text-section-ink font-black py-3.5 rounded-xl text-sm transition-colors"
+                    className="mt-4 w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-60 text-section-ink font-black py-3.5 rounded-xl text-sm transition-colors"
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Pay {formatLKR(totalAmount)} via PayHere →</>}
                   </button>
@@ -714,7 +723,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           <button
             onClick={handleSlipUpload}
             disabled={!slipFile || uploadingSlip}
-            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4 rounded-xl text-base transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4 rounded-xl text-base transition-colors"
           >
             {uploadingSlip ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <>Submit Payment Slip <ArrowRight className="w-4 h-4" /></>
@@ -766,7 +775,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
           <div className="flex flex-col sm:flex-row gap-3 mt-6 w-full max-w-sm">
             <button
               onClick={() => router.push('/ideofest/my-tickets')}
-              className="flex-1 py-3 px-6 bg-signal-lime text-section-ink font-black rounded-xl hover:bg-[#b8e85a] transition-colors text-sm"
+              className="flex-1 py-3 px-6 bg-signal-lime text-section-ink font-black rounded-xl hover:bg-[#b0d420] transition-colors text-sm"
             >
               My Tickets
             </button>

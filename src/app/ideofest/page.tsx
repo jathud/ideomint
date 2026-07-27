@@ -62,14 +62,14 @@ export default async function IdeofestPage() {
         </div>
 
         {/* Glow orbs */}
-        <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-creative-flame/15 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/3 left-1/4 w-[600px] h-[600px] bg-[#c1e527]/15 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-digital-pulse/15 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="container-layout relative z-10 text-center py-24 px-4 sm:px-6 lg:px-8">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-creative-flame/15 border border-creative-flame/30 px-4 py-2 rounded-full mb-8">
-            <Zap className="w-3.5 h-3.5 text-creative-flame" />
-            <span className="text-xs font-bold text-creative-flame tracking-widest uppercase">
+          <div className="inline-flex items-center gap-2 bg-[#c1e527]/15 border border-[#c1e527]/30 px-4 py-2 rounded-full mb-8">
+            <Zap className="w-3.5 h-3.5 text-[#c1e527]" />
+            <span className="text-xs font-bold text-[#c1e527] tracking-widest uppercase">
               Sri Lanka's Premier Creative Festival Series
             </span>
           </div>
@@ -77,7 +77,7 @@ export default async function IdeofestPage() {
           {/* Heading */}
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-tight tracking-tight mb-6">
             Live Experiences <br />
-            <span className="text-creative-flame">Perfectly Minted.</span>
+            <span className="text-[#c1e527]">Perfectly Minted.</span>
           </h1>
 
           <p className="max-w-2xl mx-auto text-lg sm:text-xl text-white/70 font-normal leading-relaxed mb-10">
@@ -88,7 +88,7 @@ export default async function IdeofestPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/ideofest/events"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-white px-8 py-4 rounded-full font-black text-base transition-all transform hover:scale-105 shadow-lg shadow-creative-flame/20"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink px-8 py-4 rounded-full font-black text-base transition-all transform hover:scale-105 shadow-lg shadow-[#c1e527]/20"
             >
               Browse All Events <ArrowRight className="w-5 h-5" />
             </Link>
@@ -117,7 +117,7 @@ export default async function IdeofestPage() {
         <section className="bg-white/3 border-y border-white/8 py-10">
           <div className="container-layout px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
             <div>
-              <span className="text-xs font-bold text-creative-flame uppercase tracking-widest">Next event — {nextEvent.title}</span>
+              <span className="text-xs font-bold text-[#c1e527] uppercase tracking-widest">Next event — {nextEvent.title}</span>
               <h2 className="text-2xl font-black text-white mt-1">{nextEvent.tagline}</h2>
               <p className="text-xs text-white/40 mt-1">{nextEvent.venue}, {nextEvent.city}</p>
             </div>
@@ -125,7 +125,7 @@ export default async function IdeofestPage() {
               <CountdownTimer targetDate={nextEvent.date} />
               <Link
                 href={`/ideofest/events/${nextEvent.slug}/book`}
-                className="hidden sm:inline-flex items-center gap-2 bg-signal-lime hover:bg-[#b8e85a] text-section-ink px-6 py-3 rounded-xl font-black text-sm transition-colors shadow-lg shadow-signal-lime/10 shrink-0"
+                className="hidden sm:inline-flex items-center gap-2 bg-signal-lime hover:bg-[#b0d420] text-section-ink px-6 py-3 rounded-xl font-black text-sm transition-colors shadow-lg shadow-signal-lime/10 shrink-0"
               >
                 Get Pass <ArrowRight className="w-4 h-4" />
               </Link>
@@ -146,9 +146,9 @@ export default async function IdeofestPage() {
         <div className="container-layout px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between mb-12">
             <div>
-              <span className="text-xs font-bold text-creative-flame tracking-widest uppercase block mb-3">Curated Selection</span>
+              <span className="text-xs font-bold text-[#c1e527] tracking-widest uppercase block mb-3">Curated Selection</span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black">
-                Featured <span className="text-creative-flame">Events</span>
+                Featured <span className="text-[#c1e527]">Events</span>
               </h2>
             </div>
             <Link href="/ideofest/events" className="hidden sm:flex items-center gap-2 text-sm font-bold text-white/60 hover:text-white transition-colors">
@@ -167,13 +167,13 @@ export default async function IdeofestPage() {
       {/* === CATEGORIES === */}
       <section className="section-spacing border-t border-white/8">
         <div className="container-layout px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black mb-8">Browse by <span className="text-creative-flame">Category</span></h2>
+          <h2 className="text-3xl font-black mb-8">Browse by <span className="text-[#c1e527]">Category</span></h2>
           <div className="flex flex-wrap gap-3">
             {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
               <Link
                 key={key}
                 href={`/ideofest/events?category=${key}`}
-                className="px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-creative-flame/10 hover:border-creative-flame/40 text-sm font-semibold text-white/70 hover:text-white transition-all"
+                className="px-5 py-2.5 rounded-full bg-white/5 border border-white/10 hover:bg-[#c1e527]/10 hover:border-[#c1e527]/40 text-sm font-semibold text-white/70 hover:text-white transition-all"
               >
                 {label}
               </Link>
@@ -189,7 +189,7 @@ export default async function IdeofestPage() {
             <div>
               <span className="text-xs font-bold text-signal-lime tracking-widest uppercase block mb-3">Upcoming</span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black">
-                What's <span className="text-creative-flame">next.</span>
+                What's <span className="text-[#c1e527]">next.</span>
               </h2>
             </div>
             <Link href="/ideofest/events" className="hidden md:flex items-center gap-2 text-sm font-bold text-white/60 hover:text-white transition-colors">

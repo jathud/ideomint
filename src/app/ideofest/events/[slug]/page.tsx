@@ -62,7 +62,7 @@ const TIER_BADGE: Record<string, string> = {
   free: 'bg-signal-lime text-section-ink',
   early_bird: 'bg-digital-pulse text-white',
   standard: 'bg-white/20 text-white',
-  vip: 'bg-creative-flame text-white',
+  vip: 'bg-[#c1e527] text-section-ink',
 };
 
 export default async function EventDetailPage({ params }: Props) {
@@ -103,7 +103,7 @@ export default async function EventDetailPage({ params }: Props) {
 
         <div className="absolute bottom-0 left-0 right-0 container-layout pb-10">
           <div className="flex items-center gap-2 mb-4">
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${event.featured ? 'bg-creative-flame text-white' : 'bg-white/15 text-white'}`}>
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${event.featured ? 'bg-[#c1e527] text-section-ink' : 'bg-white/15 text-white'}`}>
               {event.featured ? 'Featured' : CATEGORY_LABELS[event.category]}
             </span>
             <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-white/10 text-white/60">
@@ -132,7 +132,7 @@ export default async function EventDetailPage({ params }: Props) {
               { icon: Tag, label: 'Category', value: CATEGORY_LABELS[event.category] },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="flex items-start gap-3 p-4 bg-white/5 rounded-xl border border-white/8">
-                <Icon className="w-5 h-5 text-creative-flame shrink-0 mt-0.5" />
+                <Icon className="w-5 h-5 text-[#c1e527] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{label}</p>
                   <p className="text-sm font-semibold text-white mt-0.5">{value}</p>
@@ -196,7 +196,7 @@ export default async function EventDetailPage({ params }: Props) {
                   </div>
                   <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-creative-flame rounded-full transition-all"
+                      className="h-full bg-[#c1e527] rounded-full transition-all"
                       style={{ width: `${soldPct}%` }}
                     />
                   </div>
@@ -228,7 +228,7 @@ export default async function EventDetailPage({ params }: Props) {
 
               <Link
                 href={`/ideofest/events/${event.slug}/book`}
-                className="w-full flex items-center justify-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-white font-black py-4 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-4 rounded-xl transition-colors"
               >
                 Book Tickets <ArrowRight className="w-4 h-4" />
               </Link>

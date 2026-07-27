@@ -241,7 +241,7 @@ export default function MyTicketsPage() {
           <button
             type="submit"
             disabled={loading || !searchQuery.trim()}
-            className="bg-signal-lime hover:bg-[#b8e85a] disabled:opacity-40 text-section-ink font-black px-6 rounded-xl transition-colors flex items-center gap-2 text-sm shrink-0"
+            className="bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black px-6 rounded-xl transition-colors flex items-center gap-2 text-sm shrink-0"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
           </button>

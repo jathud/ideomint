@@ -434,7 +434,7 @@ export default function AdminVerificationsPage() {
               <button
                 type="button"
                 onClick={() => setPrintBooking(selectedBooking)}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b8e85a] text-section-ink py-3 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
+                className="w-full mt-4 flex items-center justify-center gap-2 bg-signal-lime hover:bg-[#b0d420] text-section-ink py-3 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
               >
                 <Printer className="w-4 h-4" /> Download / Print Ticket Pass
               </button>

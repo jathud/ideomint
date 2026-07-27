@@ -134,7 +134,7 @@ export default function TicketPrintModal({ booking, onClose }: TicketPrintModalP
           <p className="text-xs text-white/50">Save as PDF or print pass</p>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-signal-lime hover:bg-[#b8e85a] text-section-ink px-6 py-2.5 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
+            className="flex items-center gap-2 bg-signal-lime hover:bg-[#b0d420] text-section-ink px-6 py-2.5 rounded-xl font-black text-sm transition-all shadow-lg shadow-signal-lime/10"
           >
             <Printer className="w-4 h-4" /> Print / Save PDF Pass
           </button>

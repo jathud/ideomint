@@ -508,7 +508,7 @@ export default function CreateEventPage() {
             </button>
             <button
               onClick={() => setStep(3)}
-              className="flex-1 py-4 bg-creative-flame hover:bg-[#E54D30] text-white font-black rounded-xl transition-colors"
+              className="flex-1 py-4 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black rounded-xl transition-colors"
             >
               Next: Banner Media →
             </button>
@@ -531,7 +531,7 @@ export default function CreateEventPage() {
                   </div>
                 </div>
               ) : (
-                <div className="w-full aspect-video rounded-2xl border-2 border-dashed border-white/20 hover:border-creative-flame/50 bg-white/3 flex flex-col items-center justify-center gap-3 transition-colors">
+                <div className="w-full aspect-video rounded-2xl border-2 border-dashed border-white/20 hover:border-signal-lime/50 bg-white/3 flex flex-col items-center justify-center gap-3 transition-colors">
                   <Upload className="w-8 h-8 text-white/30" />
                   <p className="text-sm text-white/50">Click to upload banner image</p>
                   <p className="text-xs text-white/30">PNG, JPG, WebP · Max 10MB</p>
@@ -561,7 +561,7 @@ export default function CreateEventPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 py-4 bg-creative-flame hover:bg-[#E54D30] disabled:opacity-60 text-white font-black rounded-xl transition-colors flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-60 text-section-ink font-black rounded-xl transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

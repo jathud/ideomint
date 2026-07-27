@@ -461,7 +461,7 @@ export default function AdminEventsTable({ initialEvents }: { initialEvents: IEv
                 type="button"
                 onClick={handleSaveEdit}
                 disabled={savingEdit || uploadingImage}
-                className="flex items-center gap-2 bg-signal-lime hover:bg-[#b8e85a] text-section-ink px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-signal-lime/10 disabled:opacity-50"
+                className="flex items-center gap-2 bg-signal-lime hover:bg-[#b0d420] text-section-ink px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg shadow-signal-lime/10 disabled:opacity-50"
               >
                 {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Changes
