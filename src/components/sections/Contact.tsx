@@ -85,13 +85,13 @@ export default function Contact() {
             </p>
             
             <div className="flex flex-col gap-8 mt-auto">
-              <a href="mailto:hello@ideomint.com" className="flex items-start gap-4 group">
+              <a href="mailto:ideomint@gmail.com" className="flex items-start gap-4 group">
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-section-ink transition-colors shrink-0">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-sm text-white/70 font-bold mb-1 uppercase tracking-wider">Email Us</p>
-                  <p className="text-xl font-medium group-hover:text-creative-flame transition-colors">hello@ideomint.com</p>
+                  <p className="text-xl font-medium group-hover:text-creative-flame transition-colors">ideomint@gmail.com</p>
                 </div>
               </a>
               
@@ -102,7 +102,7 @@ export default function Contact() {
                 <div>
                   <p className="text-sm text-white/70 font-bold mb-1 uppercase tracking-wider">Visit Studio</p>
                   <p className="text-xl font-medium group-hover:text-creative-flame transition-colors">
-                    124 Creative Block,<br />New York, NY 10012
+                    Jaffna,<br />Sri Lanka
                   </p>
                 </div>
               </div>

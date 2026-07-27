@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Ticket, LayoutDashboard, CalendarDays, Menu, X, ShieldCheck } from 'lucide-react';
+import { Ticket, LayoutDashboard, CalendarDays, Menu, X, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import CountdownTimer from './CountdownTimer';
 import IdeofestLogo from './IdeofestLogo';
@@ -75,10 +75,20 @@ export default function IdeofestHeader() {
         {/* ── Main nav ── */}
         <div className="container-layout flex items-center justify-between py-3 gap-6">
 
-          {/* Logo */}
-          <Link href="/ideofest" className="flex-shrink-0 hover:opacity-85 transition-opacity">
-            <IdeofestLogo width={160} height={48} />
-          </Link>
+          {/* Logo & Ideomint link */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <a
+              href="/"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-white/70 hover:text-white bg-white/6 hover:bg-white/12 border border-white/12 transition-all"
+              title="Return to main Ideomint studio website"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-signal-lime" />
+              <span className="hidden sm:inline">Ideomint Studio</span>
+            </a>
+            <Link href="/ideofest" className="hover:opacity-85 transition-opacity">
+              <IdeofestLogo width={150} height={44} />
+            </Link>
+          </div>
 
           {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">

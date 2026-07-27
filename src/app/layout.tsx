@@ -59,6 +59,11 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
+  icons: {
+    icon: '/ideomint-dp.svg',
+    shortcut: '/ideomint-dp.svg',
+    apple: '/ideomint-dp.svg',
+  },
   alternates: {
     canonical: 'https://ideomint.com',
   },
@@ -72,6 +77,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable}`} suppressHydrationWarning>
       <head>
+        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+        <link rel="icon" type="image/svg+xml" href="/ideomint-dp.svg" />
+        <link rel="apple-touch-icon" href="/ideomint-dp.svg" />
         <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
         <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,800&display=swap" rel="stylesheet" />
       </head>

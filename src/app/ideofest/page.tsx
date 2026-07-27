@@ -156,12 +156,6 @@ export default async function IdeofestPage() {
         </section>
       )}
 
-      {/* ── STATS BAR ── */}
-      <section className="py-12 border-b border-white/8 bg-black/20">
-        <div className="container-layout px-4 sm:px-6 lg:px-8">
-          <StatsBar />
-        </div>
-      </section>
 
       {/* ── FEATURED EVENTS ── */}
       <section className="section-spacing">

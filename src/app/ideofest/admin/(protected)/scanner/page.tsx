@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { QrCode, Camera, CameraOff, CheckCircle, XCircle, Loader2, ShieldCheck, Users, Ticket } from 'lucide-react';
+import jsQR from 'jsqr';
+import { QrCode, Camera, CameraOff, CheckCircle, XCircle, Loader2, ShieldCheck, Users, Ticket, RefreshCw, Zap } from 'lucide-react';
 
 type ScanResult = {
   success: boolean;
@@ -21,61 +22,131 @@ type ScanResult = {
     remainingAfterScan?: number;
     ticket_number?: string;
     booking_ref?: string;
+    pass_index?: number;
+    attendee_nic?: string;
+    attendee_phone?: string;
   };
   error?: string;
 };
 
 export default function AdminScannerPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const animFrameIdRef = useRef<number | null>(null);
+  const isScanningRef = useRef<boolean>(false);
+  const cooldownRef = useRef<boolean>(false);
+
   const [cameraActive, setCameraActive] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [checkInQty, setCheckInQty] = useState<number>(1);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-        setCameraActive(true);
-      }
-    } catch {
-      alert('Camera access denied or unavailable. Use manual entry below.');
-    }
-  };
-
-  const stopCamera = () => {
-    const stream = videoRef.current?.srcObject as MediaStream;
-    stream?.getTracks().forEach((t) => t.stop());
-    if (videoRef.current) videoRef.current.srcObject = null;
-    setCameraActive(false);
-  };
-
-  useEffect(() => () => stopCamera(), []);
-
+  // Process scanned or manual payload
   const processPayload = async (payload: string) => {
-    if (!payload.trim()) return;
+    if (!payload.trim() || cooldownRef.current || isScanningRef.current) return;
+
+    isScanningRef.current = true;
+    cooldownRef.current = true;
     setScanning(true);
     setResult(null);
+
+    // Beep / haptic vibration if supported
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate(100); } catch { /* ignore */ }
+    }
+
     try {
       const res = await fetch('/api/ideofest/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          qrPayload: payload,
+          qr_token: payload,
           check_in_qty: checkInQty,
         }),
       });
       const data = await res.json();
       setResult(data);
     } catch {
-      setResult({ success: false, error: 'Network error. Try again.' });
+      setResult({ success: false, error: 'Network error. Please try again.' });
     } finally {
       setScanning(false);
+      isScanningRef.current = false;
+      // 2.5s cooldown before next auto scan
+      setTimeout(() => {
+        cooldownRef.current = false;
+      }, 2500);
     }
   };
+
+  // Continuous QR Code Frame Reader Loop using jsQR
+  const tick = () => {
+    if (videoRef.current && videoRef.current.readyState === videoRef.current.HAVE_ENOUGH_DATA) {
+      const canvas = canvasRef.current || document.createElement('canvas');
+      canvasRef.current = canvas;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+      if (ctx) {
+        canvas.height = videoRef.current.videoHeight;
+        canvas.width = videoRef.current.videoWidth;
+        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        });
+
+        if (code && code.data && !cooldownRef.current && !isScanningRef.current) {
+          console.log('[QR Detected]:', code.data);
+          processPayload(code.data);
+        }
+      }
+    }
+
+    if (cameraActive) {
+      animFrameIdRef.current = requestAnimationFrame(tick);
+    }
+  };
+
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setCameraActive(true);
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      alert('Camera access denied or unavailable. Use manual code entry below.');
+    }
+  };
+
+  const stopCamera = () => {
+    if (animFrameIdRef.current) {
+      cancelAnimationFrame(animFrameIdRef.current);
+      animFrameIdRef.current = null;
+    }
+    const stream = videoRef.current?.srcObject as MediaStream;
+    stream?.getTracks().forEach((t) => t.stop());
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraActive(false);
+  };
+
+  useEffect(() => {
+    if (cameraActive) {
+      animFrameIdRef.current = requestAnimationFrame(tick);
+    } else {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+    }
+    return () => {
+      if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
+    };
+  }, [cameraActive]);
+
+  useEffect(() => () => stopCamera(), []);
 
   const handleManual = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,35 +156,36 @@ export default function AdminScannerPage() {
   const resetResult = () => {
     setResult(null);
     setManualCode('');
+    cooldownRef.current = false;
   };
 
   return (
-    <div className="max-w-lg mx-auto">
-      <div className="mb-8 text-center">
-        <div className="inline-flex items-center gap-2 bg-signal-lime/15 border border-signal-lime/30 px-3.5 py-1 rounded-full mb-3">
-          <ShieldCheck className="w-3.5 h-3.5 text-signal-lime" />
-          <span className="text-[10px] font-bold text-signal-lime tracking-widest uppercase">
+    <div className="max-w-xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <div className="inline-flex items-center gap-2 bg-[#c1e527]/15 border border-[#c1e527]/30 px-3.5 py-1 rounded-full mb-3">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#c1e527]" />
+          <span className="text-[10px] font-extrabold text-[#c1e527] tracking-widest uppercase">
             Official Gate Terminal
           </span>
         </div>
-        <h1 className="text-3xl font-black">Gate QR Scanner</h1>
-        <p className="text-white/40 text-sm mt-1">Scan or validate attendee QR tickets at entrance gates</p>
+        <h1 className="text-2xl sm:text-3xl font-black">Gate QR Scanner</h1>
+        <p className="text-white/40 text-xs sm:text-sm mt-1">Scan or validate attendee QR tickets at entrance gates</p>
       </div>
 
-      {/* ── Attendees Count Selector ── */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-6">
+      {/* Attendees Count Selector */}
+      <div className="bg-white/4 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md">
         <div className="flex items-center justify-between gap-2 mb-3">
-          <label className="text-xs font-bold text-white/70 uppercase tracking-widest flex items-center gap-2">
-            <Users className="w-4 h-4 text-signal-lime" />
+          <label className="text-xs font-extrabold text-white/70 uppercase tracking-widest flex items-center gap-2">
+            <Users className="w-4 h-4 text-[#c1e527]" />
             Attendees Arriving Now
           </label>
-          <span className="text-xs font-mono font-bold text-signal-lime bg-signal-lime/10 px-2.5 py-0.5 rounded-full border border-signal-lime/20">
+          <span className="text-xs font-mono font-bold text-[#c1e527] bg-[#c1e527]/10 px-2.5 py-0.5 rounded-full border border-[#c1e527]/20">
             {checkInQty} Person{checkInQty > 1 ? 's' : ''}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Preset buttons */}
+        <div className="flex items-center gap-2">
           <div className="grid grid-cols-4 gap-2 flex-1">
             {[1, 2, 3, 4].map((num) => (
               <button
@@ -122,7 +194,7 @@ export default function AdminScannerPage() {
                 onClick={() => setCheckInQty(num)}
                 className={`py-2.5 rounded-xl font-black text-xs transition-all border ${
                   checkInQty === num
-                    ? 'bg-signal-lime text-section-ink border-signal-lime shadow-lg shadow-signal-lime/10'
+                    ? 'bg-[#c1e527] text-section-ink border-[#c1e527] shadow-lg'
                     : 'bg-white/5 text-white/70 border-white/10 hover:border-white/25 hover:text-white'
                 }`}
               >
@@ -131,119 +203,160 @@ export default function AdminScannerPage() {
             ))}
           </div>
 
-          {/* Number input for custom count */}
-          <div className="w-20">
+          <div className="w-16 sm:w-20">
             <input
               type="number"
               min={1}
               max={50}
               value={checkInQty}
               onChange={(e) => setCheckInQty(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-center text-sm font-bold text-white focus:outline-none focus:border-signal-lime"
-              title="Custom check-in quantity"
+              className="w-full bg-white/5 border border-white/12 rounded-xl px-2 py-2 text-center text-xs sm:text-sm font-bold text-white focus:outline-none focus:border-[#c1e527]"
             />
           </div>
         </div>
       </div>
 
-      {/* Camera viewfinder */}
-      <div className="relative w-full aspect-square rounded-3xl bg-white/5 border border-white/12 overflow-hidden mb-6 flex items-center justify-center">
+      {/* Hidden Canvas for QR Frame Processing */}
+      <canvas ref={canvasRef} className="hidden" />
+
+      {/* Camera Viewfinder Box */}
+      <div className="relative w-full aspect-square max-h-[380px] rounded-3xl bg-black/60 border border-white/15 overflow-hidden flex items-center justify-center shadow-2xl">
         <video
           ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover ${cameraActive ? 'opacity-100' : 'opacity-0'}`}
           playsInline
           muted
         />
+
         {!cameraActive && (
-          <div className="flex flex-col items-center gap-4 text-white/40">
-            <QrCode className="w-16 h-16 text-signal-lime/60" />
-            <p className="text-sm font-medium">Camera terminal inactive</p>
+          <div className="flex flex-col items-center gap-3 text-white/40 p-6 text-center">
+            <QrCode className="w-16 h-16 text-[#c1e527]/60" />
+            <p className="text-sm font-bold text-white">Camera Scanner Terminal Inactive</p>
+            <p className="text-xs text-white/50">Click "Start Camera Scanner" below or enter ticket ID manually</p>
           </div>
         )}
-        {/* Corner brackets */}
+
+        {/* Scanning laser animation */}
         {cameraActive && (
           <>
-            <div className="absolute top-8 left-8 w-12 h-12 border-t-4 border-l-4 border-signal-lime rounded-tl-xl" />
-            <div className="absolute top-8 right-8 w-12 h-12 border-t-4 border-r-4 border-signal-lime rounded-tr-xl" />
-            <div className="absolute bottom-8 left-8 w-12 h-12 border-b-4 border-l-4 border-signal-lime rounded-bl-xl" />
-            <div className="absolute bottom-8 right-8 w-12 h-12 border-b-4 border-r-4 border-signal-lime rounded-br-xl" />
-            <div className="absolute top-1/2 left-8 right-8 h-0.5 bg-signal-lime/60 animate-pulse" />
+            <div className="absolute top-6 left-6 w-10 h-10 border-t-4 border-l-4 border-[#c1e527] rounded-tl-xl" />
+            <div className="absolute top-6 right-6 w-10 h-10 border-t-4 border-r-4 border-[#c1e527] rounded-tr-xl" />
+            <div className="absolute bottom-6 left-6 w-10 h-10 border-b-4 border-l-4 border-[#c1e527] rounded-bl-xl" />
+            <div className="absolute bottom-6 right-6 w-10 h-10 border-b-4 border-r-4 border-[#c1e527] rounded-br-xl" />
+            <div className="absolute top-1/2 left-6 right-6 h-0.5 bg-[#c1e527] shadow-[0_0_15px_#c1e527] animate-pulse" />
           </>
+        )}
+
+        {scanning && (
+          <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-10 h-10 text-[#c1e527] animate-spin" />
+            <p className="text-xs font-extrabold text-[#c1e527] tracking-widest uppercase">Validating Ticket...</p>
+          </div>
         )}
       </div>
 
-      {/* Camera toggle */}
+      {/* Camera Toggle Button */}
       <button
         onClick={cameraActive ? stopCamera : startCamera}
-        className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-base transition-all mb-6 ${
+        className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-black text-sm transition-all shadow-lg ${
           cameraActive
             ? 'bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/25'
-            : 'bg-signal-lime hover:bg-[#b0d420] text-section-ink'
+            : 'bg-gradient-to-r from-[#c1e527] to-[#d4ff33] hover:from-[#b0d420] hover:to-[#c1e527] text-section-ink'
         }`}
       >
-        {cameraActive ? <><CameraOff className="w-5 h-5" /> Stop Terminal Camera</> : <><Camera className="w-5 h-5" /> Start Gate Camera</>}
+        {cameraActive ? (
+          <><CameraOff className="w-5 h-5" /> Stop Camera</>
+        ) : (
+          <><Camera className="w-5 h-5" /> Start Live Camera Scanner</>
+        )}
       </button>
 
-      {/* Manual entry */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6">
-        <h2 className="text-base font-bold mb-4">Manual Ticket / Ref Verification</h2>
-        <form onSubmit={handleManual} className="flex gap-3">
-          <input
-            value={manualCode}
-            onChange={(e) => setManualCode(e.target.value)}
-            placeholder="IDF-XXXXXXXX or IDF-TKT-XXXXXXXX"
-            className="flex-1 bg-white/5 border border-white/12 rounded-xl px-4 py-3 text-sm text-white placeholder-white/30 focus:outline-none focus:border-signal-lime transition-colors font-mono"
-          />
-          <button
-            type="submit"
-            disabled={scanning || !manualCode.trim()}
-            className="px-5 py-3 bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black rounded-xl transition-colors flex items-center gap-2"
-          >
-            {scanning ? <Loader2 className="w-4 h-4 animate-spin text-section-ink" /> : 'Validate'}
-          </button>
-        </form>
-      </div>
-
-      {/* Result */}
+      {/* Scan Result Feedback Card */}
       {result && (
-        <div className={`rounded-2xl p-6 border ${result.success ? 'bg-signal-lime/15 border-signal-lime/40' : 'bg-red-500/15 border-red-500/40'}`}>
-          <div className="flex items-center gap-3 mb-4">
-            {result.success ? (
-              <CheckCircle className="w-8 h-8 text-signal-lime shrink-0" />
-            ) : (
-              <XCircle className="w-8 h-8 text-red-400 shrink-0" />
-            )}
-            <div>
-              <p className={`font-black text-lg ${result.success ? 'text-signal-lime' : 'text-red-400'}`}>
-                {result.success ? 'Gate Access Granted! 🎉' : 'Access Denied'}
+        <div className={`p-6 rounded-3xl border transition-all ${
+          result.success
+            ? 'bg-[#c1e527]/15 border-[#c1e527] shadow-[0_0_30px_rgba(193,229,39,0.2)]'
+            : result.result === 'duplicate'
+            ? 'bg-amber-500/15 border-amber-500/40'
+            : 'bg-red-500/15 border-red-500/40'
+        }`}>
+          <div className="flex items-start gap-4">
+            <div className={`p-3 rounded-2xl shrink-0 ${
+              result.success ? 'bg-[#c1e527] text-section-ink' : result.result === 'duplicate' ? 'bg-amber-500 text-black' : 'bg-red-500 text-white'
+            }`}>
+              {result.success ? <CheckCircle className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+            </div>
+
+            <div className="flex-1">
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
+                result.success ? 'bg-[#c1e527]/20 text-[#c1e527]' : result.result === 'duplicate' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
+              }`}>
+                {result.result === 'valid' ? 'VALID TICKET' : result.result === 'duplicate' ? 'DUPLICATE SCAN' : 'ACCESS DENIED'}
+              </span>
+
+              <h3 className="text-lg font-black text-white mt-1">
+                {result.data?.attendee_name || result.data?.attendeeName || 'Gate Scanner Result'}
+              </h3>
+
+              <p className="text-xs text-white/80 mt-1 leading-relaxed">
+                {result.message || result.error}
               </p>
-              <p className="text-white/80 text-sm font-bold mt-0.5">{result.message || result.error}</p>
+
+              {result.data && (
+                <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-white/40 block text-[10px]">Pass Reference</span>
+                    <span className="font-mono text-white font-bold">{result.data.ticket_number || result.data.booking_ref || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px]">Pass Tier</span>
+                    <span className="text-white font-bold">{result.data.tier_label || 'Standard'}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px]">NIC Number</span>
+                    <span className="text-white font-bold">{result.data.attendee_nic || '—'}</span>
+                  </div>
+                  <div>
+                    <span className="text-white/40 block text-[10px]">Gate Status</span>
+                    <span className="text-[#c1e527] font-bold">Passed Gate ✓</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {result.success && result.data && (
-            <div className="grid grid-cols-2 gap-3 text-sm bg-black/30 p-4 rounded-xl border border-white/10">
-              {[
-                ['Attendee', result.data.attendeeName || result.data.attendee_name || 'Attendee'],
-                ['Event', result.data.eventTitle || result.data.event_title || 'Ideofest Event'],
-                ['Ticket Tier', result.data.ticketTierLabel || result.data.tier_label || 'Standard'],
-                ['Checked In Batch', `${result.data.checkInCount || checkInQty} Person(s)`],
-                ['Total Checked In', `${result.data.newTotalCheckedIn || result.data.quantity} / ${result.data.quantity}`],
-                ['Remaining', `${result.data.remainingAfterScan ?? 0} Ticket(s)`],
-              ].map(([k, v]) => (
-                <div key={k}>
-                  <p className="text-white/40 text-[10px] uppercase tracking-widest">{k}</p>
-                  <p className="text-white font-bold">{v}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <button onClick={resetResult} className="w-full mt-4 py-3 bg-white/10 hover:bg-white/20 border border-white/15 rounded-xl text-sm font-bold text-white transition-colors">
-            Scan Next Attendee
+          <button
+            onClick={resetResult}
+            className="mt-4 w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-extrabold transition-all"
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Next Scan
           </button>
         </div>
       )}
+
+      {/* Manual Ticket Ref Input */}
+      <form onSubmit={handleManual} className="bg-white/4 border border-white/10 rounded-3xl p-5 backdrop-blur-md space-y-3">
+        <label htmlFor="manualCodeInput" className="block text-xs font-black text-white/60 uppercase tracking-wider">
+          Or Enter Ticket ID / Booking Reference
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="manualCodeInput"
+            type="text"
+            value={manualCode}
+            onChange={(e) => setManualCode(e.target.value)}
+            placeholder="e.g. IDF-TKT-XXXXXX or IDF-1B5534C5"
+            className="flex-1 bg-white/5 border border-white/12 rounded-xl px-4 py-3 text-white placeholder-white/30 text-xs sm:text-sm font-mono focus:outline-none focus:border-[#c1e527]"
+          />
+          <button
+            type="submit"
+            disabled={!manualCode.trim() || scanning}
+            className="bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black px-5 py-3 rounded-xl text-xs sm:text-sm transition-all shrink-0"
+          >
+            {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

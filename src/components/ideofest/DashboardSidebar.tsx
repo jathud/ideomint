@@ -8,14 +8,11 @@ import {
   Users,
   QrCode,
   BarChart2,
-  Settings,
-  LogOut,
   PlusCircle,
   FileCheck,
   type LucideIcon,
   ShieldCheck,
 } from 'lucide-react';
-import IdeofestLogo from './IdeofestLogo';
 
 interface NavItem {
   href: string;
@@ -33,28 +30,28 @@ const navSections: NavSection[] = [
   {
     label: 'Overview',
     items: [
-      { href: '/', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+      { href: '/ideofest/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     ],
   },
   {
     label: 'Events',
     items: [
-      { href: '/events', label: 'My Events', icon: CalendarDays },
-      { href: '/events/create', label: 'Create Event', icon: PlusCircle },
+      { href: '/ideofest/admin/events', label: 'My Events', icon: CalendarDays },
+      { href: '/ideofest/admin/events/create', label: 'Create Event', icon: PlusCircle },
     ],
   },
   {
     label: 'Attendees',
     items: [
-      { href: '/attendees', label: 'Attendee List', icon: Users },
-      { href: '/verifications', label: 'Payment Slips', icon: FileCheck },
-      { href: '/scanner', label: 'QR Scanner', icon: QrCode },
+      { href: '/ideofest/admin/attendees', label: 'Attendee List', icon: Users },
+      { href: '/ideofest/admin/verifications', label: 'Payment Slips', icon: FileCheck },
+      { href: '/ideofest/admin/scanner', label: 'QR Scanner', icon: QrCode },
     ],
   },
   {
     label: 'Reports',
     items: [
-      { href: '/reports', label: 'Analytics', icon: BarChart2 },
+      { href: '/ideofest/admin/reports', label: 'Analytics', icon: BarChart2 },
     ],
   },
 ];
@@ -63,12 +60,12 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 shrink-0 flex flex-col bg-[#080A12] border-r border-white/8 min-h-[calc(100vh-5rem)]">
+    <aside className="hidden lg:flex w-64 shrink-0 flex-col bg-[#080A12] border-r border-white/8 min-h-[calc(100vh-5rem)]">
       {/* Brand Header */}
       <div className="px-5 py-4 border-b border-white/8 bg-white/2">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-signal-lime shrink-0" />
-          <span className="text-xs font-black text-signal-lime tracking-[0.15em] uppercase truncate">
+          <ShieldCheck className="w-4 h-4 text-[#c1e527] shrink-0" />
+          <span className="text-xs font-black text-[#c1e527] tracking-[0.15em] uppercase truncate">
             Admin Controls
           </span>
         </div>
@@ -83,19 +80,19 @@ export default function DashboardSidebar() {
             </p>
             {section.items.map(({ href, label, icon: Icon, exact }) => {
               const active = exact
-                ? (pathname === href || pathname === '/ideofest/admin' || (pathname === '/' && href === '/'))
-                : (pathname === href || pathname.startsWith(href + '/') || pathname === `/ideofest/admin${href}` || pathname.startsWith(`/ideofest/admin${href}/`));
+                ? pathname === href
+                : (pathname === href || pathname.startsWith(href + '/'));
               return (
                 <Link
                   key={href}
                   href={href}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-0.5 text-sm font-semibold transition-all ${
                     active
-                      ? 'bg-signal-lime/15 text-signal-lime border border-signal-lime/30 font-bold'
+                      ? 'bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30 font-bold'
                       : 'text-white/60 hover:text-white hover:bg-white/6'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-signal-lime' : 'text-white/40'}`} />
+                  <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-[#c1e527]' : 'text-white/40'}`} />
                   {label}
                 </Link>
               );
@@ -103,24 +100,6 @@ export default function DashboardSidebar() {
           </div>
         ))}
       </nav>
-
-      {/* Sidebar Footer */}
-      <div className="px-3 py-4 border-t border-white/8">
-        <Link
-          href="/settings"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-white hover:bg-white/6 transition-colors mb-1"
-        >
-          <Settings className="w-4 h-4" />
-          Settings
-        </Link>
-        <a
-          href="http://localhost:3000/ideofest"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-white/50 hover:text-signal-lime hover:bg-signal-lime/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Exit to Main Site
-        </a>
-      </div>
     </aside>
   );
 }

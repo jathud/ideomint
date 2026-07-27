@@ -3,36 +3,40 @@
 import { useState, useRef, useEffect } from 'react';
 import QRTicket from '@/components/ideofest/QRTicket';
 import Link from 'next/link';
-import TicketPrintModal from '@/components/ideofest/TicketPrintModal';
 import {
   Ticket, ArrowRight, Search, Phone, Upload, CheckCircle2,
-  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer,
+  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck
 } from 'lucide-react';
 import type { IBooking } from '@/lib/ideofest/types';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   confirmed: {
-    label: 'Confirmed',
-    color: 'bg-signal-lime/15 text-signal-lime border border-signal-lime/30',
-    icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+    label: 'Payment Verified & Pass Active ✓',
+    color: 'bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30',
+    icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#c1e527]" />,
+  },
+  paid: {
+    label: 'Payment Verified & Pass Active ✓',
+    color: 'bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30',
+    icon: <CheckCircle2 className="w-3.5 h-3.5 text-[#c1e527]" />,
   },
   pending_verification: {
-    label: 'Pending Review',
+    label: 'Receipt Uploaded — Pending Review',
     color: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
     icon: <Clock className="w-3.5 h-3.5" />,
   },
   pending: {
-    label: 'Upload Slip',
+    label: 'Awaiting Slip Upload',
     color: 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/30',
     icon: <Upload className="w-3.5 h-3.5" />,
   },
   rejected: {
-    label: 'Rejected',
+    label: 'Payment Slip Rejected',
     color: 'bg-red-500/15 text-red-400 border border-red-500/30',
     icon: <XCircle className="w-3.5 h-3.5" />,
   },
   cancelled: {
-    label: 'Cancelled',
+    label: 'Booking Cancelled',
     color: 'bg-white/10 text-white/40 border border-white/15',
     icon: <XCircle className="w-3.5 h-3.5" />,
   },
@@ -106,16 +110,16 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
         type="button"
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
-        className="w-full flex items-center justify-center gap-2 border border-dashed border-white/20 hover:border-signal-lime/50 rounded-xl py-4 bg-white/2 hover:bg-white/5 transition-all text-xs font-bold text-white/80"
+        className="w-full flex items-center justify-center gap-2 border border-dashed border-white/20 hover:border-[#c1e527]/50 rounded-xl py-4 bg-white/2 hover:bg-white/5 transition-all text-xs font-bold text-white/80"
       >
         {uploading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin text-signal-lime" />
+            <Loader2 className="w-4 h-4 animate-spin text-[#c1e527]" />
             Uploading receipt...
           </>
         ) : (
           <>
-            <ImagePlus className="w-4 h-4 text-signal-lime" />
+            <ImagePlus className="w-4 h-4 text-[#c1e527]" />
             Choose Slip File to Upload
           </>
         )}
@@ -195,7 +199,7 @@ export default function MyTicketsPage() {
     <div className="container-layout py-10 px-4 sm:px-6 max-w-4xl mx-auto min-h-[70vh]">
       {/* Header */}
       <div className="mb-10 text-center">
-        <span className="text-xs font-bold text-signal-lime uppercase tracking-widest">Digital Ticket Portal</span>
+        <span className="text-xs font-bold text-[#c1e527] uppercase tracking-widest">Digital Ticket Portal</span>
         <h1 className="text-3xl md:text-4xl font-black text-white mt-2 mb-3">Find My Tickets</h1>
         <p className="text-white/50 text-sm max-w-md mx-auto">
           Enter your Booking Reference (IDF-XXXXXXXX) or Email to view your active QR pass or upload a payment slip.
@@ -203,14 +207,14 @@ export default function MyTicketsPage() {
       </div>
 
       {/* Lookup Card */}
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 shadow-xl max-w-xl mx-auto">
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-10 shadow-xl max-w-xl mx-auto backdrop-blur-xl">
         <div className="flex rounded-xl bg-white/5 p-1 mb-5">
           <button
             type="button"
             onClick={() => { setMode('ref'); setSearchQuery(''); setSearched(false); setBookings([]); }}
             aria-pressed={mode === 'ref'}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              mode === 'ref' ? 'bg-signal-lime text-section-ink' : 'text-white/50 hover:text-white'
+              mode === 'ref' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
             }`}
           >
             <Ticket className="w-3.5 h-3.5" /> Booking Reference
@@ -220,7 +224,7 @@ export default function MyTicketsPage() {
             onClick={() => { setMode('phone'); setSearchQuery(''); setSearched(false); setBookings([]); }}
             aria-pressed={mode === 'phone'}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              mode === 'phone' ? 'bg-signal-lime text-section-ink' : 'text-white/50 hover:text-white'
+              mode === 'phone' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
             }`}
           >
             <Phone className="w-3.5 h-3.5" /> Email Address
@@ -235,19 +239,19 @@ export default function MyTicketsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={mode === 'ref' ? 'IDF-XXXXXXXX' : 'you@example.com'}
-              className="w-full bg-white/5 border border-white/12 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-signal-lime transition-colors font-mono uppercase"
+              className="w-full bg-white/5 border border-white/12 rounded-xl pl-11 pr-4 py-3.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#c1e527] transition-colors font-mono uppercase"
             />
           </div>
           <button
             type="submit"
             disabled={loading || !searchQuery.trim()}
-            className="bg-signal-lime hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black px-6 rounded-xl transition-colors flex items-center gap-2 text-sm shrink-0"
+            className="bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black px-6 rounded-xl transition-colors flex items-center gap-2 text-sm shrink-0"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Search'}
           </button>
         </form>
 
-        {error && <p className="text-xs text-red-400 mt-3 text-center">{error}</p>}
+        {error && <p className="text-xs text-red-400 mt-3 text-center font-semibold">{error}</p>}
       </div>
 
       {/* Results */}
@@ -260,7 +264,7 @@ export default function MyTicketsPage() {
           </p>
           <Link
             href="/ideofest/events"
-            className="inline-flex items-center gap-2 bg-signal-lime text-section-ink font-black px-5 py-2.5 rounded-xl text-xs"
+            className="inline-flex items-center gap-2 bg-[#c1e527] text-section-ink font-black px-5 py-2.5 rounded-xl text-xs"
           >
             Browse Events <ArrowRight className="w-3.5 h-3.5" />
           </Link>
@@ -280,12 +284,12 @@ export default function MyTicketsPage() {
                 onClick={() => setSelectedBooking(b)}
                 className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
                   selectedBooking?.booking_ref === b.booking_ref
-                    ? 'bg-signal-lime/10 border-signal-lime'
+                    ? 'bg-[#c1e527]/10 border-[#c1e527]'
                     : 'bg-white/5 border-white/8 hover:border-white/20'
                 }`}
               >
                 <div>
-                  <span className="font-mono text-xs font-bold text-signal-lime">{b.booking_ref}</span>
+                  <span className="font-mono text-xs font-bold text-[#c1e527]">{b.booking_ref}</span>
                   <p className="font-bold text-white text-sm mt-0.5">{b.event_title}</p>
                   <p className="text-xs text-white/40">{b.tier_label} × {b.quantity}</p>
                 </div>
@@ -306,7 +310,8 @@ export default function MyTicketsPage() {
         <div className="flex flex-col items-center gap-8">
           {/* Status banner */}
           {(() => {
-            const statusKey = selectedBooking.payment_status || selectedBooking.status;
+            const isConfirmed = selectedBooking.status === 'confirmed' || selectedBooking.payment_status === 'paid';
+            const statusKey = isConfirmed ? 'confirmed' : (selectedBooking.payment_status || selectedBooking.status);
             const cfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.pending;
             return (
               <div className={`w-full max-w-sm flex items-center justify-between p-4 rounded-2xl ${cfg.color}`}>
@@ -319,10 +324,10 @@ export default function MyTicketsPage() {
             );
           })()}
 
-          {/* QR Ticket Pass with Logo and Actions */}
+          {/* QR Ticket Pass */}
           <QRTicket booking={selectedBooking} />
 
-          {/* Slip upload panel if not confirmed or slip missing */}
+          {/* Slip upload panel (ONLY shown if payment NOT confirmed/paid) */}
           {selectedBooking.status !== 'confirmed' && selectedBooking.payment_status !== 'paid' && selectedBooking.status !== 'cancelled' && (
             <div className="w-full max-w-sm">
               <SlipUploadPanel

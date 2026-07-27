@@ -333,7 +333,7 @@ export default function AdminVerificationsPage() {
               </div>
 
               {/* Details grid */}
-              <div className="bg-white/4 rounded-xl p-4 mb-5 grid grid-cols-2 gap-x-4 gap-y-3">
+              <div className="bg-white/4 rounded-xl p-4 mb-5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                 {[
                   ['Reference', selectedBooking.booking_ref],
                   ['Status', selectedBooking.payment_status || selectedBooking.status],

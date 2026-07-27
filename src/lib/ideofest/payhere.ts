@@ -34,11 +34,22 @@ export function generatePayHereHash(
   return crypto.createHash('md5').update(rawStr).digest('hex').toUpperCase();
 }
 
+function getBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL;
+  if (envUrl && !envUrl.includes('localhost')) {
+    return envUrl.startsWith('http') ? envUrl : `https://${envUrl}`;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://ideomint.com';
+  }
+  return 'https://ideomint.com';
+}
+
 /**
  * Build the complete PayHere checkout payload for a booking.
  */
 export function buildPayHereCheckoutPayload(booking: IBooking): IPayHereCheckout {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const baseUrl = getBaseUrl();
   const orderId = booking.booking_ref;
   const amount = booking.total_amount;
   const currency = 'LKR';

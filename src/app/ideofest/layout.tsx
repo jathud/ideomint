@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import IdeofestThemeSetter from '@/components/ideofest/IdeofestThemeSetter';
 
 export const metadata: Metadata = {
   title: {
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function IdeofestRootLayout({ children }: { children: React.ReactNode }) {
-  return <div className="min-h-screen bg-section-ink text-white">{children}</div>;
+  return (
+    <div className="min-h-screen bg-section-ink text-white ideofest-theme">
+      <IdeofestThemeSetter />
+      {children}
+    </div>
+  );
 }

@@ -51,7 +51,7 @@ export default function QRTicket({ booking }: QRTicketProps) {
   };
 
   const isConfirmed = booking.status === 'confirmed' || booking.payment_status === 'paid';
-  const qrPayload = (booking as any).qr_token || `IDEOFEST:${booking.booking_ref}:${booking.event_slug}:${booking.tier_name}`;
+  const qrPayload = (booking as any).qr_token || booking.booking_ref;
 
   return (
     <div className="printable-ticket-card bg-[#0B0D14] border border-white/15 rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl relative">

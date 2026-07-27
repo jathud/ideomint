@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <!-- Background -->
+  <rect width="1000" height="1000" fill="#05070D" />
+  
+  <!-- Ideomint Minting Frame Logo -->
+  <g fill="none" stroke-width="50" stroke-linecap="square" stroke-linejoin="miter">
+    <!-- Top Left (Creative Flame) -->
+    <path d="M 325 450 L 325 325 L 450 325" stroke="#FF5A3C" />
+    
+    <!-- Top Right (White) -->
+    <path d="M 550 325 L 675 325 L 675 450" stroke="#FFFFFF" />
+    
+    <!-- Bottom Left (White) -->
+    <path d="M 325 550 L 325 675 L 450 675" stroke="#FFFFFF" />
+    
+    <!-- Bottom Right (Creative Flame) -->
+    <path d="M 675 550 L 675 675 L 550 675" stroke="#FF5A3C" />
+  </g>
+</svg>

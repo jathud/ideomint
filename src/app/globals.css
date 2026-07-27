@@ -16,10 +16,64 @@
     overflow-x: hidden;
   }
   body {
-    @apply font-sans bg-human-canvas text-section-ink antialiased selection:bg-creative-flame selection:text-white;
+    @apply font-sans bg-human-canvas text-section-ink antialiased selection:bg-[#c1e527] selection:text-section-ink;
     width: 100%;
     position: relative;
   }
+}
+
+/* === DUAL-THEME SCROLLBARS === */
+/* Default Ideomint Pages: Creative Flame (#FF5A3C) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #05070d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF5A3C;
+  border-radius: 9999px;
+  border: 2px solid #05070d;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff7a63;
+  box-shadow: 0 0 12px #FF5A3C;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #FF5A3C #05070d;
+}
+
+/* Ideofest Pages: Signal Lime (#c1e527) */
+html.ideofest-theme ::-webkit-scrollbar-thumb,
+body.ideofest-theme ::-webkit-scrollbar-thumb,
+html.ideofest-theme::-webkit-scrollbar-thumb,
+body.ideofest-theme::-webkit-scrollbar-thumb,
+.ideofest-theme::-webkit-scrollbar-thumb,
+.ideofest-theme ::-webkit-scrollbar-thumb {
+  background: #c1e527 !important;
+}
+
+html.ideofest-theme ::-webkit-scrollbar-thumb:hover,
+body.ideofest-theme ::-webkit-scrollbar-thumb:hover,
+html.ideofest-theme::-webkit-scrollbar-thumb:hover,
+body.ideofest-theme::-webkit-scrollbar-thumb:hover,
+.ideofest-theme::-webkit-scrollbar-thumb:hover,
+.ideofest-theme ::-webkit-scrollbar-thumb:hover {
+  background: #d4ff33 !important;
+  box-shadow: 0 0 12px #c1e527 !important;
+}
+
+html.ideofest-theme *,
+body.ideofest-theme *,
+html.ideofest-theme,
+body.ideofest-theme {
+  scrollbar-color: #c1e527 #05070d !important;
 }
 
 @layer utilities {
