@@ -208,15 +208,44 @@ function baseTemplate(content: string, title: string): string {
 /**
  * Booking confirmation (pending payment verification)
  */
-export async function sendBookingConfirmationEmail(booking: IBooking) {
+export async function sendBookingConfirmationEmail(
+  booking: IBooking,
+  customBankDetails?: {
+    bank_name?: string;
+    bank_account_name?: string;
+    bank_account_no?: string;
+    bank_branch?: string;
+  }
+) {
   const appUrl = getAppUrl();
   const subject = `Booking Confirmation - ${booking.event_title} (${booking.booking_ref})`;
 
-  const paymentInstruction =
+  const bankName = customBankDetails?.bank_name || process.env.BANK_NAME || process.env.NEXT_PUBLIC_BANK_NAME || 'Commercial Bank of Ceylon';
+  const bankAccountName = customBankDetails?.bank_account_name || process.env.BANK_ACCOUNT_NAME || process.env.NEXT_PUBLIC_BANK_ACCOUNT_NAME || 'Ideomint (Pvt) Ltd';
+  const bankAccountNo = customBankDetails?.bank_account_no || process.env.BANK_ACCOUNT_NO || process.env.NEXT_PUBLIC_BANK_ACCOUNT_NO || '1234567890';
+  const bankBranch = customBankDetails?.bank_branch || process.env.BANK_BRANCH || process.env.NEXT_PUBLIC_BANK_BRANCH || 'Colombo 03';
+
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_ORGANIZER_WHATSAPP || '+94786892649';
+  const cleanWhatsapp = whatsappNumber.replace(/[^\d]/g, '');
+
+  const bankTransferSection =
     booking.payment_method === 'bank_transfer'
-      ? `<div class="notice">
-          <strong>Awaiting Payment Receipt Verification</strong><br/>
-          Please upload your bank transfer receipt in your booking portal if not already uploaded. Our team will verify your payment within 24 hours.
+      ? `<div style="background:#131826;border:1px solid #c1e527;border-radius:16px;padding:24px;margin:24px 0;">
+          <p style="color:#c1e527;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">
+            🏦 OFFICIAL BANK TRANSFER DETAILS
+          </p>
+          <div class="detail-row"><span class="detail-label">Bank Name</span><span class="detail-value" style="color:#ffffff;">${bankName}</span></div>
+          <div class="detail-row"><span class="detail-label">Account Name</span><span class="detail-value" style="color:#ffffff;">${bankAccountName}</span></div>
+          <div class="detail-row"><span class="detail-label">Account Number</span><span class="detail-value" style="color:#c1e527;font-family:monospace;font-size:16px;font-weight:bold;">${bankAccountNo}</span></div>
+          <div class="detail-row"><span class="detail-label">Branch</span><span class="detail-value" style="color:#ffffff;">${bankBranch}</span></div>
+          <div class="detail-row"><span class="detail-label">Payment Reference</span><span class="detail-value" style="color:#c1e527;font-family:monospace;font-size:15px;font-weight:bold;">${booking.booking_ref}</span></div>
+          <div class="detail-row"><span class="detail-label">Exact Amount Due</span><span class="detail-value" style="color:#c1e527;font-size:16px;font-weight:bold;">${formatLKR(booking.total_amount)}</span></div>
+        </div>
+
+        <div class="notice">
+          <strong>⚠️ Payment Reference Instruction:</strong><br/>
+          Please enter <strong style="color:#c1e527;font-family:monospace;">${booking.booking_ref}</strong> as the payment reference or remarks when completing your bank transfer.<br/><br/>
+          📱 <strong>Send Receipt via WhatsApp:</strong> You can also send your payment transfer receipt directly to our team on WhatsApp at <a href="https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(`Hi Ideofest Team, here is my payment slip for booking reference ${booking.booking_ref}`)}" style="color:#4ade80;font-weight:bold;text-decoration:underline;">${whatsappNumber}</a>.
         </div>`
       : `<div class="notice">
           <strong>Awaiting Payment Confirmation</strong><br/>
@@ -224,8 +253,9 @@ export async function sendBookingConfirmationEmail(booking: IBooking) {
         </div>`;
 
   const content = `
-    <h2>Booking Received</h2>
-    <p>Hi <strong>${booking.attendee_name}</strong>, your booking request has been received. Here are your details:</p>
+    <h2>Booking Received (Unconfirmed)</h2>
+    <p>Hi <strong>${booking.attendee_name}</strong>, your ticket booking for <strong>${booking.event_title}</strong> has been received. Your seat is reserved pending payment verification.</p>
+
     <div style="background:#0c0f17;border:1px solid #1e2433;border-radius:14px;padding:20px;margin:20px 0;">
       <div class="detail-row"><span class="detail-label">Booking Reference</span><span class="detail-value" style="color:#c1e527;font-family:monospace;">${booking.booking_ref}</span></div>
       <div class="detail-row"><span class="detail-label">Event</span><span class="detail-value">${booking.event_title}</span></div>
@@ -236,8 +266,10 @@ export async function sendBookingConfirmationEmail(booking: IBooking) {
       <div class="detail-row"><span class="detail-label">Payment Method</span><span class="detail-value">${booking.payment_method === 'bank_transfer' ? 'Bank Transfer' : 'PayHere'}</span></div>
       <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="badge badge-pending">Pending Verification</span></span></div>
     </div>
-    ${paymentInstruction}
-    <a class="btn" href="${appUrl}/ideofest/my-tickets?ref=${booking.booking_ref}">View My Booking →</a>
+
+    ${bankTransferSection}
+
+    <a class="btn" href="${appUrl}/ideofest/my-tickets?ref=${booking.booking_ref}">View My Booking & Upload Receipt →</a>
   `;
 
   const html = baseTemplate(content, subject);

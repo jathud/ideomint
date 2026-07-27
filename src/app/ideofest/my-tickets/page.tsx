@@ -5,7 +5,7 @@ import QRTicket from '@/components/ideofest/QRTicket';
 import Link from 'next/link';
 import {
   Ticket, ArrowRight, Search, Phone, Upload, CheckCircle2,
-  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck
+  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck, Share2
 } from 'lucide-react';
 import type { IBooking } from '@/lib/ideofest/types';
 
@@ -327,9 +327,41 @@ export default function MyTicketsPage() {
           {/* QR Ticket Pass */}
           <QRTicket booking={selectedBooking} />
 
-          {/* Slip upload panel (ONLY shown if payment NOT confirmed/paid) */}
+          {/* Slip upload & WhatsApp panel (ONLY shown if payment NOT confirmed/paid) */}
           {selectedBooking.status !== 'confirmed' && selectedBooking.payment_status !== 'paid' && selectedBooking.status !== 'cancelled' && (
-            <div className="w-full max-w-sm">
+            <div className="w-full max-w-sm space-y-4">
+              {/* WhatsApp Direct Slip Submission Card */}
+              <div className="w-full bg-gradient-to-r from-emerald-500/15 via-white/5 to-emerald-500/10 border border-emerald-500/35 rounded-2xl p-5 text-left backdrop-blur-xl space-y-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/30 text-emerald-400 shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-white text-xs">Send Slip via WhatsApp</h4>
+                    <p className="text-[10px] text-white/60">Fastest verification — send your transfer receipt directly to our team on WhatsApp</p>
+                  </div>
+                </div>
+
+                {(() => {
+                  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_ORGANIZER_WHATSAPP || '+94786892649';
+                  const cleanWhatsapp = whatsappNumber.replace(/[^\d]/g, '');
+                  const waText = `Hi Ideofest Team 👋\n\nI have a booking for *${selectedBooking.event_title}*.\n\n📌 *Booking Ref:* ${selectedBooking.booking_ref}\n👤 *Name:* ${selectedBooking.attendee_name}\n🎟️ *Pass Tier:* ${selectedBooking.tier_label} × ${selectedBooking.quantity}\n💰 *Total Amount:* LKR ${(selectedBooking.total_amount || 0).toLocaleString('en-LK')}\n\nHere is my payment transfer receipt attached:`;
+                  const waUrl = `https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent(waText)}`;
+
+                  return (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-black font-black py-3 px-4 rounded-xl text-xs transition-all shadow-[0_0_20px_rgba(37,211,102,0.25)] hover:scale-[1.01]"
+                    >
+                      <Share2 className="w-4 h-4 shrink-0" />
+                      <span>Send Slip via WhatsApp ({whatsappNumber})</span>
+                    </a>
+                  );
+                })()}
+              </div>
+
               <SlipUploadPanel
                 booking={selectedBooking}
                 onSuccess={() => {

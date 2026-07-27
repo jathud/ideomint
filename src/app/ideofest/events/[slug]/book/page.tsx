@@ -21,11 +21,11 @@ const STEPS = [
 ];
 
 const SRI_LANKA_DISTRICTS = [
-  'Colombo','Gampaha','Kalutara','Kandy','Matale','Nuwara Eliya',
-  'Galle','Matara','Hambantota','Jaffna','Kilinochchi','Mannar',
-  'Mullaitivu','Vavuniya','Trincomalee','Batticaloa','Ampara',
-  'Kurunegala','Puttalam','Anuradhapura','Polonnaruwa','Badulla',
-  'Moneragala','Ratnapura','Kegalle',
+  'Colombo', 'Gampaha', 'Kalutara', 'Kandy', 'Matale', 'Nuwara Eliya',
+  'Galle', 'Matara', 'Hambantota', 'Jaffna', 'Kilinochchi', 'Mannar',
+  'Mullaitivu', 'Vavuniya', 'Trincomalee', 'Batticaloa', 'Ampara',
+  'Kurunegala', 'Puttalam', 'Anuradhapura', 'Polonnaruwa', 'Badulla',
+  'Moneragala', 'Ratnapura', 'Kegalle',
 ];
 
 function FormField({
@@ -58,9 +58,8 @@ function InputField({
       value={value}
       onChange={(e) => onChange(e.currentTarget.value)}
       placeholder={placeholder}
-      className={`w-full bg-white/5 border rounded-xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none transition-all ${
-        error ? 'border-red-500/80 focus:border-red-400 bg-red-500/5' : 'border-white/12 focus:border-[#c1e527] focus:bg-white/8'
-      }`}
+      className={`w-full bg-white/5 border rounded-xl px-4 py-3.5 text-white placeholder-white/30 focus:outline-none transition-all ${error ? 'border-red-500/80 focus:border-red-400 bg-red-500/5' : 'border-white/12 focus:border-[#c1e527] focus:bg-white/8'
+        }`}
       {...rest}
     />
   );
@@ -124,7 +123,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
   const [loading, setLoading] = useState(false);
 
   // WhatsApp environment number (defaults to +94771234567 if not set in env)
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_ORGANIZER_WHATSAPP || '+94771234567';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_ORGANIZER_WHATSAPP || '+94786892649';
   const cleanWhatsapp = whatsappNumber.replace(/[^\d]/g, '');
 
   const getWhatsAppUrl = (b: IBooking) => {
@@ -433,20 +432,18 @@ Ideomint — Perfectly Minted Events.
                 <div
                   key={tier.id}
                   onClick={() => { if (!isSoldOut) setSelectedTier(tier); }}
-                  className={`relative p-6 rounded-3xl border transition-all cursor-pointer overflow-hidden ${
-                    isSelected
+                  className={`relative p-6 rounded-3xl border transition-all cursor-pointer overflow-hidden ${isSelected
                       ? 'bg-gradient-to-r from-[#c1e527]/15 via-white/5 to-[#c1e527]/10 border-[#c1e527] shadow-[0_0_30px_rgba(193,229,39,0.2)]'
                       : isSoldOut
-                      ? 'bg-white/2 border-white/8 opacity-45 cursor-not-allowed'
-                      : 'bg-white/4 border-white/10 hover:border-white/25 hover:bg-white/6'
-                  }`}
+                        ? 'bg-white/2 border-white/8 opacity-45 cursor-not-allowed'
+                        : 'bg-white/4 border-white/10 hover:border-white/25 hover:bg-white/6'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3.5">
                       {/* Selection Radio Circle */}
-                      <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isSelected ? 'border-[#c1e527] bg-[#c1e527]' : 'border-white/30'
-                      }`}>
+                      <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'border-[#c1e527] bg-[#c1e527]' : 'border-white/30'
+                        }`}>
                         {isSelected && <Check className="w-3.5 h-3.5 text-section-ink stroke-[3]" />}
                       </div>
 
@@ -708,9 +705,8 @@ Ideomint — Perfectly Minted Events.
                   id="district"
                   value={form.district}
                   onChange={(e) => setForm({ ...form, district: e.target.value })}
-                  className={`w-full bg-white/5 border rounded-xl px-4 py-3.5 text-white focus:outline-none transition-colors ${
-                    errors.district ? 'border-red-500' : 'border-white/12 focus:border-[#c1e527]'
-                  }`}
+                  className={`w-full bg-white/5 border rounded-xl px-4 py-3.5 text-white focus:outline-none transition-colors ${errors.district ? 'border-red-500' : 'border-white/12 focus:border-[#c1e527]'
+                    }`}
                 >
                   <option value="" className="bg-zinc-900">Select district</option>
                   {SRI_LANKA_DISTRICTS.map((d) => (
@@ -833,11 +829,10 @@ Ideomint — Perfectly Minted Events.
             {enabledMethods.includes('payhere') && (
               <div
                 onClick={() => setPaymentMethod('payhere')}
-                className={`p-6 rounded-3xl border cursor-pointer transition-all ${
-                  paymentMethod === 'payhere'
+                className={`p-6 rounded-3xl border cursor-pointer transition-all ${paymentMethod === 'payhere'
                     ? 'bg-[#c1e527]/10 border-[#c1e527] shadow-[0_0_30px_rgba(193,229,39,0.2)]'
                     : 'bg-white/4 border-white/10 hover:border-white/20'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-4 mb-2">
                   <div className={`p-3 rounded-2xl ${paymentMethod === 'payhere' ? 'bg-[#c1e527] text-section-ink' : 'bg-white/8'}`}>
@@ -866,11 +861,10 @@ Ideomint — Perfectly Minted Events.
             {enabledMethods.includes('bank_transfer') && (
               <div
                 onClick={() => setPaymentMethod('bank_transfer')}
-                className={`p-6 rounded-3xl border cursor-pointer transition-all ${
-                  paymentMethod === 'bank_transfer'
+                className={`p-6 rounded-3xl border cursor-pointer transition-all ${paymentMethod === 'bank_transfer'
                     ? 'bg-[#c1e527]/10 border-[#c1e527] shadow-[0_0_30px_rgba(193,229,39,0.2)]'
                     : 'bg-white/4 border-white/10 hover:border-white/20'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-4 mb-2">
                   <div className={`p-3 rounded-2xl ${paymentMethod === 'bank_transfer' ? 'bg-[#c1e527] text-section-ink' : 'bg-white/8'}`}>
@@ -961,15 +955,26 @@ Ideomint — Perfectly Minted Events.
             </div>
           </div>
 
-          <button
-            onClick={handleSlipUpload}
-            disabled={!slipFile || uploadingSlip}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] hover:from-[#b0d420] hover:to-[#c1e527] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4.5 rounded-2xl text-base transition-all shadow-[0_0_25px_rgba(193,229,39,0.25)]"
-          >
-            {uploadingSlip ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-              <>Submit Payment Receipt <ArrowRight className="w-5 h-5" /></>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleSlipUpload}
+              disabled={!slipFile || uploadingSlip}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] hover:from-[#b0d420] hover:to-[#c1e527] disabled:opacity-40 disabled:cursor-not-allowed text-section-ink font-black py-4 rounded-2xl text-sm sm:text-base transition-all shadow-[0_0_25px_rgba(193,229,39,0.25)]"
+            >
+              {uploadingSlip ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                <>Submit Payment Receipt <ArrowRight className="w-5 h-5" /></>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => { setPayLater(true); setStep(4); }}
+              className="flex-1 flex items-center justify-center gap-2 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-300 font-extrabold py-4 rounded-2xl text-sm sm:text-base transition-all hover:scale-[1.01]"
+            >
+              <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+              <span>Pay Later / Reserve Seat →</span>
+            </button>
+          </div>
 
           {/* Pay Later / Send via WhatsApp Informational Message Card */}
           <div className="bg-gradient-to-r from-emerald-500/12 via-white/5 to-amber-500/12 border border-emerald-500/30 rounded-2xl p-5 text-left text-xs text-white/80 space-y-2 backdrop-blur-xl">
