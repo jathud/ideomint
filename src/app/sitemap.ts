@@ -3,32 +3,39 @@ import { createAdminClient } from '@/lib/ideofest/supabase/server';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://ideomint.com';
+  const now = new Date();
 
   // Core static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'weekly',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/services`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/ideofest`,
-      lastModified: new Date(),
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
+      url: `${baseUrl}/ideofest/events`,
+      lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/ideofest/events`,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 0.9,
+      url: `${baseUrl}/my-tickets`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
   ];
 
@@ -46,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         url: `${baseUrl}/ideofest/events/${ev.slug}`,
         lastModified: new Date(ev.updated_at || ev.created_at || Date.now()),
         changeFrequency: 'daily' as const,
-        priority: 0.8,
+        priority: 0.85,
       }));
     }
   } catch (err) {
