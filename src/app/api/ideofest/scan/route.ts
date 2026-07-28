@@ -10,7 +10,7 @@ import type { ApiResponse } from '@/lib/ideofest/types';
  * - Encrypted & HMAC-signed QR Tokens
  * - Plain Ticket Numbers (IDF-TKT-XXXXXXXX)
  * - Booking References (IDF-XXXXXXXX)
- * - Partial group check-in
+ * - Partial / Group check-in with complete multi-attendee details
  */
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
@@ -43,35 +43,27 @@ export async function POST(request: NextRequest) {
     // 2. Query ticket by ticket_number (from decrypted ref) first
     let ticket: any = null;
 
+    const bookingSelectFields = `
+      id, booking_ref, event_id, event_title, event_slug, event_date, venue,
+      attendee_name, attendee_email, attendee_nic, attendee_phone, additional_attendees,
+      tier_label, quantity, payment_status, status
+    `;
+
     if (extractedRef) {
-      // We successfully decrypted the QR — look up by the embedded ticket number
+      // Look up by the embedded ticket number
       const { data: byRef } = await supabase
         .from('tickets')
-        .select(`
-          *,
-          booking:bookings(
-            id, booking_ref, event_id, event_title, event_slug, event_date, venue,
-            attendee_name, attendee_email, attendee_nic,
-            tier_label, quantity, payment_status, status
-          )
-        `)
+        .select(`*, booking:bookings(${bookingSelectFields})`)
         .eq('ticket_number', extractedRef)
         .maybeSingle();
       ticket = byRef || null;
     }
 
-    // 3. If not found by decrypted ref, try matching the raw payload as a ticket number or booking ref directly
+    // 3. Try matching the raw payload as a ticket number
     if (!ticket) {
       const { data: byTicketNum } = await supabase
         .from('tickets')
-        .select(`
-          *,
-          booking:bookings(
-            id, booking_ref, event_id, event_title, event_slug, event_date, venue,
-            attendee_name, attendee_email, attendee_nic,
-            tier_label, quantity, payment_status, status
-          )
-        `)
+        .select(`*, booking:bookings(${bookingSelectFields})`)
         .eq('ticket_number', rawPayload)
         .maybeSingle();
       ticket = byTicketNum || null;
@@ -88,25 +80,16 @@ export async function POST(request: NextRequest) {
       if (bookingData?.id) {
         const { data: bkgTickets } = await supabase
           .from('tickets')
-          .select(`
-            *,
-            booking:bookings(
-              id, booking_ref, event_id, event_title, event_slug, event_date, venue,
-              attendee_name, attendee_email, attendee_nic,
-              tier_label, quantity, payment_status, status
-            )
-          `)
+          .select(`*, booking:bookings(${bookingSelectFields})`)
           .eq('booking_id', bookingData.id)
           .order('pass_index', { ascending: true });
 
         if (bkgTickets && bkgTickets.length > 0) {
-          // Prefer first un-used ticket
           const unused = bkgTickets.find((t: any) => t.status !== 'used');
           ticket = unused || bkgTickets[0];
         }
       }
     }
-
 
     if (!ticket) {
       return Response.json({
@@ -120,7 +103,26 @@ export async function POST(request: NextRequest) {
     const ticketNumber = ticket.ticket_number || ticket.qr_token || searchTerm;
     const totalQty = booking?.quantity || 1;
 
-    // 4. Check ticket status
+    // Build multi-attendee list (Lead Booker + Additional Attendees)
+    const extras = Array.isArray(booking?.additional_attendees) ? booking.additional_attendees : [];
+    const allAttendees = [
+      {
+        index: 1,
+        role: `Lead Booker (1/${totalQty})`,
+        name: booking?.attendee_name || ticket.attendee_name || 'Lead Booker',
+        nic: booking?.attendee_nic || ticket.attendee_nic || '—',
+        phone: booking?.attendee_phone || ticket.attendee_phone || '—',
+      },
+      ...extras.map((extra: any, idx: number) => ({
+        index: idx + 2,
+        role: `Attendee ${idx + 2} of ${totalQty}`,
+        name: extra.name || `Attendee ${idx + 2}`,
+        nic: extra.nic || '—',
+        phone: extra.phone || booking?.attendee_phone || '—',
+      })),
+    ];
+
+    // Check ticket status
     if (ticket.status === 'cancelled') {
       return Response.json({ success: false, error: 'Ticket is cancelled', result: 'invalid' } satisfies ApiResponse, { status: 400 });
     }
@@ -128,35 +130,39 @@ export async function POST(request: NextRequest) {
       return Response.json({ success: false, error: 'Ticket has expired', result: 'expired' } satisfies ApiResponse, { status: 400 });
     }
 
-    // 5. Check attendance logs for previous check-ins
+    // Check attendance logs for previous check-ins
     const { data: logs } = await supabase
       .from('attendance_logs')
-      .select('id, scanned_at, gate')
+      .select('id, scanned_at, gate, quantity_checked_in')
       .eq('booking_id', ticket.booking_id)
       .eq('result', 'success');
 
-    const previousCheckIns = logs ? logs.length : (ticket.status === 'used' ? totalQty : 0);
+    const previousCheckIns = logs
+      ? logs.reduce((sum: number, log: any) => sum + (log.quantity_checked_in || 1), 0)
+      : (ticket.status === 'used' ? totalQty : 0);
+
     const remaining = Math.max(0, totalQty - previousCheckIns);
 
-    if (remaining <= 0 || ticket.status === 'used') {
+    if (remaining <= 0) {
       const lastScan = logs?.[logs.length - 1];
       return Response.json({
         success: false,
-        error: `Duplicate Scan — Pass #${ticket.pass_index || 1} for ${ticket.attendee_name || booking?.attendee_name} has already been scanned.`,
+        error: `Duplicate Scan — All ${totalQty} attendee pass(es) for ${booking?.attendee_name} have already entered.`,
         result: 'duplicate',
         data: {
-          attendee_name: ticket.attendee_name || booking?.attendee_name || 'Attendee',
+          attendee_name: booking?.attendee_name || ticket.attendee_name || 'Attendee',
           scanned_at: lastScan?.scanned_at || ticket.used_at || new Date().toISOString(),
           ticket_number: ticketNumber,
           totalQty,
           checkedIn: totalQty,
           remaining: 0,
           pass_index: ticket.pass_index || 1,
+          all_attendees: allAttendees,
         },
       } satisfies ApiResponse, { status: 409 });
     }
 
-    // 6. Perform check-in
+    // Perform check-in
     const actualCheckInQty = Math.min(requestedCheckInQty, remaining);
     const now = new Date().toISOString();
 
@@ -165,12 +171,6 @@ export async function POST(request: NextRequest) {
       .from('tickets')
       .update({ status: 'used', used_at: now, updated_at: now })
       .eq('id', ticket.id);
-
-    // Update attendee status in attendees table
-    await supabase
-      .from('attendees')
-      .update({ checked_in: true, checked_in_at: now, status: 'checked_in' })
-      .eq('ticket_id', ticket.id);
 
     // Insert attendance log
     await supabase.from('attendance_logs').insert({
@@ -189,13 +189,13 @@ export async function POST(request: NextRequest) {
 
     return Response.json({
       success: true,
-      message: `VALID TICKET — Welcome ${ticket.attendee_name || booking?.attendee_name}! Pass #${ticket.pass_index || 1} Checked In`,
+      message: `VALID PASS — Welcome ${booking?.attendee_name}! Admitted ${actualCheckInQty} of ${totalQty} attendee(s)`,
       result: 'valid',
       data: {
-        attendee_name: ticket.attendee_name || booking?.attendee_name,
+        attendee_name: booking?.attendee_name || ticket.attendee_name,
         attendee_email: booking?.attendee_email,
-        attendee_nic: ticket.attendee_nic || booking?.attendee_nic,
-        attendee_phone: ticket.attendee_phone || booking?.attendee_phone,
+        attendee_nic: booking?.attendee_nic || ticket.attendee_nic,
+        attendee_phone: booking?.attendee_phone || ticket.attendee_phone,
         ticket_number: ticketNumber,
         booking_ref: booking?.booking_ref,
         event_title: booking?.event_title,
@@ -205,6 +205,7 @@ export async function POST(request: NextRequest) {
         checkedIn: newCheckedInCount,
         remaining: newRemaining,
         pass_index: ticket.pass_index || 1,
+        all_attendees: allAttendees,
         scanned_at: now,
         gate,
       },

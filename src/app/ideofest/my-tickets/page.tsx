@@ -5,7 +5,7 @@ import QRTicket from '@/components/ideofest/QRTicket';
 import Link from 'next/link';
 import {
   Ticket, ArrowRight, Search, Phone, Upload, CheckCircle2,
-  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck, Share2, ArrowLeft
+  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck, Share2, ArrowLeft, Mail, FileText, AlertTriangle
 } from 'lucide-react';
 import type { IBooking } from '@/lib/ideofest/types';
 
@@ -42,7 +42,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
   },
 };
 
-function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess: () => void }) {
+function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess: (uploadedUrl?: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -64,7 +64,8 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
       const upData = await upRes.json();
       if (!upData.success) throw new Error(upData.error || 'Upload failed');
 
-      onSuccess();
+      const uploadedUrl = upData.data?.url || upData.url || 'uploaded';
+      onSuccess(uploadedUrl);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -74,9 +75,48 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
 
   return (
     <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4 pt-6">
+      {/* Submitted Slip Preview Card */}
+      {booking.payment_slip_url && (
+        <div className="mb-4 bg-white/5 border border-white/12 rounded-2xl p-4 text-left space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-[#c1e527] uppercase tracking-wider flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              Submitted Payment Receipt
+            </span>
+            <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full font-semibold">
+              Pending Admin Verification
+            </span>
+          </div>
+
+          <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/40 max-h-40 flex items-center justify-center">
+            {booking.payment_slip_url.toLowerCase().endsWith('.pdf') ? (
+              <div className="p-4 text-center">
+                <FileText className="w-8 h-8 text-red-400 mx-auto mb-1" />
+                <p className="text-xs text-white/80 font-bold">PDF Payment Receipt Attached</p>
+              </div>
+            ) : (
+              <img
+                src={booking.payment_slip_url}
+                alt="Payment Receipt Slip"
+                className="w-full h-36 object-cover object-top hover:scale-105 transition-transform"
+              />
+            )}
+          </div>
+
+          <a
+            href={booking.payment_slip_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2 rounded-xl text-xs transition-colors"
+          >
+            <span>View Full Receipt / Slip →</span>
+          </a>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-bold text-white/70 uppercase tracking-widest">
-          Upload Payment Slip
+          {booking.payment_slip_url ? 'Re-upload Payment Slip' : 'Upload Payment Slip'}
         </span>
         <span className="text-[10px] text-white/40">PNG, JPG, PDF · Max 10MB</span>
       </div>
@@ -137,6 +177,7 @@ export default function MyTicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [bookings, setBookings] = useState<IBooking[]>([]);
   const [selectedBooking, setSelectedBooking] = useState<IBooking | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; title: string; message: string } | null>(null);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -236,7 +277,7 @@ export default function MyTicketsPage() {
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === 'phone' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
               }`}
           >
-            <Phone className="w-3.5 h-3.5" /> Email Address
+            <Mail className="w-3.5 h-3.5" /> Email Address
           </button>
         </div>
 
@@ -372,19 +413,44 @@ export default function MyTicketsPage() {
 
               <SlipUploadPanel
                 booking={selectedBooking}
-                onSuccess={() => {
+                onSuccess={(uploadedUrl) => {
                   const updated: IBooking = {
                     ...selectedBooking,
                     payment_status: 'pending_verification',
                     status: 'pending_verification',
-                    payment_slip_url: 'uploaded',
+                    payment_slip_url: uploadedUrl || selectedBooking.payment_slip_url || 'uploaded',
                   };
                   setSelectedBooking(updated);
                   setBookings((prev) => prev.map((b) => (b.booking_ref === selectedBooking.booking_ref ? updated : b)));
+                  setToast({
+                    type: 'success',
+                    title: 'Payment Receipt Uploaded! 🎉',
+                    message: 'Your transfer slip has been uploaded successfully! Waiting for organizer verification.',
+                  });
+                  setTimeout(() => setToast(null), 6000);
                 }}
               />
             </div>
           )}
+        </div>
+      )}
+
+      {/* Floating Toast Notification Banner */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-gradient-to-r from-emerald-950 via-zinc-900 to-zinc-950 border border-emerald-500/40 rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 flex items-start gap-3">
+          <div className="p-2 bg-emerald-500/20 rounded-xl border border-emerald-500/40 text-emerald-400 shrink-0">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="font-extrabold text-white text-xs">{toast.title}</h4>
+            <p className="text-[11px] text-white/70 mt-0.5 leading-relaxed">{toast.message}</p>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-white/40 hover:text-white text-xs font-bold p-1"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

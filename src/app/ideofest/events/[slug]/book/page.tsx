@@ -134,6 +134,7 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [slipUploaded, setSlipUploaded] = useState(false);
   const [payLater, setPayLater] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; title: string; message: string } | null>(null);
 
   const [loading, setLoading] = useState(false);
 
@@ -172,6 +173,18 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
     load();
     return () => { active = false; };
   }, [slug]);
+
+  // Auto-select single payment method if only 1 option is available for this event
+  useEffect(() => {
+    if (event) {
+      const methods = (event.payment_methods && event.payment_methods.length > 0)
+        ? event.payment_methods
+        : ['bank_transfer'];
+      if (methods.length === 1 && !paymentMethod) {
+        setPaymentMethod(methods[0] as 'bank_transfer' | 'payhere');
+      }
+    }
+  }, [event, paymentMethod]);
 
   if (loadingEvent) {
     return (
@@ -288,7 +301,24 @@ Ideomint — Perfectly Minted Events.
     });
 
     setErrors(e);
-    return Object.keys(e).length === 0;
+
+    if (Object.keys(e).length > 0) {
+      const firstErrorKey = Object.keys(e)[0];
+      const targetEl = document.getElementById(firstErrorKey);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.focus();
+      }
+      setToast({
+        type: 'error',
+        title: 'Attendee Details Error',
+        message: `Please check your details: ${e[firstErrorKey]}`,
+      });
+      setTimeout(() => setToast(null), 6000);
+      return false;
+    }
+
+    return true;
   }
 
   // ── Create booking ─────────────────────────────────────────
@@ -395,10 +425,30 @@ Ideomint — Perfectly Minted Events.
       const res = await fetch('/api/ideofest/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
+
+      const uploadedUrl = data.data?.url || data.url || 'uploaded';
+      setBooking((prev) => prev ? {
+        ...prev,
+        payment_slip_url: uploadedUrl,
+        status: 'pending_verification',
+        payment_status: 'pending_verification',
+      } : null);
+
       setSlipUploaded(true);
+      setToast({
+        type: 'success',
+        title: 'Payment Receipt Uploaded! 🎉',
+        message: 'Your transfer receipt has been uploaded successfully! Waiting for organizer verification.',
+      });
+      setTimeout(() => setToast(null), 6000);
       setStep(4);
     } catch (err) {
-      alert('Upload error: ' + (err as Error).message);
+      setToast({
+        type: 'error',
+        title: 'Upload Failed',
+        message: (err as Error).message || 'Failed to upload payment receipt',
+      });
+      setTimeout(() => setToast(null), 6000);
     } finally {
       setUploadingSlip(false);
     }
@@ -1106,8 +1156,47 @@ Ideomint — Perfectly Minted Events.
                 </a>
               </div>
 
+              {/* ── SUBMITTED PAYMENT RECEIPT CARD PREVIEW ── */}
+              {booking.payment_slip_url && (
+                <div className="w-full bg-white/5 border border-white/12 rounded-3xl p-6 text-left space-y-4 backdrop-blur-xl shadow-xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-[#c1e527] uppercase tracking-wider flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4.5 h-4.5 text-emerald-400" />
+                      Submitted Payment Receipt
+                    </span>
+                    <span className="text-[10px] text-amber-300 bg-amber-500/15 border border-amber-500/30 px-3 py-1 rounded-full font-semibold">
+                      Pending Admin Verification
+                    </span>
+                  </div>
+
+                  <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 max-h-48 flex items-center justify-center">
+                    {booking.payment_slip_url.toLowerCase().endsWith('.pdf') ? (
+                      <div className="p-6 text-center">
+                        <FileText className="w-10 h-10 text-red-400 mx-auto mb-2" />
+                        <p className="text-xs text-white/80 font-bold">PDF Payment Receipt Attached</p>
+                      </div>
+                    ) : (
+                      <img
+                        src={booking.payment_slip_url}
+                        alt="Payment Receipt Slip"
+                        className="w-full h-44 object-cover object-top hover:scale-105 transition-transform"
+                      />
+                    )}
+                  </div>
+
+                  <a
+                    href={booking.payment_slip_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl text-xs transition-colors"
+                  >
+                    <span>View Full Receipt / Slip →</span>
+                  </a>
+                </div>
+              )}
+
               {/* ── INLINE PAYMENT SLIP UPLOAD (IF NOT YET UPLOADED) ── */}
-              {!slipUploaded && (
+              {!booking.payment_slip_url && !slipUploaded && (
                 <div className="w-full bg-white/4 border border-white/10 rounded-3xl p-6 text-left backdrop-blur-xl space-y-4">
                   <p className="text-xs font-black text-white/70 uppercase tracking-wider flex items-center gap-2">
                     <Upload className="w-4 h-4 text-[#c1e527]" /> Or Upload Transfer Receipt Here
@@ -1189,6 +1278,25 @@ Ideomint — Perfectly Minted Events.
               Browse More Events
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification Banner */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-md w-full bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-white/20 rounded-2xl p-4 shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4 flex items-start gap-3">
+          <div className={`p-2 rounded-xl border shrink-0 ${toast.type === 'error' ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400'}`}>
+            {toast.type === 'error' ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+          </div>
+          <div className="flex-1">
+            <h4 className="font-extrabold text-white text-xs">{toast.title}</h4>
+            <p className="text-[11px] text-white/70 mt-0.5 leading-relaxed">{toast.message}</p>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-white/40 hover:text-white text-xs font-bold p-1"
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>

@@ -62,15 +62,15 @@ export default function AdminVerificationsPage() {
 
   const [printBooking, setPrintBooking] = useState<IBooking | null>(null);
 
-  // Lock background scroll when modal is open
+  // Lock ALL scrollable ancestors when modal is open
   useEffect(() => {
-    if (selectedBooking || printBooking) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    const isOpen = !!(selectedBooking || printBooking);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+    const scrollables = document.querySelectorAll<HTMLElement>('main, nav, aside');
+    scrollables.forEach((el) => { el.style.overflow = isOpen ? 'hidden' : ''; });
     return () => {
       document.body.style.overflow = '';
+      scrollables.forEach((el) => { el.style.overflow = ''; });
     };
   }, [selectedBooking, printBooking]);
 
@@ -319,10 +319,13 @@ export default function AdminVerificationsPage() {
       {/* ── Detail Modal ── */}
       {selectedBooking && (
         <div
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] overflow-y-auto p-4 sm:p-6"
           onClick={(e) => { if (e.target === e.currentTarget) setSelectedBooking(null); }}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
-          <div className="bg-[#111] border border-white/12 rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="min-h-full flex items-center justify-center py-6">
+          <div className="bg-[#111] border border-white/12 rounded-2xl max-w-xl w-full" onClick={(e) => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-lg font-black">Review Booking</h2>
@@ -457,6 +460,7 @@ export default function AdminVerificationsPage() {
                 </p>
               )}
             </div>
+          </div>
           </div>
         </div>
       )}

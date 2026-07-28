@@ -4,8 +4,9 @@ import { isAdminAuthenticated } from '@/lib/ideofest/auth';
 import type { ApiResponse } from '@/lib/ideofest/types';
 
 /**
- * GET /api/ideofest/admin/export-tickets?event_id=...
+ * GET /api/ideofest/admin/export-tickets?event_id=...&status=...
  * Exports ticket and booking details for a specific event (or all events) as CSV spreadsheet.
+ * Expands multi-ticket bookings (e.g. 3 tickets) so each attendee gets an explicit row in the report.
  * Admin only.
  */
 export async function GET(request: NextRequest) {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const event_id = searchParams.get('event_id');
+    const filterStatus = searchParams.get('status') || searchParams.get('payment_status') || 'all';
     const format = searchParams.get('format') || 'csv';
 
     const supabase = createAdminClient();
@@ -35,6 +37,12 @@ export async function GET(request: NextRequest) {
       query = query.eq('event_id', event_id);
     }
 
+    if (filterStatus === 'confirmed' || filterStatus === 'paid') {
+      query = query.or('status.eq.confirmed,payment_status.eq.paid,payment_status.eq.confirmed');
+    } else if (filterStatus === 'pending_verification' || filterStatus === 'pending') {
+      query = query.or('status.eq.pending_verification,payment_status.eq.pending_verification');
+    }
+
     const { data: bookings, error } = await query;
     if (error) throw error;
 
@@ -52,22 +60,28 @@ export async function GET(request: NextRequest) {
     // CSV Headers
     const headers = [
       'Booking Ref',
-      'Ticket Number',
-      'Customer Name',
-      'Email',
-      'Phone',
+      'Pass Index',
+      'Attendee Name',
+      'Email Address',
+      'Phone Number',
       'NIC / Passport',
       'Event Title',
       'Event Date',
       'Venue',
       'Ticket Tier',
-      'Quantity',
+      'Group Quantity',
       'Unit Price (LKR)',
       'Total Amount (LKR)',
       'Payment Method',
       'Payment Status',
       'Booking Status',
-      'QR Code Token',
+      'Emergency Contact Name',
+      'Emergency Contact Phone',
+      'City / District',
+      'Postal Code',
+      'Payment Slip URL',
+      'Ticket Number',
+      'QR Token',
       'Created At',
     ];
 
@@ -75,35 +89,86 @@ export async function GET(request: NextRequest) {
 
     (bookings || []).forEach((b: any) => {
       const ticketList = b.tickets || [];
-      const ticketNumber = ticketList.map((t: { ticket_number: string }) => t.ticket_number).join('; ') || 'Pending';
-      const qrToken = ticketList.map((t: { qr_token: string }) => t.qr_token).join('; ') || 'N/A';
+      const qty = Math.max(1, b.quantity || 1);
+      const extras: Array<{ name?: string; nic?: string; phone?: string }> = Array.isArray(b.additional_attendees) ? b.additional_attendees : [];
 
-      const row = [
+      // Row for Attendee 1 (Lead Booker)
+      const leadTicketNum = ticketList[0]?.ticket_number || ticketList.map((t: any) => t.ticket_number).join('; ') || 'Pending';
+      const leadQrToken = ticketList[0]?.qr_token || ticketList.map((t: any) => t.qr_token).join('; ') || 'N/A';
+
+      const leadRow = [
         escapeCsv(b.booking_ref),
-        escapeCsv(ticketNumber),
+        escapeCsv(`1 of ${qty} (Lead Booker)`),
         escapeCsv(b.attendee_name),
         escapeCsv(b.attendee_email),
         escapeCsv(b.attendee_phone || ''),
         escapeCsv(b.attendee_nic || ''),
         escapeCsv(b.event_title),
-        escapeCsv(b.event_date),
-        escapeCsv(b.venue),
-        escapeCsv(b.tier_label || b.tier_name),
-        escapeCsv(b.quantity),
-        escapeCsv(b.unit_price),
-        escapeCsv(b.total_amount),
-        escapeCsv(b.payment_method),
-        escapeCsv(b.payment_status),
-        escapeCsv(b.status),
-        escapeCsv(qrToken),
-        escapeCsv(b.created_at),
+        escapeCsv(b.event_date || ''),
+        escapeCsv(b.venue || ''),
+        escapeCsv(b.tier_label || b.tier_name || 'Standard'),
+        escapeCsv(qty),
+        escapeCsv(b.unit_price || 0),
+        escapeCsv(b.total_amount || 0),
+        escapeCsv(b.payment_method || 'bank_transfer'),
+        escapeCsv(b.payment_status || 'pending_verification'),
+        escapeCsv(b.status || 'pending_verification'),
+        escapeCsv(b.emergency_contact_name || ''),
+        escapeCsv(b.emergency_contact_phone || ''),
+        escapeCsv([b.city, b.district].filter(Boolean).join(', ')),
+        escapeCsv(b.postal_code || ''),
+        escapeCsv(b.payment_slip_url || ''),
+        escapeCsv(leadTicketNum),
+        escapeCsv(leadQrToken),
+        escapeCsv(b.created_at || ''),
       ];
 
-      rows.push(row.join(','));
+      rows.push(leadRow.join(','));
+
+      // Rows for Additional Attendees (Attendee 2, Attendee 3, etc.)
+      for (let i = 1; i < qty; i++) {
+        const extra = extras[i - 1] || {};
+        const attendeeName = extra.name || `Attendee ${i + 1} (${b.attendee_name}'s Group)`;
+        const attendeeNic = extra.nic || '—';
+        const attendeePhone = extra.phone || b.attendee_phone || '—';
+
+        const extraTicketNum = ticketList[i]?.ticket_number || 'Pending';
+        const extraQrToken = ticketList[i]?.qr_token || 'N/A';
+
+        const extraRow = [
+          escapeCsv(`${b.booking_ref}-${i + 1}`),
+          escapeCsv(`${i + 1} of ${qty}`),
+          escapeCsv(attendeeName),
+          escapeCsv(b.attendee_email),
+          escapeCsv(attendeePhone),
+          escapeCsv(attendeeNic),
+          escapeCsv(b.event_title),
+          escapeCsv(b.event_date || ''),
+          escapeCsv(b.venue || ''),
+          escapeCsv(b.tier_label || b.tier_name || 'Standard'),
+          escapeCsv(1),
+          escapeCsv(0),
+          escapeCsv(0),
+          escapeCsv(b.payment_method || 'bank_transfer'),
+          escapeCsv(b.payment_status || 'pending_verification'),
+          escapeCsv(b.status || 'pending_verification'),
+          escapeCsv(b.emergency_contact_name || ''),
+          escapeCsv(b.emergency_contact_phone || ''),
+          escapeCsv([b.city, b.district].filter(Boolean).join(', ')),
+          escapeCsv(b.postal_code || ''),
+          escapeCsv(b.payment_slip_url || ''),
+          escapeCsv(extraTicketNum),
+          escapeCsv(extraQrToken),
+          escapeCsv(b.created_at || ''),
+        ];
+
+        rows.push(extraRow.join(','));
+      }
     });
 
     const csvContent = rows.join('\n');
-    const filename = `ideofest-tickets-${eventTitle}-${new Date().toISOString().split('T')[0]}.csv`;
+    const statusLabel = filterStatus !== 'all' ? `-${filterStatus}` : '';
+    const filename = `ideofest-report-${eventTitle}${statusLabel}-${new Date().toISOString().split('T')[0]}.csv`;
 
     return new Response(csvContent, {
       status: 200,

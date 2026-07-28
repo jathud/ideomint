@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
       // Attendee 1 (Lead Booker)
       attendees.push({
         booking_ref: b.booking_ref,
+        event_id: b.event_id,
+        event_title: b.event_title,
         name: b.attendee_name,
         email: b.attendee_email,
         phone: b.attendee_phone || '—',
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
         tier_name: b.tier_name,
         tier_label: b.tier_label,
         quantity: b.quantity,
+        total_amount: b.total_amount || 0,
         checked_in: isCheckedIn,
         checked_in_at: ticket?.used_at,
         booking_status: b.status,
@@ -54,6 +57,8 @@ export async function GET(request: NextRequest) {
           if (extra.name || extra.nic || extra.phone) {
             attendees.push({
               booking_ref: `${b.booking_ref}-${idx + 2}`,
+              event_id: b.event_id,
+              event_title: b.event_title,
               name: extra.name || `Attendee ${idx + 2}`,
               email: b.attendee_email,
               phone: extra.phone || b.attendee_phone || '—',
@@ -61,6 +66,7 @@ export async function GET(request: NextRequest) {
               tier_name: b.tier_name,
               tier_label: `${b.tier_label} (Pass ${idx + 2}/${b.quantity})`,
               quantity: 1,
+              total_amount: 0,
               checked_in: isCheckedIn,
               checked_in_at: ticket?.used_at,
               booking_status: b.status,

@@ -205,6 +205,8 @@ export interface ITicket {
 // ── Attendee (derived view for admin list) ────────────────────
 export interface IAttendee {
   booking_ref: string;
+  event_id?: string;
+  event_title?: string;
   name: string;
   email: string;
   phone?: string;
@@ -212,6 +214,7 @@ export interface IAttendee {
   tier_name: TicketTierName;
   tier_label: string;
   quantity: number;
+  total_amount?: number;
   checked_in: boolean;
   checked_in_at?: string;
   booking_status: BookingStatus;

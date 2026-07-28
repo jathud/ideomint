@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import jsQR from 'jsqr';
-import { QrCode, Camera, CameraOff, CheckCircle, XCircle, Loader2, ShieldCheck, Users, Ticket, RefreshCw, Zap } from 'lucide-react';
+import { QrCode, Camera, CameraOff, CheckCircle, XCircle, Loader2, ShieldCheck, Users, Ticket, RefreshCw, UserCheck, Phone, FileText } from 'lucide-react';
+
+type AttendeeItem = {
+  index: number;
+  role: string;
+  name: string;
+  nic: string;
+  phone: string;
+};
 
 type ScanResult = {
   success: boolean;
@@ -12,19 +20,22 @@ type ScanResult = {
     bookingId?: string;
     attendeeName?: string;
     attendee_name?: string;
+    attendee_email?: string;
+    attendee_nic?: string;
+    attendee_phone?: string;
     eventTitle?: string;
     event_title?: string;
     ticketTierLabel?: string;
     tier_label?: string;
     quantity?: number;
-    checkInCount?: number;
-    newTotalCheckedIn?: number;
-    remainingAfterScan?: number;
+    totalQty?: number;
+    checkedIn?: number;
+    remaining?: number;
+    quantity_checked_in?: number;
     ticket_number?: string;
     booking_ref?: string;
     pass_index?: number;
-    attendee_nic?: string;
-    attendee_phone?: string;
+    all_attendees?: AttendeeItem[];
   };
   error?: string;
 };
@@ -35,7 +46,7 @@ export default function AdminScannerPage() {
   const animFrameIdRef = useRef<number | null>(null);
   const isScanningRef = useRef<boolean>(false);
   const cooldownRef = useRef<boolean>(false);
-  const cameraActiveRef = useRef<boolean>(false); // ref so tick() never captures stale closure
+  const cameraActiveRef = useRef<boolean>(false);
 
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -45,8 +56,8 @@ export default function AdminScannerPage() {
   const [result, setResult] = useState<ScanResult | null>(null);
 
   // Process scanned or manual payload
-  const processPayload = async (payload: string) => {
-    if (!payload.trim() || cooldownRef.current || isScanningRef.current) return;
+  const processPayload = async (payload: string, overrideQty?: number) => {
+    if (!payload.trim() || (cooldownRef.current && !overrideQty) || isScanningRef.current) return;
 
     isScanningRef.current = true;
     cooldownRef.current = true;
@@ -64,7 +75,7 @@ export default function AdminScannerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           qr_token: payload,
-          check_in_qty: checkInQty,
+          check_in_qty: overrideQty || checkInQty,
         }),
       });
       const data = await res.json();
@@ -74,7 +85,6 @@ export default function AdminScannerPage() {
     } finally {
       setScanning(false);
       isScanningRef.current = false;
-      // 2.5s cooldown before next auto scan
       setTimeout(() => {
         cooldownRef.current = false;
       }, 2500);
@@ -83,7 +93,7 @@ export default function AdminScannerPage() {
 
   // Continuous QR Code Frame Reader Loop using jsQR
   const tick = () => {
-    if (!cameraActiveRef.current) return; // stop if camera was deactivated
+    if (!cameraActiveRef.current) return;
 
     if (videoRef.current && videoRef.current.readyState >= videoRef.current.HAVE_ENOUGH_DATA) {
       const canvas = canvasRef.current;
@@ -117,7 +127,7 @@ export default function AdminScannerPage() {
     setCameraError(null);
     try {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setCameraError('Camera API not available. Make sure this page is loaded over HTTPS or localhost.');
+        setCameraError('Camera API not available. Load over HTTPS or localhost.');
         return;
       }
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -125,11 +135,9 @@ export default function AdminScannerPage() {
       });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        // play() can throw NotAllowedError if browser blocks autoplay — catch separately
         try {
           await videoRef.current.play();
-        } catch (playErr: any) {
-          // Some browsers need a user gesture to play; stream is fine, just try muted play
+        } catch {
           videoRef.current.muted = true;
           await videoRef.current.play();
         }
@@ -138,35 +146,7 @@ export default function AdminScannerPage() {
         animFrameIdRef.current = requestAnimationFrame(tick);
       }
     } catch (err: any) {
-      const name = err?.name || '';
-      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') {
-        setCameraError(
-          'Camera permission was denied. Please click the camera icon in your browser\'s address bar, allow camera access, then try again.'
-        );
-      } else if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
-        setCameraError('No camera found on this device. Use manual ticket entry below.');
-      } else if (name === 'NotReadableError' || name === 'TrackStartError') {
-        setCameraError('Camera is already in use by another app. Close other apps using the camera and try again.');
-      } else if (name === 'OverconstrainedError') {
-        // Retry with relaxed constraints
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.muted = true;
-            await videoRef.current.play();
-            cameraActiveRef.current = true;
-            setCameraActive(true);
-            animFrameIdRef.current = requestAnimationFrame(tick);
-          }
-          return;
-        } catch {
-          setCameraError('Camera constraints not supported. Try a different browser or device.');
-        }
-      } else {
-        setCameraError(`Camera error: ${err?.message || 'Unknown error'}. Use manual ticket entry below.`);
-      }
-      console.error('[Camera Error]', err);
+      setCameraError(`Camera error: ${err?.message || 'Access denied'}. Enter ticket ID below.`);
     }
   };
 
@@ -182,7 +162,6 @@ export default function AdminScannerPage() {
     if (videoRef.current) videoRef.current.srcObject = null;
   };
 
-  // cameraActive state just drives the UI; actual loop control is via cameraActiveRef
   useEffect(() => {
     return () => {
       cameraActiveRef.current = false;
@@ -212,18 +191,18 @@ export default function AdminScannerPage() {
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black">Gate QR Scanner</h1>
-        <p className="text-white/40 text-xs sm:text-sm mt-1">Scan or validate attendee QR tickets at entrance gates</p>
+        <p className="text-white/40 text-xs sm:text-sm mt-1">Scan QR codes and manage group attendee gate entry</p>
       </div>
 
-      {/* Attendees Count Selector */}
+      {/* Attendees Arriving Now Selector */}
       <div className="bg-white/4 border border-white/10 rounded-2xl p-4 sm:p-5 backdrop-blur-md">
         <div className="flex items-center justify-between gap-2 mb-3">
           <label className="text-xs font-extrabold text-white/70 uppercase tracking-widest flex items-center gap-2">
             <Users className="w-4 h-4 text-[#c1e527]" />
-            Attendees Arriving Now
+            How many attendees arriving now?
           </label>
           <span className="text-xs font-mono font-bold text-[#c1e527] bg-[#c1e527]/10 px-2.5 py-0.5 rounded-full border border-[#c1e527]/20">
-            {checkInQty} Person{checkInQty > 1 ? 's' : ''}
+            Admit {checkInQty} Person{checkInQty > 1 ? 's' : ''}
           </span>
         </div>
 
@@ -258,11 +237,11 @@ export default function AdminScannerPage() {
         </div>
       </div>
 
-      {/* Hidden Canvas for QR Frame Processing */}
+      {/* Hidden Canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Camera Viewfinder Box */}
-      <div className="relative w-full aspect-square max-h-[380px] rounded-3xl bg-black/60 border border-white/15 overflow-hidden flex items-center justify-center shadow-2xl">
+      {/* Camera Viewfinder */}
+      <div className="relative w-full aspect-square max-h-[360px] rounded-3xl bg-black/60 border border-white/15 overflow-hidden flex items-center justify-center shadow-2xl">
         <video
           ref={videoRef}
           className={`absolute inset-0 w-full h-full object-cover ${cameraActive ? 'opacity-100' : 'opacity-0'}`}
@@ -278,7 +257,6 @@ export default function AdminScannerPage() {
           </div>
         )}
 
-        {/* Scanning laser animation */}
         {cameraActive && (
           <>
             <div className="absolute top-6 left-6 w-10 h-10 border-t-4 border-l-4 border-[#c1e527] rounded-tl-xl" />
@@ -305,42 +283,19 @@ export default function AdminScannerPage() {
             : 'bg-gradient-to-r from-[#c1e527] to-[#d4ff33] hover:from-[#b0d420] hover:to-[#c1e527] text-section-ink'
         }`}
       >
-        {cameraActive ? (
-          <><CameraOff className="w-5 h-5" /> Stop Camera</>
-        ) : (
-          <><Camera className="w-5 h-5" /> Start Live Camera Scanner</>
-        )}
+        {cameraActive ? <><CameraOff className="w-5 h-5" /> Stop Camera</> : <><Camera className="w-5 h-5" /> Start Live Camera Scanner</>}
       </button>
 
-      {/* Camera Permission Error Card */}
       {cameraError && !cameraActive && (
         <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
-          <div className="p-2 bg-red-500/20 rounded-xl shrink-0 mt-0.5">
-            <CameraOff className="w-4 h-4 text-red-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-red-400 mb-1">Camera Unavailable</p>
-            <p className="text-xs text-white/60 leading-relaxed">{cameraError}</p>
-            {cameraError.includes('permission') && (
-              <ol className="mt-2 text-[10px] text-white/40 space-y-0.5 list-decimal list-inside">
-                <li>Click the 🔒 lock / camera icon in your browser address bar</li>
-                <li>Set Camera to <strong className="text-white/60">Allow</strong></li>
-                <li>Refresh the page and try again</li>
-              </ol>
-            )}
-            <button
-              onClick={startCamera}
-              className="mt-3 flex items-center gap-1.5 bg-white/10 hover:bg-white/15 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all"
-            >
-              <RefreshCw className="w-3 h-3" /> Retry Camera
-            </button>
-          </div>
+          <CameraOff className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+          <div className="text-xs text-white/70">{cameraError}</div>
         </div>
       )}
 
-      {/* Scan Result Feedback Card */}
+      {/* Scan Result Feedback Card with All Attendees Breakdown */}
       {result && (
-        <div className={`p-6 rounded-3xl border transition-all ${
+        <div className={`p-6 rounded-3xl border space-y-4 backdrop-blur-xl transition-all ${
           result.success
             ? 'bg-[#c1e527]/15 border-[#c1e527] shadow-[0_0_30px_rgba(193,229,39,0.2)]'
             : result.result === 'duplicate'
@@ -358,50 +313,107 @@ export default function AdminScannerPage() {
               <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full ${
                 result.success ? 'bg-[#c1e527]/20 text-[#c1e527]' : result.result === 'duplicate' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'
               }`}>
-                {result.result === 'valid' ? 'VALID TICKET' : result.result === 'duplicate' ? 'DUPLICATE SCAN' : 'ACCESS DENIED'}
+                {result.result === 'valid' ? 'VALID PASS — GATE PASSED ✓' : result.result === 'duplicate' ? 'DUPLICATE / FULLY ADMITTED' : 'ACCESS DENIED'}
               </span>
 
               <h3 className="text-lg font-black text-white mt-1">
-                {result.data?.attendee_name || result.data?.attendeeName || 'Gate Scanner Result'}
+                {result.data?.attendee_name || result.data?.attendeeName || 'Gate Terminal Result'}
               </h3>
 
               <p className="text-xs text-white/80 mt-1 leading-relaxed">
                 {result.message || result.error}
               </p>
 
+              {/* Group Check-in Summary Stats */}
               {result.data && (
-                <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-white/40 block text-[10px]">Pass Reference</span>
-                    <span className="font-mono text-white font-bold">{result.data.ticket_number || result.data.booking_ref || '—'}</span>
+                <div className="mt-3 pt-3 border-t border-white/10 grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="bg-white/5 p-2 rounded-xl">
+                    <span className="text-[10px] text-white/40 block uppercase font-bold">Total Group</span>
+                    <span className="font-extrabold text-white text-sm">{result.data.totalQty || 1} Pass(es)</span>
                   </div>
-                  <div>
-                    <span className="text-white/40 block text-[10px]">Pass Tier</span>
-                    <span className="text-white font-bold">{result.data.tier_label || 'Standard'}</span>
+                  <div className="bg-emerald-500/15 border border-emerald-500/30 p-2 rounded-xl">
+                    <span className="text-[10px] text-emerald-400 block uppercase font-bold">Admitted</span>
+                    <span className="font-extrabold text-emerald-300 text-sm">{result.data.checkedIn || 1} Checked In</span>
                   </div>
-                  <div>
-                    <span className="text-white/40 block text-[10px]">NIC Number</span>
-                    <span className="text-white font-bold">{result.data.attendee_nic || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-white/40 block text-[10px]">Gate Status</span>
-                    <span className="text-[#c1e527] font-bold">Passed Gate ✓</span>
+                  <div className="bg-amber-500/15 border border-amber-500/30 p-2 rounded-xl">
+                    <span className="text-[10px] text-amber-400 block uppercase font-bold">Remaining</span>
+                    <span className="font-extrabold text-amber-300 text-sm">{result.data.remaining || 0} Left</span>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
+          {/* ALL ATTENDEES FULL DETAILS BREAKDOWN */}
+          {result.data?.all_attendees && result.data.all_attendees.length > 0 && (
+            <div className="bg-black/40 border border-white/12 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                <span className="text-xs font-black text-[#c1e527] uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-4 h-4" /> All Attendee Details ({result.data.all_attendees.length})
+                </span>
+                <span className="text-[10px] text-white/40">Group Pass breakdown</span>
+              </div>
+
+              <div className="space-y-2.5">
+                {result.data.all_attendees.map((att) => (
+                  <div key={att.index} className="bg-white/5 border border-white/8 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold text-[#c1e527] bg-[#c1e527]/10 px-2 py-0.5 rounded-full border border-[#c1e527]/20">
+                          {att.role}
+                        </span>
+                        <strong className="text-white text-sm">{att.name}</strong>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-[11px] text-white/50 font-mono">
+                        {att.nic && att.nic !== '—' && <span>NIC: {att.nic}</span>}
+                        {att.phone && att.phone !== '—' && <span>Tel: {att.phone}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {att.index <= (result.data?.checkedIn || 0) ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-1 rounded-full">
+                          <UserCheck className="w-3 h-3" /> Admitted ✓
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 rounded-full">
+                          Pending Entry ⏳
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Incremental Check-In Action for Remaining Attendees */}
+          {result.data?.remaining && result.data.remaining > 0 && result.data.booking_ref && (
+            <div className="bg-white/5 border border-white/12 rounded-2xl p-4 space-y-3">
+              <span className="text-xs font-bold text-white/80 block">
+                Arriving with more group members right now? Select count to admit:
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => processPayload(result.data?.ticket_number || result.data?.booking_ref || '', result.data?.remaining)}
+                  className="flex-1 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-3 rounded-xl text-xs transition-all shadow-md"
+                >
+                  Admit All Remaining {result.data.remaining} Person(s) Now →
+                </button>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={resetResult}
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-2.5 rounded-xl text-xs font-extrabold transition-all"
+            className="w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 text-white py-3 rounded-xl text-xs font-extrabold transition-all"
           >
-            <RefreshCw className="w-3.5 h-3.5" /> Next Scan
+            <RefreshCw className="w-3.5 h-3.5" /> Scan Next Ticket
           </button>
         </div>
       )}
 
-      {/* Manual Ticket Ref Input */}
+      {/* Manual Ticket Entry */}
       <form onSubmit={handleManual} className="bg-white/4 border border-white/10 rounded-3xl p-5 backdrop-blur-md space-y-3">
         <label htmlFor="manualCodeInput" className="block text-xs font-black text-white/60 uppercase tracking-wider">
           Or Enter Ticket ID / Booking Reference
@@ -412,7 +424,7 @@ export default function AdminScannerPage() {
             type="text"
             value={manualCode}
             onChange={(e) => setManualCode(e.target.value)}
-            placeholder="e.g. IDF-TKT-XXXXXX or IDF-1B5534C5"
+            placeholder="e.g. IDF-TKT-XXXXXX or IDF-XXXXXXXX"
             className="flex-1 bg-white/5 border border-white/12 rounded-xl px-4 py-3 text-white placeholder-white/30 text-xs sm:text-sm font-mono focus:outline-none focus:border-[#c1e527]"
           />
           <button
@@ -420,7 +432,7 @@ export default function AdminScannerPage() {
             disabled={!manualCode.trim() || scanning}
             className="bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-40 text-section-ink font-black px-5 py-3 rounded-xl text-xs sm:text-sm transition-all shrink-0"
           >
-            {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan'}
+            {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan Pass'}
           </button>
         </div>
       </form>

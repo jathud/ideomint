@@ -128,6 +128,29 @@ export default function QRTicket({ booking }: QRTicketProps) {
               LKR {booking.total_amount?.toLocaleString('en-LK', { minimumFractionDigits: 2 })}
             </span>
           </div>
+
+          {/* Group Pass Members Breakdown (for 2, 3, 4+ passes) */}
+          {booking.quantity > 1 && (
+            <div className="pt-2.5 border-t border-white/8 print:border-gray-200">
+              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest print:text-gray-500 mb-1.5">
+                Group Pass Members ({booking.quantity} Total Passes)
+              </p>
+              <div className="space-y-1.5">
+                {/* Attendee 1 (Lead Booker) */}
+                <div className="flex items-center justify-between text-[11px] bg-white/5 print:bg-gray-100 px-2.5 py-1 rounded-lg">
+                  <span className="font-bold text-white print:text-black">1. {booking.attendee_name} (Lead)</span>
+                  <span className="font-mono text-white/50 print:text-gray-600 text-[10px]">{booking.attendee_nic || '—'}</span>
+                </div>
+                {/* Additional Attendees (Attendee 2, 3, 4...) */}
+                {Array.isArray(booking.additional_attendees) && booking.additional_attendees.map((extra, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] bg-white/5 print:bg-gray-100 px-2.5 py-1 rounded-lg">
+                    <span className="font-bold text-white/90 print:text-black">{idx + 2}. {extra.name || `Attendee ${idx + 2}`}</span>
+                    <span className="font-mono text-white/50 print:text-gray-600 text-[10px]">{extra.nic || '—'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
