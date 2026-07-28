@@ -359,13 +359,13 @@ Ideomint — Perfectly Minted Events.
   const bankBranch = event.bank_branch || process.env.NEXT_PUBLIC_BANK_BRANCH || 'Colombo 03';
 
   return (
-    <div className="container-layout py-12 px-4 sm:px-6 max-w-3xl mx-auto min-h-screen">
+    <div className="container-layout pt-28 sm:pt-32 pb-16 px-4 sm:px-6 max-w-3xl mx-auto min-h-screen">
       {/* Navigation Top */}
       <button
         onClick={() => step > 1 ? setStep(step - 1) : router.push(`/ideofest/events/${slug}`)}
         className="inline-flex items-center gap-2 text-white/60 hover:text-white text-xs font-extrabold uppercase tracking-widest mb-8 transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10"
       >
-        <ArrowLeft className="w-4 h-4 text-[#c1e527]" /> Back to Event Details
+        <ArrowLeft className="w-4 h-4 text-[#c1e527]" /> Back
       </button>
 
       {/* Progress Steps Header */}

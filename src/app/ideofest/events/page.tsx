@@ -73,15 +73,15 @@ export default function EventsPage() {
   }, [filters, events]);
 
   return (
-    <div className="container-layout py-10 px-4 sm:px-6 lg:px-8">
+    <div className="container-layout pt-32 sm:pt-36 pb-16 px-4 sm:px-6 lg:px-8">
       {/* Back Button */}
       <div className="mb-6">
         <Link
           href="/ideofest"
-          className="inline-flex items-center gap-2 text-xs font-bold text-white/70 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-full transition-all"
+          className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-white/70 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 transition-all hover:scale-105 group"
         >
-          <ArrowLeft className="w-4 h-4 text-signal-lime" />
-          <span>Back to Home</span>
+          <ArrowLeft className="w-4 h-4 text-[#c1e527] group-hover:-translate-x-1 transition-transform" />
+          <span>Back</span>
         </Link>
       </div>
 

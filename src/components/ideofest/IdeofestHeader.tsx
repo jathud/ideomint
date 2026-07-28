@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Ticket, CalendarDays, Menu, X, ArrowLeft } from 'lucide-react';
+import { Ticket, CalendarDays, Menu, X, ArrowLeft, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import CountdownTimer from './CountdownTimer';
 import IdeofestLogo from './IdeofestLogo';
@@ -81,20 +81,19 @@ export default function IdeofestHeader() {
         {/* ── Main Nav Bar ── */}
         <div className="container-layout flex items-center justify-between py-3 gap-4">
 
-          {/* Left: Back + Logo */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Left: Special Glowing Back to Ideomint Button */}
+          <div className="flex items-center flex-shrink-0">
             <a
               href="/"
-              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black text-white bg-[#c1e527]/15 hover:bg-[#c1e527]/30 border border-[#c1e527]/40 hover:border-[#c1e527]/70 transition-all group"
-              title="Return to Ideomint Main Website"
+              className="relative group p-[1.5px] rounded-full bg-gradient-to-r from-[#FF5A3C] via-[#ff7a63] to-[#c1e527] shadow-[0_0_20px_rgba(255,90,60,0.35)] hover:shadow-[0_0_30px_rgba(255,90,60,0.7)] hover:scale-[1.04] active:scale-95 transition-all duration-300"
+              title="Return to Ideomint Main Studio Website"
             >
-              <ArrowLeft className="w-3.5 h-3.5 text-[#c1e527] group-hover:-translate-x-0.5 transition-transform" />
-              <span>Ideomint</span>
+              <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-section-ink/90 group-hover:bg-gradient-to-r group-hover:from-[#FF5A3C] group-hover:to-[#e04529] text-white text-xs sm:text-xs font-black transition-all duration-300">
+                <ArrowLeft className="w-3.5 h-3.5 text-[#FF5A3C] group-hover:text-white group-hover:-translate-x-0.5 sm:group-hover:-translate-x-1 transition-transform duration-300 shrink-0" />
+                <span className="tracking-wide">Ideomint</span>
+                <Sparkles className="w-3.5 h-3.5 text-[#c1e527] group-hover:text-white shrink-0 animate-pulse hidden sm:inline" />
+              </div>
             </a>
-
-            {/* <Link href="/ideofest" className="hover:opacity-85 transition-opacity">
-              <IdeofestLogo width={140} height={40} />
-            </Link> */}
           </div>
 
           {/* Center: Desktop nav */}

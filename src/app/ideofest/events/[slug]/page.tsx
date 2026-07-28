@@ -150,13 +150,13 @@ export default async function EventDetailPage({ params }: Props) {
         <div className="absolute inset-0 bg-gradient-to-t from-section-ink via-section-ink/60 to-transparent" />
         
         {/* Floating Back Button */}
-        <div className="absolute top-6 left-0 right-0 z-10 container-layout px-4 sm:px-6">
+        <div className="absolute top-28 sm:top-32 left-0 right-0 z-10 container-layout px-4 sm:px-6">
           <Link
             href="/ideofest/events"
-            className="inline-flex items-center gap-2 text-xs font-bold text-white hover:text-signal-lime bg-black/60 hover:bg-black/80 border border-white/20 px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg"
+            className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-white/90 hover:text-white bg-black/70 hover:bg-black/90 border border-white/20 px-4 py-2 rounded-full transition-all backdrop-blur-md shadow-lg hover:scale-105 group"
           >
-            <ArrowLeft className="w-4 h-4 text-signal-lime" />
-            <span>Back to All Events</span>
+            <ArrowLeft className="w-4 h-4 text-[#c1e527] group-hover:-translate-x-1 transition-transform" />
+            <span>Back</span>
           </Link>
         </div>
 

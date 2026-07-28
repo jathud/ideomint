@@ -5,7 +5,7 @@ import QRTicket from '@/components/ideofest/QRTicket';
 import Link from 'next/link';
 import {
   Ticket, ArrowRight, Search, Phone, Upload, CheckCircle2,
-  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck, Share2
+  Clock, XCircle, Loader2, ImagePlus, RefreshCw, Printer, ShieldCheck, Share2, ArrowLeft
 } from 'lucide-react';
 import type { IBooking } from '@/lib/ideofest/types';
 
@@ -73,7 +73,7 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
   };
 
   return (
-    <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4">
+    <div className="mt-4 rounded-2xl bg-white/5 border border-white/10 p-4 pt-6">
       <div className="flex items-center justify-between mb-3">
         <span className="text-xs font-bold text-white/70 uppercase tracking-widest">
           Upload Payment Slip
@@ -196,7 +196,18 @@ export default function MyTicketsPage() {
   };
 
   return (
-    <div className="container-layout py-10 px-4 sm:px-6 max-w-4xl mx-auto min-h-[70vh]">
+    <div className="container-layout pt-32 sm:pt-36 pb-16 px-4 sm:px-6 max-w-4xl mx-auto min-h-[80vh]">
+      {/* Top Back Navigation Button */}
+      <div className="mb-6">
+        <Link
+          href="/ideofest"
+          className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-white/70 hover:text-white bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 transition-all hover:scale-105 group"
+        >
+          <ArrowLeft className="w-4 h-4 text-[#c1e527] group-hover:-translate-x-1 transition-transform" />
+          <span>Back</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <div className="mb-10 text-center">
         <span className="text-xs font-bold text-[#c1e527] uppercase tracking-widest">Digital Ticket Portal</span>
@@ -213,9 +224,8 @@ export default function MyTicketsPage() {
             type="button"
             onClick={() => { setMode('ref'); setSearchQuery(''); setSearched(false); setBookings([]); }}
             aria-pressed={mode === 'ref'}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              mode === 'ref' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
-            }`}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === 'ref' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
+              }`}
           >
             <Ticket className="w-3.5 h-3.5" /> Booking Reference
           </button>
@@ -223,9 +233,8 @@ export default function MyTicketsPage() {
             type="button"
             onClick={() => { setMode('phone'); setSearchQuery(''); setSearched(false); setBookings([]); }}
             aria-pressed={mode === 'phone'}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              mode === 'phone' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
-            }`}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${mode === 'phone' ? 'bg-[#c1e527] text-section-ink' : 'text-white/50 hover:text-white'
+              }`}
           >
             <Phone className="w-3.5 h-3.5" /> Email Address
           </button>
@@ -282,11 +291,10 @@ export default function MyTicketsPage() {
               <div
                 key={b.booking_ref}
                 onClick={() => setSelectedBooking(b)}
-                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                  selectedBooking?.booking_ref === b.booking_ref
-                    ? 'bg-[#c1e527]/10 border-[#c1e527]'
-                    : 'bg-white/5 border-white/8 hover:border-white/20'
-                }`}
+                className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${selectedBooking?.booking_ref === b.booking_ref
+                  ? 'bg-[#c1e527]/10 border-[#c1e527]'
+                  : 'bg-white/5 border-white/8 hover:border-white/20'
+                  }`}
               >
                 <div>
                   <span className="font-mono text-xs font-bold text-[#c1e527]">{b.booking_ref}</span>
