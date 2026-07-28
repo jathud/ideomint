@@ -28,6 +28,21 @@ const SRI_LANKA_DISTRICTS = [
   'Moneragala', 'Ratnapura', 'Kegalle',
 ];
 
+function isValidPhone(p: string) {
+  const clean = p.replace(/[\s\-\(\)]/g, '');
+  return /^(?:\+?94|0)?7[0-9]{8}$/.test(clean) || /^\+?[0-9]{9,15}$/.test(clean);
+}
+
+function isValidNIC(nic: string) {
+  const clean = nic.trim();
+  return /^[0-9]{9}[vVxX]$/.test(clean) || /^[0-9]{12}$/.test(clean) || /^[A-Z0-9]{6,12}$/i.test(clean);
+}
+
+function isValidPostal(postal: string) {
+  const clean = postal.trim();
+  return /^[0-9]{5}$/.test(clean) || /^[A-Z0-9 \-]{3,10}$/i.test(clean);
+}
+
 function FormField({
   id, label, required, error, children,
 }: {
@@ -221,21 +236,57 @@ Ideomint — Perfectly Minted Events.
   // ── Step 2 validation ─────────────────────────────────────
   function validateStep2() {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Full name is required';
-    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) e.email = 'Valid email is required';
-    if (!form.phone.trim()) e.phone = 'Phone number is required';
-    if (!form.nic.trim()) e.nic = 'NIC number is required';
-    if (!form.address1.trim()) e.address1 = 'Address is required';
+
+    if (!form.name.trim()) e.name = 'Full legal name is required';
+
+    if (!form.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      e.email = 'Valid email address is required (e.g. name@example.com)';
+    }
+
+    if (!form.phone.trim()) {
+      e.phone = 'Phone number is required';
+    } else if (!isValidPhone(form.phone)) {
+      e.phone = 'Enter valid phone number (e.g. 0771234567 or +94771234567)';
+    }
+
+    if (!form.nic.trim()) {
+      e.nic = 'NIC / Passport number is required';
+    } else if (!isValidNIC(form.nic)) {
+      e.nic = 'Enter valid NIC (e.g. 123456789V or 200012345678) or Passport';
+    }
+
+    if (!form.address1.trim()) e.address1 = 'Address Line 1 is required';
     if (!form.city.trim()) e.city = 'City is required';
-    if (!form.district) e.district = 'District is required';
+    if (!form.district) e.district = 'District selection is required';
+
+    if (!form.postal.trim()) {
+      e.postal = 'Postal code is required';
+    } else if (!isValidPostal(form.postal)) {
+      e.postal = 'Enter valid 5-digit postal code (e.g. 00300 or 10100)';
+    }
+
     if (!form.emergencyName.trim()) e.emergencyName = 'Emergency contact name is required';
-    if (!form.emergencyPhone.trim()) e.emergencyPhone = 'Emergency contact phone is required';
+
+    if (!form.emergencyPhone.trim()) {
+      e.emergencyPhone = 'Emergency contact phone is required';
+    } else if (!isValidPhone(form.emergencyPhone)) {
+      e.emergencyPhone = 'Enter valid phone number (e.g. 0771234567)';
+    }
 
     additionalAttendees.forEach((a, i) => {
-      if (!a.name.trim()) e[`extra_name_${i}`] = 'Name is required';
-      if (!a.nic.trim()) e[`extra_nic_${i}`] = 'NIC is required';
-      if (!a.phone.trim()) e[`extra_phone_${i}`] = 'Phone is required';
+      if (!a.name.trim()) e[`extra_name_${i}`] = 'Full name is required';
+      if (!a.nic.trim()) {
+        e[`extra_nic_${i}`] = 'NIC number is required';
+      } else if (!isValidNIC(a.nic)) {
+        e[`extra_nic_${i}`] = 'Enter valid NIC (e.g. 123456789V or 200012345678)';
+      }
+      if (!a.phone.trim()) {
+        e[`extra_phone_${i}`] = 'Phone number is required';
+      } else if (!isValidPhone(a.phone)) {
+        e[`extra_phone_${i}`] = 'Enter valid phone number';
+      }
     });
+
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -715,9 +766,9 @@ Ideomint — Perfectly Minted Events.
                 </select>
                 {errors.district && <p className="text-red-400 text-xs mt-1">{errors.district}</p>}
               </FormField>
-              <FormField id="postal" label="Postal Code">
-                <InputField id="postal" placeholder="00100" value={form.postal}
-                  onChange={(v) => setForm({ ...form, postal: v })} />
+              <FormField id="postal" label="Postal Code" required error={errors.postal}>
+                <InputField id="postal" placeholder="00300" value={form.postal}
+                  onChange={(v) => setForm({ ...form, postal: v })} error={errors.postal} />
               </FormField>
             </div>
           </div>

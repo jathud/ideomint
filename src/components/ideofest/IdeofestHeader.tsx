@@ -81,18 +81,15 @@ export default function IdeofestHeader() {
         {/* ── Main Nav Bar ── */}
         <div className="container-layout flex items-center justify-between py-3 gap-4">
 
-          {/* Left: Special Glowing Back to Ideomint Button */}
+          {/* Left: Solid Orange Ideomint Button (matches Get Tickets CTA style) */}
           <div className="flex items-center flex-shrink-0">
             <a
               href="/"
-              className="relative group p-[1.5px] rounded-full bg-gradient-to-r from-[#FF5A3C] via-[#ff7a63] to-[#c1e527] shadow-[0_0_20px_rgba(255,90,60,0.35)] hover:shadow-[0_0_30px_rgba(255,90,60,0.7)] hover:scale-[1.04] active:scale-95 transition-all duration-300"
+              className="flex items-center gap-2 bg-[#FF5A3C] hover:bg-[#e04529] text-white px-4 py-2 rounded-full text-sm font-black tracking-wide transition-all shadow-[0_0_20px_rgba(255,90,60,0.35)] hover:scale-[1.03] active:scale-95 group"
               title="Return to Ideomint Main Studio Website"
             >
-              <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-section-ink/90 group-hover:bg-gradient-to-r group-hover:from-[#FF5A3C] group-hover:to-[#e04529] text-white text-xs sm:text-xs font-black transition-all duration-300">
-                <ArrowLeft className="w-3.5 h-3.5 text-[#FF5A3C] group-hover:text-white group-hover:-translate-x-0.5 sm:group-hover:-translate-x-1 transition-transform duration-300 shrink-0" />
-                <span className="tracking-wide">Ideomint</span>
-                <Sparkles className="w-3.5 h-3.5 text-[#c1e527] group-hover:text-white shrink-0 animate-pulse hidden sm:inline" />
-              </div>
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform shrink-0" />
+              <span>Ideomint</span>
             </a>
           </div>
 
