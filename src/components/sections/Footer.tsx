@@ -57,7 +57,7 @@ export default function Footer() {
 
           {/* Links Group 1 */}
           <div className="lg:col-span-2 lg:col-start-6">
-            <h4 className="text-sm font-bold tracking-widest text-white/40 uppercase mb-6">Studio</h4>
+            <h4 className="text-sm font-bold tracking-widest text-white/80 uppercase mb-6">Studio</h4>
             <ul className="flex flex-col gap-4">
               <li><Link href={isHome ? '#manifesto' : '/#manifesto'} className="hover:text-creative-flame transition-colors font-medium p-2 -ml-2 w-max inline-block">About Us</Link></li>
               <li><Link href={isHome ? '#services' : '/#services'} className="hover:text-creative-flame transition-colors font-medium p-2 -ml-2 w-max inline-block">Capabilities</Link></li>
@@ -69,7 +69,7 @@ export default function Footer() {
 
           {/* Links Group 2 */}
           <div className="lg:col-span-2">
-            <h4 className="text-sm font-bold tracking-widest text-white/40 uppercase mb-6">Connect</h4>
+            <h4 className="text-sm font-bold tracking-widest text-white/80 uppercase mb-6">Connect</h4>
             <ul className="flex flex-col gap-4">
               <li><Link href={isHome ? '#contact' : '/#contact'} className="hover:text-creative-flame transition-colors font-medium p-2 -ml-2 w-max inline-block">Contact</Link></li>
             </ul>
@@ -77,7 +77,7 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div className="lg:col-span-3">
-            <h4 className="text-sm font-bold tracking-widest text-white/40 uppercase mb-6">The Mint</h4>
+            <h4 className="text-sm font-bold tracking-widest text-white/80 uppercase mb-6">The Mint</h4>
             <p className="text-sm text-white/60 mb-4">Subscribe to our newsletter for brand strategy insights and studio updates.</p>
             <form className="flex flex-col gap-3" onSubmit={(e) => e.preventDefault()}>
               <div className="relative">
@@ -100,18 +100,18 @@ export default function Footer() {
                     </svg>
                   </div>
                 </div>
-                <span className="text-xs text-white/50 group-hover:text-white/80 transition-colors">I agree to receive marketing communications.</span>
+                <span className="text-xs text-white/75 group-hover:text-white transition-colors">I agree to receive marketing communications.</span>
               </label>
             </form>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/10 text-xs text-white/40 gap-4">
+        <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-white/10 text-xs text-white/75 gap-4">
           <p>© {new Date().getFullYear()} Ideomint. All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link href="#" className="hover:text-white transition-colors p-2 -m-2">Privacy Policy</Link>
-            <Link href="#" className="hover:text-white transition-colors p-2 -m-2">Terms of Service</Link>
+            <Link href="#" className="hover:text-white font-medium transition-colors p-2 -m-2">Privacy Policy</Link>
+            <Link href="#" className="hover:text-white font-medium transition-colors p-2 -m-2">Terms of Service</Link>
           </div>
         </div>
       </div>

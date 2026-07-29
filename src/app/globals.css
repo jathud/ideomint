@@ -253,45 +253,58 @@ html {
 
 /* === CLEAN PRINT STYLING === */
 @media print {
+  /* Hide standard page headers, footers, sidebars, and navigation */
+  header, footer, nav, aside, .print-hide, .print\:hidden, button {
+    display: none !important;
+  }
+
+  /* Reset document for clean print */
   html, body {
     background: #ffffff !important;
     color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* Hide EVERYTHING on the page by default */
+  /* Hide background page content during print */
   body * {
     visibility: hidden !important;
   }
 
-  /* Show ONLY the printable ticket card and its contents */
+  /* Show ONLY elements with printable-ticket-card or print-modal-card */
   .printable-ticket-card,
-  .printable-ticket-card * {
+  .printable-ticket-card *,
+  .print-modal-card,
+  .print-modal-card * {
     visibility: visible !important;
   }
 
-  /* Position printable ticket card at top-center of page */
-  .printable-ticket-card {
+  /* Position printable ticket card cleanly centered on A4 page */
+  .printable-ticket-card,
+  .print-modal-card {
     position: absolute !important;
-    left: 50% !important;
-    top: 10px !important;
-    transform: translateX(-50%) !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
+    margin: 0 auto !important;
     width: 100% !important;
-    max-width: 480px !important;
-    margin: 0 !important;
+    max-width: 580px !important;
     box-shadow: none !important;
-    border: 2px solid #000000 !important;
-    background: #ffffff !important;
-    color: #000000 !important;
-    border-radius: 16px !important;
+    background: #0B0D14 !important;
+    color: #ffffff !important;
+    border: 2px solid #333333 !important;
+    border-radius: 20px !important;
     page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    z-index: 999999 !important;
   }
 
-  /* Completely hide buttons during print */
-  .print-hide,
-  .print-hide * {
-    display: none !important;
-    visibility: hidden !important;
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
   }
 }

@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'approve') {
-      // Update booking to confirmed
+      const qty = Math.max(1, booking.quantity || 1);
+      // Update booking to confirmed with total_passes and initial checked_in_count
       await supabase.from('bookings').update({
         status: 'confirmed',
         payment_status: 'paid',
@@ -42,6 +43,8 @@ export async function POST(request: NextRequest) {
         admin_notes: admin_notes || null,
         approved_by: 'admin',
         approved_at: new Date().toISOString(),
+        total_passes: qty,
+        checked_in_count: 0,
       }).eq('id', booking_id);
 
       // Fetch event for QR
@@ -64,6 +67,8 @@ export async function POST(request: NextRequest) {
             qr_token: tempQR,
             qr_expires_at: expiresAt.toISOString(),
             status: 'issued',
+            total_passes: qty,
+            checked_in_count: 0,
           })
           .select()
           .single();

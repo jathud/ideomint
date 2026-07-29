@@ -18,7 +18,7 @@ export default function Hero() {
             We take raw, exceptional ideas and forge them into pristine, highly valuable brands and experiences that people trust.
           </p>
           <div className="flex flex-wrap items-center gap-6 mt-8">
-            <a href="#work" className="bg-creative-flame hover:bg-[#E54D30] text-white px-8 py-5 rounded-full font-bold transition-all flex items-center justify-center group">
+            <a href="#services" className="bg-creative-flame hover:bg-[#E54D30] text-section-ink px-8 py-5 rounded-full font-black transition-all flex items-center justify-center group shadow-lg">
               Explore Our Work
             </a>
             <a href="#services" className="flex items-center gap-3 group px-4 py-2 hover:bg-white/5 rounded-full transition-colors">

@@ -88,13 +88,26 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
             </span>
           </div>
 
-          <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/40 max-h-40 flex items-center justify-center">
-            {booking.payment_slip_url.toLowerCase().endsWith('.pdf') ? (
-              <div className="p-4 text-center">
-                <FileText className="w-8 h-8 text-red-400 mx-auto mb-1" />
-                <p className="text-xs text-white/80 font-bold">PDF Payment Receipt Attached</p>
-              </div>
+          <div className="relative rounded-xl overflow-hidden border border-white/10 bg-black/40 max-h-48 flex items-center justify-center">
+            {booking.payment_slip_url.toLowerCase().includes('.pdf') ? (
+              booking.payment_slip_url.includes('res.cloudinary.com') ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={booking.payment_slip_url.replace('/upload/', '/upload/pg_1,f_jpg/').replace(/\.pdf$/i, '.jpg')}
+                  alt="PDF Payment Receipt Page 1 Preview"
+                  className="w-full h-44 object-cover object-top hover:scale-105 transition-transform"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="p-4 text-center">
+                  <FileText className="w-8 h-8 text-red-400 mx-auto mb-1" />
+                  <p className="text-xs text-white/80 font-bold">PDF Payment Receipt Attached</p>
+                </div>
+              )
             ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={booking.payment_slip_url}
                 alt="Payment Receipt Slip"
@@ -104,12 +117,16 @@ function SlipUploadPanel({ booking, onSuccess }: { booking: IBooking; onSuccess:
           </div>
 
           <a
-            href={booking.payment_slip_url}
+            href={
+              (booking.payment_slip_url.toLowerCase().includes('.pdf') && booking.payment_slip_url.includes('res.cloudinary.com'))
+                ? booking.payment_slip_url.replace('/upload/', `/upload/fl_attachment:${booking.booking_ref || 'slip'}/`)
+                : booking.payment_slip_url
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2 rounded-xl text-xs transition-colors"
           >
-            <span>View Full Receipt / Slip →</span>
+            <span>View / Download Receipt PDF →</span>
           </a>
         </div>
       )}

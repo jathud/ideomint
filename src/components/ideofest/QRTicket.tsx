@@ -47,14 +47,238 @@ export default function QRTicket({ booking }: QRTicketProps) {
   };
 
   const handlePrintPdf = () => {
-    window.print();
+    const printWin = window.open('', '_blank', 'width=700,height=900');
+    if (!printWin) {
+      window.print();
+      return;
+    }
+
+    const qrValue = (booking as any).qr_token || booking.booking_ref || `IDEOFEST:${booking.id}`;
+    const dateFormatted = formatDate(booking.event_date);
+    const logoUrl = `${window.location.origin}/ideofest-logo.jpg`;
+
+    // Grab vector SVG QR from DOM
+    const qrWrapper = document.getElementById(`qr-wrapper-${booking.id || booking.booking_ref}`);
+    let qrSvgHtml = '';
+    if (qrWrapper) {
+      const svg = qrWrapper.querySelector('svg');
+      if (svg) {
+        qrSvgHtml = svg.outerHTML;
+      }
+    }
+    if (!qrSvgHtml) {
+      qrSvgHtml = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrValue)}" style="width:170px;height:170px;margin:0 auto;" />`;
+    }
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Ideofest Ticket Pass - ${booking.booking_ref}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&display=swap');
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body {
+              font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+              background-color: #05070D !important;
+              color: #ffffff !important;
+              padding: 24px;
+              display: flex;
+              justify-content: center;
+              align-items: flex-start;
+              min-height: 100vh;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            .pass-card {
+              width: 100%;
+              max-width: 480px;
+              background: #0B0D14 !important;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 20px;
+              overflow: hidden;
+              box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+              color: #ffffff !important;
+            }
+            .pass-header {
+              background: linear-gradient(135deg, #121624 0%, #1A2032 100%) !important;
+              padding: 24px;
+              border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .logo-bar {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            }
+            .badge {
+              font-size: 10px;
+              font-weight: 800;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              padding: 4px 10px;
+              border-radius: 20px;
+              background: rgba(193, 229, 39, 0.15) !important;
+              color: #c1e527 !important;
+              border: 1px solid rgba(193, 229, 39, 0.4);
+            }
+            .event-title {
+              font-size: 22px;
+              font-weight: 900;
+              color: #ffffff !important;
+              line-height: 1.2;
+            }
+            .pass-body {
+              padding: 24px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 14px;
+              margin-bottom: 16px;
+            }
+            .info-box {
+              background: rgba(255, 255, 255, 0.05) !important;
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              padding: 12px 14px;
+              border-radius: 12px;
+            }
+            .info-label {
+              font-size: 9px;
+              font-weight: 800;
+              color: rgba(255, 255, 255, 0.5) !important;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+              margin-bottom: 2px;
+            }
+            .info-val {
+              font-size: 12px;
+              font-weight: 800;
+              color: #ffffff !important;
+            }
+            .info-val-highlight {
+              color: #c1e527 !important;
+              font-family: monospace;
+              font-size: 14px;
+            }
+            .qr-box {
+              background: #ffffff !important;
+              padding: 20px;
+              border-radius: 16px;
+              text-align: center;
+              margin-bottom: 20px;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+            }
+            .qr-box svg {
+              width: 170px !important;
+              height: 170px !important;
+            }
+            .qr-text {
+              font-size: 11px;
+              font-weight: 800;
+              color: #000000 !important;
+              margin-top: 10px;
+              letter-spacing: 1px;
+              font-family: monospace;
+            }
+            .qr-subtext {
+              font-size: 10px;
+              color: #666666 !important;
+              margin-top: 2px;
+            }
+            .footer-badge {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              font-size: 11px;
+              color: rgba(255,255,255,0.5) !important;
+              padding-top: 12px;
+              border-top: 1px solid rgba(255,255,255,0.1);
+            }
+            .verified-tag {
+              color: #c1e527 !important;
+              font-weight: 800;
+            }
+            @media print {
+              body { background-color: #05070D !important; padding: 0; }
+              @page { size: portrait; margin: 5mm; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="pass-card">
+            <div class="pass-header">
+              <div class="logo-bar">
+                <img src="${logoUrl}" alt="Ideofest" style="height:36px; border-radius:6px;" />
+                <span class="badge">Official Ticket Bill</span>
+              </div>
+              <div class="event-title">${booking.event_title}</div>
+            </div>
+            <div class="pass-body">
+              <div class="info-grid">
+                <div class="info-box">
+                  <div class="info-label">Date & Time</div>
+                  <div class="info-val">${dateFormatted}</div>
+                </div>
+                <div class="info-box">
+                  <div class="info-label">Location</div>
+                  <div class="info-val">${booking.venue || 'Sri Lanka'}</div>
+                </div>
+              </div>
+
+              <div class="info-grid">
+                <div class="info-box">
+                  <div class="info-label">Ticket Holder</div>
+                  <div class="info-val">${booking.attendee_name}</div>
+                  <div style="font-size:10px; color:rgba(255,255,255,0.5); font-family:monospace; margin-top:2px;">${booking.attendee_email}</div>
+                  ${booking.attendee_nic ? `<div style="font-size:10px; color:rgba(255,255,255,0.4); font-family:monospace;">NIC: ${booking.attendee_nic}</div>` : ''}
+                </div>
+                <div class="info-box" style="text-align:right;">
+                  <div class="info-label">Booking Ref</div>
+                  <div class="info-val info-val-highlight">${booking.booking_ref}</div>
+                  <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.8); margin-top:2px;">
+                    ${booking.tier_label || booking.tier_name} × ${booking.quantity}
+                  </div>
+                  <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.5); margin-top:2px;">LKR ${booking.total_amount?.toLocaleString('en-LK')}</div>
+                </div>
+              </div>
+
+              <div class="qr-box">
+                ${qrSvgHtml}
+                <div class="qr-text">SCAN AT ENTRANCE GATE</div>
+                <div class="qr-subtext">Present this digital or printed pass for entry scan</div>
+              </div>
+
+              <div class="footer-badge">
+                <span class="verified-tag">✓ Verified Ticket Pass</span>
+                <span>Ideofest Encrypted Pass</span>
+              </div>
+            </div>
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 400);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
   };
 
   const isConfirmed = booking.status === 'confirmed' || booking.payment_status === 'paid';
   const qrPayload = (booking as any).qr_token || booking.booking_ref;
 
   return (
-    <div className="printable-ticket-card bg-[#0B0D14] border border-white/15 rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl relative">
+    <div 
+      id={`qr-ticket-card-${booking.id || booking.booking_ref}`}
+      className="printable-ticket-card bg-[#0B0D14] border border-white/15 rounded-3xl overflow-hidden max-w-sm w-full shadow-2xl relative"
+    >
       {/* ── Bill Header Banner ── */}
       <div className="bg-gradient-to-r from-[#121624] via-[#1A2032] to-[#121624] px-6 py-5 border-b border-white/12 print:bg-white print:border-gray-300">
         <div className="flex items-center justify-between gap-3 mb-3">

@@ -47,7 +47,7 @@ export default function AnalyticsChart({ data, label = 'Revenue' }: AnalyticsCha
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.font = '10px system-ui';
       ctx.textAlign = 'right';
-      ctx.fillText(`₹${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`, padL - 6, y + 4);
+      ctx.fillText(`${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`, padL - 6, y + 4);
     }
 
     // Gradient fill

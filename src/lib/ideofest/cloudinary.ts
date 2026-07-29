@@ -15,14 +15,17 @@ export { cloudinary };
  */
 export async function uploadToCloudinary(
   buffer: Buffer,
-  folder: string = 'ideofest/events'
+  folder: string = 'ideofest/events',
+  customFilename?: string,
+  resourceType: 'auto' | 'image' | 'raw' = 'auto'
 ): Promise<{ url: string; publicId: string }> {
   const isSlip = folder === 'ideofest/slips';
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       {
         folder,
-        resource_type: 'image',
+        resource_type: resourceType,
+        ...(customFilename ? { public_id: customFilename } : {}),
         // Slips must NOT be resized — preserve full resolution for admin review
         ...(isSlip
           ? {}

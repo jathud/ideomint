@@ -38,15 +38,24 @@ export async function POST(request: NextRequest) {
 
     // Determine Cloudinary folder based on upload type
     let folder = 'ideofest/events';
+    let customFilename: string | undefined = undefined;
+
+    const isPdfFile = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const extMatch = file.name.match(/\.[a-zA-Z0-9]+$/);
+    const fileExt = isPdfFile ? '.pdf' : (extMatch ? extMatch[0].toLowerCase() : '.jpg');
+
     if (type === 'payment_slip') {
       folder = 'ideofest/slips';
+      const cleanRef = bookingRef.trim().toUpperCase();
+      const baseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+      customFilename = cleanRef ? `${cleanRef}_${baseName}${fileExt}` : `slip_${Date.now()}${fileExt}`;
     } else if (type === 'profile_photo') {
       folder = 'ideofest/profiles';
     }
 
     // Upload to Cloudinary
-    console.log(`[Upload API] Uploading ${file.name} (${file.size} bytes) to Cloudinary folder "${folder}"...`);
-    const { url, publicId } = await uploadToCloudinary(buffer, folder);
+    console.log(`[Upload API] Uploading ${file.name} (${file.size} bytes) to Cloudinary folder "${folder}" as ${customFilename || 'auto'}...`);
+    const { url, publicId } = await uploadToCloudinary(buffer, folder, customFilename, 'auto');
     console.log(`[Upload API] Cloudinary upload successful: ${url}`);
 
     // If this is a payment slip, update the booking in Supabase

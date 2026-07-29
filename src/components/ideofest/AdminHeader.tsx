@@ -13,7 +13,7 @@ const mobileNavItems = [
   { href: '/ideofest/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/ideofest/admin/events', label: 'My Events', icon: CalendarDays },
   { href: '/ideofest/admin/events/create', label: 'Create Event', icon: PlusCircle },
-  { href: '/ideofest/admin/attendees', label: 'Attendee List', icon: Users },
+  { href: '/ideofest/admin/attendees', label: 'User Details & CSV', icon: Users },
   { href: '/ideofest/admin/verifications', label: 'Payment Slips', icon: FileCheck },
   { href: '/ideofest/admin/scanner', label: 'QR Scanner', icon: QrCode },
   { href: '/ideofest/admin/reports', label: 'Analytics', icon: BarChart2 },

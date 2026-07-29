@@ -1,27 +1,16 @@
-# Ideomint & Ideofest
+# Ideomint
 
-> Ideomint is a premier creative experience company. Ideofest is Ideomint's flagship live events and ticketing platform in Sri Lanka.
+> Ideomint is a premier creative experience company specializing in brand strategy, web application design, digital experiences, and event management.
 
-## Key Information
-- **Website**: https://ideomint.com
-- **Ideofest Platform**: https://ideomint.com/ideofest
-- **Admin Portal**: https://ideofest.ideomint.com
-- **Location**: Sri Lanka
-- **Currency**: LKR (Sri Lankan Rupee)
+## About Ideomint
+Different Sections. One Creative Vision. We partner with brands to craft memorable digital products, bespoke websites, and immersive live event experiences.
 
-## Key Features & Offerings
-- **Live Event Ticketing**: Premium live concerts, tech summits, creative festivals, workshops, and nightlife experiences in Sri Lanka.
-- **Instant QR Tickets**: Encrypted, tamper-proof QR code tickets issued instantly upon booking.
-- **Flexible Payments**: Support for PayHere online card payments and direct Sri Lankan bank transfers.
-- **Event Management**: Complete organizer dashboard for live check-ins, attendee management, and real-time sales reporting.
+## Core Services
+- **Brand Strategy & Identity**: Visual identity, design systems, and positioning.
+- **Web Design & Development**: Modern high-performance web applications built with Next.js & React.
+- **Ideofest Ticket & Event Management**: End-to-end ticketing, QR pass generation, and venue entrance verification.
 
-## Popular Event Categories
-- Music & Concerts
-- Tech & Innovation Summits
-- Art & Cultural Exhibitions
-- Creative Workshops & Masterclasses
-- Nightlife & Festival Experiences
-
-## Contact & Support
-- **Support Email**: support@ideomint.com
-- **Official Domain**: https://ideomint.com
+## Contact & Links
+- Website: https://ideomint.com
+- Events: https://ideomint.com/ideofest
+- Email: hello@ideomint.com

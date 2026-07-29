@@ -7,7 +7,7 @@ import TicketPrintModal from '@/components/ideofest/TicketPrintModal';
 import {
   CheckCircle2, XCircle, Search, ExternalLink, ShieldCheck,
   Loader2, RefreshCw, Eye, Landmark, CreditCard, AlertCircle,
-  Clock, Check, X, Printer,
+  Clock, Check, X, Printer, FileText,
 } from 'lucide-react';
 
 type FilterTab = 'pending_verification' | 'all' | 'confirmed' | 'rejected';
@@ -378,29 +378,87 @@ export default function AdminVerificationsPage() {
                     <Loader2 className="w-4 h-4 animate-spin" /> Loading receipt...
                   </div>
                 ) : slipSignedUrl ? (
-                  <div className="rounded-xl overflow-hidden border border-white/10 bg-white/4 p-2">
-                    {!slipSignedUrl.toLowerCase().endsWith('.pdf') ? (
-                      <div className="flex flex-col items-center gap-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={slipSignedUrl} alt="Payment slip" className="w-full max-h-72 object-contain rounded-lg border border-white/10" />
-                        <a
-                          href={slipSignedUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 text-xs text-signal-lime hover:underline font-bold py-1"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" /> Open Full Resolution Image
-                        </a>
-                      </div>
-                    ) : (
-                      <div className="p-4 flex items-center gap-3">
-                        <ExternalLink className="w-5 h-5 text-signal-lime" />
-                        <a href={slipSignedUrl} target="_blank" rel="noopener noreferrer"
-                          className="text-signal-lime text-sm font-bold hover:underline">
-                          Open PDF Receipt
-                        </a>
-                      </div>
-                    )}
+                  <div className="rounded-xl overflow-hidden border border-white/10 bg-white/4 p-3">
+                    {(() => {
+                      const url = slipSignedUrl || selectedBooking.payment_slip_url || '';
+                      const isPdf = url.toLowerCase().includes('.pdf') || url.toLowerCase().includes('/pdf');
+                      const refName = selectedBooking.booking_ref || 'Receipt';
+                      const isCloudinary = url.includes('res.cloudinary.com');
+
+                      const downloadUrl = (isCloudinary && isPdf)
+                        ? url.replace('/upload/', `/upload/fl_attachment:${refName}_slip/`)
+                        : url;
+
+                      if (isPdf) {
+                        const page1Preview = isCloudinary
+                          ? url.replace('/upload/', '/upload/pg_1,f_jpg/').replace(/\.pdf$/i, '.jpg')
+                          : null;
+
+                        return (
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between px-1">
+                              <span className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                <FileText className="w-4 h-4 text-red-400" /> PDF Payment Receipt ({refName})
+                              </span>
+                              <span className="text-[10px] text-white/40 font-mono">PDF Document</span>
+                            </div>
+
+                            {page1Preview ? (
+                              <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/40 max-h-80 flex items-center justify-center p-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={page1Preview}
+                                  alt="PDF Receipt Page 1 Preview"
+                                  className="w-full h-auto max-h-72 object-contain rounded-xl hover:scale-[1.02] transition-transform"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="p-6 text-center border border-white/10 rounded-2xl bg-black/40">
+                                <FileText className="w-10 h-10 text-red-400 mx-auto mb-2" />
+                                <p className="text-xs text-white/80 font-bold">PDF Payment Receipt Attached ({refName})</p>
+                              </div>
+                            )}
+
+                            <a
+                              href={downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-center gap-2 text-xs text-section-ink bg-signal-lime hover:bg-[#b0d420] font-black py-3 px-4 rounded-xl transition-all shadow-md shadow-signal-lime/10"
+                            >
+                              <ExternalLink className="w-4 h-4" /> Open / Download Receipt PDF →
+                            </a>
+                          </div>
+                        );
+                      }
+
+                      /* ── Image Receipt Preview ── */
+                      return (
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-full rounded-xl overflow-hidden border border-white/10 bg-black/40 p-2 flex items-center justify-center">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={url}
+                              alt="Payment slip"
+                              className="max-h-80 w-auto object-contain rounded-lg"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 text-xs text-signal-lime hover:underline font-bold py-1"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" /> Open Full Resolution Image
+                          </a>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-amber-400 text-sm font-bold">

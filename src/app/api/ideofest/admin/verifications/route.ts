@@ -39,13 +39,16 @@ export async function POST(request: NextRequest) {
     const newStatus = isApprove ? 'confirmed' : 'payment_rejected';
     const newPaymentStatus = isApprove ? 'paid' : 'rejected';
 
-    // 2. Update booking status
+    // 2. Update booking status & store pass counts
+    const qty = Math.max(1, booking.quantity || 1);
     const { error: updateError } = await supabase
       .from('bookings')
       .update({
         status: newStatus,
         payment_status: newPaymentStatus,
         admin_notes: rejectionReason || null,
+        total_passes: qty,
+        checked_in_count: isApprove ? 0 : booking.checked_in_count || 0,
         updated_at: new Date().toISOString(),
       })
       .eq('id', bookingId);
@@ -62,7 +65,6 @@ export async function POST(request: NextRequest) {
         const eventDate = booking.events?.date || booking.event_date || new Date().toISOString();
         const eventSlug = booking.event_slug || 'event';
         const expiresAt = qrExpiryFromEventDate(eventDate);
-        const qty = Math.max(1, booking.quantity || 1);
 
         const extras = Array.isArray(booking.additional_attendees) ? booking.additional_attendees : [];
 
@@ -74,7 +76,7 @@ export async function POST(request: NextRequest) {
 
           const tempToken = generateSecureQRToken(`TEMP-${booking.booking_ref}-${passIndex}`, eventSlug, expiresAt);
 
-          // Insert individual ticket pass into tickets table
+          // Insert individual ticket pass into tickets table with explicit pass counts
           const { data: ticket } = await supabase
             .from('tickets')
             .insert({
@@ -87,6 +89,8 @@ export async function POST(request: NextRequest) {
               attendee_nic: attendeeNic,
               attendee_phone: attendeePhone,
               pass_index: passIndex,
+              total_passes: qty,
+              checked_in_count: 0,
             })
             .select()
             .single();

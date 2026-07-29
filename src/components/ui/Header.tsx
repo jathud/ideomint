@@ -122,18 +122,18 @@ export default function Header() {
             })}
           </nav>
 
-          <div className="flex items-center gap-3 relative z-50">
+          <div className="flex items-center gap-2 sm:gap-3 relative z-50">
             {/* Graceful Ideofest CTA Button */}
             <Link
               href="/ideofest"
-              className="relative group inline-flex items-center gap-2.5 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-5 py-2.5 rounded-full text-xs font-black tracking-wider uppercase transition-all duration-300 shadow-[0_0_20px_rgba(193,229,39,0.25)] hover:shadow-[0_0_30px_rgba(193,229,39,0.5)] hover:scale-105 active:scale-95"
+              className="relative group inline-flex items-center gap-1.5 sm:gap-2.5 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-wider uppercase transition-all duration-300 shadow-[0_0_20px_rgba(193,229,39,0.25)] hover:shadow-[0_0_30px_rgba(193,229,39,0.5)] hover:scale-105 active:scale-95 shrink-0"
             >
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-section-ink opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-section-ink"></span>
               </span>
-              <Ticket />
-              <span>Book Tickets</span>
+              <Ticket className="w-3.5 h-3.5 shrink-0" />
+              <span className="whitespace-nowrap">Book Tickets</span>
             </Link>
 
             <Link
@@ -145,14 +145,14 @@ export default function Header() {
 
             {/* Mobile Menu Toggle */}
             <button
-              className="lg:hidden flex items-center gap-2 text-white hover:text-creative-flame transition-colors p-2 -mr-2"
+              className="lg:hidden flex items-center gap-1.5 text-white hover:text-creative-flame transition-colors p-1.5 -mr-1"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-menu"
               aria-label="Toggle navigation"
             >
-              <span className="text-sm font-bold tracking-widest uppercase">{isMobileMenuOpen ? 'Close' : 'Menu'}</span>
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <span className="hidden sm:inline text-xs font-bold tracking-widest uppercase">{isMobileMenuOpen ? 'Close' : 'Menu'}</span>
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>

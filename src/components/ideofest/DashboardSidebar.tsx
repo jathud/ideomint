@@ -41,9 +41,9 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    label: 'Attendees',
+    label: 'Attendees & Users',
     items: [
-      { href: '/ideofest/admin/attendees', label: 'Attendee List', icon: Users },
+      { href: '/ideofest/admin/attendees', label: 'User Details & CSV', icon: Users },
       { href: '/ideofest/admin/verifications', label: 'Payment Slips', icon: FileCheck },
       { href: '/ideofest/admin/scanner', label: 'QR Scanner', icon: QrCode },
     ],

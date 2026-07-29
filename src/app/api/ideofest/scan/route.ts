@@ -4,14 +4,228 @@ import { validateQRToken } from '@/lib/ideofest/qr-security';
 import type { ApiResponse } from '@/lib/ideofest/types';
 
 /**
- * POST /api/ideofest/scan
- * Gate QR Code scanning endpoint.
- * Supports:
- * - Encrypted & HMAC-signed QR Tokens
- * - Plain Ticket Numbers (IDF-TKT-XXXXXXXX)
- * - Booking References (IDF-XXXXXXXX)
- * - Partial / Group check-in with complete multi-attendee details
+ * GET /api/ideofest/scan?action=lookup&code=... OR ?action=attended_list&event_id=...
+ * - lookup: Inspects pass details, group quantity & check-in count without consuming pass.
+ * - attended_list: Returns real-time validated attendance logs filtered by event_id.
  */
+export async function GET(request: NextRequest) {
+  const supabase = createAdminClient();
+  const { searchParams } = new URL(request.url);
+  const action = searchParams.get('action') || 'lookup';
+  const code = (searchParams.get('code') || searchParams.get('qr_token') || '').trim();
+  const eventId = searchParams.get('event_id') || searchParams.get('eventId') || '';
+
+  try {
+    if (action === 'attended_list') {
+      // 1. Fetch attendance_logs
+      let logsQuery = supabase
+        .from('attendance_logs')
+        .select(`
+          id, booking_id, ticket_id, event_id, scanned_by, scanner_name, gate, result, quantity_checked_in, scanned_at,
+          booking:bookings(id, booking_ref, attendee_name, attendee_email, attendee_nic, attendee_phone, event_id, event_title, tier_label, quantity)
+        `)
+        .order('scanned_at', { ascending: false });
+
+      if (eventId && eventId !== 'all') {
+        logsQuery = logsQuery.eq('event_id', eventId);
+      }
+
+      const { data: rawLogs } = await logsQuery;
+      const formattedLogs: any[] = [];
+      const seenBookingIds = new Set<string>();
+
+      if (Array.isArray(rawLogs) && rawLogs.length > 0) {
+        for (const log of rawLogs) {
+          if (log.booking_id) seenBookingIds.add(log.booking_id);
+          formattedLogs.push({
+            id: log.id,
+            booking_id: log.booking_id,
+            ticket_id: log.ticket_id,
+            event_id: log.event_id,
+            scanned_by: log.scanned_by || log.scanner_name || 'Gate Staff',
+            gate: log.gate || 'Main Gate',
+            result: log.result || 'success',
+            quantity_checked_in: log.quantity_checked_in || 1,
+            scanned_at: log.scanned_at || new Date().toISOString(),
+            booking: log.booking || null,
+          });
+        }
+      }
+
+      // 2. Fallback: Also fetch bookings with used/partially_used tickets or attended status to ensure complete list
+      let bookingQuery = supabase
+        .from('bookings')
+        .select('id, booking_ref, attendee_name, attendee_email, attendee_nic, attendee_phone, event_id, event_title, tier_label, quantity, status, updated_at')
+        .in('status', ['attended', 'partially_used', 'confirmed'])
+        .order('updated_at', { ascending: false });
+
+      if (eventId && eventId !== 'all') {
+        bookingQuery = bookingQuery.eq('event_id', eventId);
+      }
+
+      const { data: attendedBookings } = await bookingQuery;
+
+      if (Array.isArray(attendedBookings)) {
+        // Also check if any tickets for these bookings are used
+        const bookingIdsToCheck = attendedBookings.map((b: any) => b.id).filter((id: string) => !seenBookingIds.has(id));
+        if (bookingIdsToCheck.length > 0) {
+          const { data: usedTickets } = await supabase
+            .from('tickets')
+            .select('booking_id, status, used_at')
+            .in('booking_id', bookingIdsToCheck)
+            .in('status', ['used', 'partially_used']);
+
+          if (Array.isArray(usedTickets) && usedTickets.length > 0) {
+            const usedMap = new Map<string, any>();
+            usedTickets.forEach((t: any) => usedMap.set(t.booking_id, t));
+
+            for (const b of attendedBookings) {
+              const ticketInfo = usedMap.get(b.id);
+              if (ticketInfo && !seenBookingIds.has(b.id)) {
+                seenBookingIds.add(b.id);
+                formattedLogs.push({
+                  id: `fallback-${b.id}`,
+                  booking_id: b.id,
+                  ticket_id: null,
+                  event_id: b.event_id,
+                  scanned_by: 'Gate Staff',
+                  gate: 'Main Gate',
+                  result: 'success',
+                  quantity_checked_in: b.quantity || 1,
+                  scanned_at: ticketInfo.used_at || b.updated_at || new Date().toISOString(),
+                  booking: b,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return Response.json({
+        success: true,
+        data: formattedLogs,
+      } satisfies ApiResponse);
+    }
+
+    // Action: Lookup ticket / booking details without marking as used
+    if (!code) {
+      return Response.json({ success: false, error: 'Code or QR token required' } satisfies ApiResponse, { status: 400 });
+    }
+
+    let extractedRef = '';
+    if (code.includes('.')) {
+      const validation = validateQRToken(code);
+      if (validation.valid && validation.payload?.ref) {
+        extractedRef = validation.payload.ref;
+      }
+    }
+
+    const searchTerm = extractedRef || code;
+    const bookingSelectFields = `
+      id, booking_ref, event_id, event_title, event_slug, event_date, venue,
+      attendee_name, attendee_email, attendee_nic, attendee_phone, additional_attendees,
+      tier_label, quantity, payment_status, status
+    `;
+
+    // Query ticket / booking
+    let ticket: any = null;
+    const { data: byTicketNum } = await supabase
+      .from('tickets')
+      .select(`*, booking:bookings(${bookingSelectFields})`)
+      .or(`ticket_number.eq.${searchTerm},qr_token.eq.${searchTerm}`)
+      .maybeSingle();
+    
+    ticket = byTicketNum || null;
+
+    if (!ticket) {
+      const { data: bookingData } = await supabase
+        .from('bookings')
+        .select('id')
+        .ilike('booking_ref', searchTerm)
+        .maybeSingle();
+
+      if (bookingData?.id) {
+        const { data: bkgTickets } = await supabase
+          .from('tickets')
+          .select(`*, booking:bookings(${bookingSelectFields})`)
+          .eq('booking_id', bookingData.id)
+          .order('pass_index', { ascending: true });
+
+        if (bkgTickets && bkgTickets.length > 0) {
+          ticket = bkgTickets[0];
+        }
+      }
+    }
+
+    if (!ticket) {
+      return Response.json({ success: false, error: `No pass or booking found for "${searchTerm}"` } satisfies ApiResponse, { status: 404 });
+    }
+
+    const booking = ticket.booking;
+    const totalQty = booking?.quantity || 1;
+
+    // Check attendance logs for previous check-ins
+    const { data: logs } = await supabase
+      .from('attendance_logs')
+      .select('id, scanned_at, gate, quantity_checked_in')
+      .eq('booking_id', ticket.booking_id)
+      .eq('result', 'success');
+
+    let previousCheckIns = 0;
+    if (Array.isArray(logs) && logs.length > 0) {
+      previousCheckIns = logs.reduce((sum: number, log: any) => sum + (log.quantity_checked_in || 1), 0);
+    } else if (ticket.status === 'used') {
+      previousCheckIns = totalQty;
+    } else if (ticket.status === 'partially_used') {
+      previousCheckIns = 1;
+    }
+
+    const remaining = Math.max(0, totalQty - previousCheckIns);
+    const extras = Array.isArray(booking?.additional_attendees) ? booking.additional_attendees : [];
+    const allAttendees = [
+      {
+        index: 1,
+        role: `Lead Booker (1/${totalQty})`,
+        name: booking?.attendee_name || ticket.attendee_name || 'Lead Booker',
+        nic: booking?.attendee_nic || ticket.attendee_nic || '—',
+        phone: booking?.attendee_phone || ticket.attendee_phone || '—',
+      },
+      ...extras.map((extra: any, idx: number) => ({
+        index: idx + 2,
+        role: `Attendee ${idx + 2} of ${totalQty}`,
+        name: extra.name || `Attendee ${idx + 2}`,
+        nic: extra.nic || '—',
+        phone: extra.phone || booking?.attendee_phone || '—',
+      })),
+    ];
+
+    return Response.json({
+      success: true,
+      data: {
+        bookingId: ticket.booking_id,
+        ticketId: ticket.id,
+        ticket_number: ticket.ticket_number || searchTerm,
+        booking_ref: booking?.booking_ref || ticket.booking_ref,
+        attendee_name: booking?.attendee_name || ticket.attendee_name,
+        attendee_email: booking?.attendee_email,
+        attendee_nic: booking?.attendee_nic || ticket.attendee_nic,
+        attendee_phone: booking?.attendee_phone || ticket.attendee_phone,
+        event_title: booking?.event_title,
+        event_id: booking?.event_id,
+        tier_label: booking?.tier_label,
+        totalQty,
+        checkedIn: previousCheckIns,
+        remaining,
+        status: ticket.status,
+        all_attendees: allAttendees,
+      },
+    } satisfies ApiResponse);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Lookup failed';
+    return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   const supabase = createAdminClient();
 
@@ -103,7 +317,7 @@ export async function POST(request: NextRequest) {
     const ticketNumber = ticket.ticket_number || ticket.qr_token || searchTerm;
     const totalQty = booking?.quantity || 1;
 
-    // Build multi-attendee list (Lead Booker + Additional Attendees)
+    // Build multi-attendee list
     const extras = Array.isArray(booking?.additional_attendees) ? booking.additional_attendees : [];
     const allAttendees = [
       {
@@ -137,9 +351,14 @@ export async function POST(request: NextRequest) {
       .eq('booking_id', ticket.booking_id)
       .eq('result', 'success');
 
-    const previousCheckIns = logs
-      ? logs.reduce((sum: number, log: any) => sum + (log.quantity_checked_in || 1), 0)
-      : (ticket.status === 'used' ? totalQty : 0);
+    let previousCheckIns = 0;
+    if (Array.isArray(logs) && logs.length > 0) {
+      previousCheckIns = logs.reduce((sum: number, log: any) => sum + (log.quantity_checked_in || 1), 0);
+    } else if (ticket.status === 'used') {
+      previousCheckIns = totalQty;
+    } else if (ticket.status === 'partially_used') {
+      previousCheckIns = 1;
+    }
 
     const remaining = Math.max(0, totalQty - previousCheckIns);
 
@@ -162,30 +381,56 @@ export async function POST(request: NextRequest) {
       } satisfies ApiResponse, { status: 409 });
     }
 
-    // Perform check-in
+    // Perform check-in logic
     const actualCheckInQty = Math.min(requestedCheckInQty, remaining);
+    const newCheckedInCount = previousCheckIns + actualCheckInQty;
+    const newRemaining = Math.max(0, totalQty - newCheckedInCount);
     const now = new Date().toISOString();
 
-    // Mark ticket used
+    // Mark ticket as used ONLY if all remaining passes are consumed, else set partially_used
+    const newTicketStatus = newRemaining <= 0 ? 'used' : 'partially_used';
     await supabase
       .from('tickets')
-      .update({ status: 'used', used_at: now, updated_at: now })
+      .update({ status: newTicketStatus, used_at: now, updated_at: now })
       .eq('id', ticket.id);
 
-    // Insert attendance log
-    await supabase.from('attendance_logs').insert({
-      booking_id: ticket.booking_id,
-      ticket_id: ticket.id,
-      event_id: booking?.event_id,
-      scanned_by: scanner_name,
-      gate,
-      result: 'success',
-      quantity_checked_in: actualCheckInQty,
-      scanned_at: now,
-    });
+    // Update overall booking status if all passes used
+    if (newRemaining <= 0 && ticket.booking_id) {
+      await supabase.from('bookings').update({ status: 'attended', updated_at: now }).eq('id', ticket.booking_id);
+    } else if (newRemaining > 0 && ticket.booking_id) {
+      await supabase.from('bookings').update({ status: 'partially_used', updated_at: now }).eq('id', ticket.booking_id);
+    }
 
-    const newCheckedInCount = previousCheckIns + actualCheckInQty;
-    const newRemaining = totalQty - newCheckedInCount;
+    // Insert attendance log safely with error catch
+    try {
+      const { error: logErr } = await supabase.from('attendance_logs').insert({
+        booking_id: ticket.booking_id,
+        ticket_id: ticket.id,
+        event_id: booking?.event_id || ticket.event_id,
+        scanned_by: scanner_name,
+        scanner_name,
+        gate,
+        result: 'success',
+        quantity_checked_in: actualCheckInQty,
+        scanned_at: now,
+      });
+
+      if (logErr) {
+        console.warn('attendance_logs insert warning:', logErr.message);
+        // Fallback insert matching strict 001_initial_schema
+        await supabase.from('attendance_logs').insert({
+          booking_id: ticket.booking_id,
+          ticket_id: ticket.id,
+          event_id: booking?.event_id || ticket.event_id,
+          scanner_name: scanner_name,
+          gate: gate,
+          result: 'success',
+          scanned_at: now,
+        });
+      }
+    } catch (e) {
+      console.error('Failed to insert attendance log:', e);
+    }
 
     return Response.json({
       success: true,

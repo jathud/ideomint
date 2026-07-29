@@ -29,10 +29,10 @@ export default function Manifesto() {
           {lines.map((line, i) => (
             <motion.h2 
               key={i}
-              initial={{ opacity: 0.1, y: 30, filter: 'blur(10px)' }}
+              initial={{ opacity: 0.6, y: 20, filter: 'blur(4px)' }}
               whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              viewport={{ once: false, margin: "-20% 0px -20% 0px" }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: false, margin: "-10% 0px -10% 0px" }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
               className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.1] text-white"
             >
               {line}
