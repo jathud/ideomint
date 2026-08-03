@@ -17,13 +17,14 @@ export async function GET(request: NextRequest) {
 
   try {
     if (action === 'attended_list') {
-      // 1. Fetch attendance_logs
+      const formattedLogs: any[] = [];
+      const seenBookingIds = new Set<string>();
+      const bookingIdsToFetch = new Set<string>();
+
+      // A. Query attendance_logs directly using valid columns
       let logsQuery = supabase
         .from('attendance_logs')
-        .select(`
-          id, booking_id, ticket_id, event_id, scanned_by, scanner_name, gate, result, quantity_checked_in, scanned_at,
-          booking:bookings(id, booking_ref, attendee_name, attendee_email, attendee_nic, attendee_phone, event_id, event_title, tier_label, quantity)
-        `)
+        .select('id, booking_id, ticket_id, event_id, scanned_at, gate')
         .order('scanned_at', { ascending: false });
 
       if (eventId && eventId !== 'all') {
@@ -31,12 +32,50 @@ export async function GET(request: NextRequest) {
       }
 
       const { data: rawLogs } = await logsQuery;
-      const formattedLogs: any[] = [];
-      const seenBookingIds = new Set<string>();
-
       if (Array.isArray(rawLogs) && rawLogs.length > 0) {
+        rawLogs.forEach((l: any) => {
+          if (l.booking_id) bookingIdsToFetch.add(l.booking_id);
+        });
+      }
+
+      // B. Query tickets with status 'used' or 'partially_used'
+      const { data: usedTickets } = await supabase
+        .from('tickets')
+        .select('id, booking_id, event_id, status, used_at')
+        .in('status', ['used', 'partially_used']);
+
+      if (Array.isArray(usedTickets)) {
+        usedTickets.forEach((t: any) => {
+          if (t.booking_id) bookingIdsToFetch.add(t.booking_id);
+        });
+      }
+
+      // C. Query bookings with status 'attended' or 'partially_used'
+      let bookingQuery = supabase
+        .from('bookings')
+        .select('id, booking_ref, attendee_name, attendee_email, attendee_nic, attendee_phone, event_id, event_title, tier_label, quantity, status, updated_at')
+        .order('updated_at', { ascending: false });
+
+      if (eventId && eventId !== 'all') {
+        bookingQuery = bookingQuery.eq('event_id', eventId);
+      }
+
+      const { data: allBookings } = await bookingQuery;
+      const bookingsMap = new Map<string, any>();
+      if (Array.isArray(allBookings)) {
+        allBookings.forEach((b: any) => {
+          bookingsMap.set(b.id, b);
+          if (b.status === 'attended' || b.status === 'partially_used') {
+            bookingIdsToFetch.add(b.id);
+          }
+        });
+      }
+
+      // 1. Process logs from attendance_logs
+      if (Array.isArray(rawLogs)) {
         for (const log of rawLogs) {
           if (log.booking_id) seenBookingIds.add(log.booking_id);
+          const bInfo = bookingsMap.get(log.booking_id) || null;
           formattedLogs.push({
             id: log.id,
             booking_id: log.booking_id,
@@ -47,64 +86,34 @@ export async function GET(request: NextRequest) {
             result: log.result || 'success',
             quantity_checked_in: log.quantity_checked_in || 1,
             scanned_at: log.scanned_at || new Date().toISOString(),
-            booking: log.booking || null,
+            booking: bInfo,
           });
         }
       }
 
-      // 2. Fallback: Also fetch bookings with used/partially_used tickets or attended status to ensure complete list
-      let bookingQuery = supabase
-        .from('bookings')
-        .select('id, booking_ref, attendee_name, attendee_email, attendee_nic, attendee_phone, event_id, event_title, tier_label, quantity, status, updated_at')
-        .in('status', ['attended', 'partially_used', 'confirmed'])
-        .order('updated_at', { ascending: false });
-
-      if (eventId && eventId !== 'all') {
-        bookingQuery = bookingQuery.eq('event_id', eventId);
-      }
-
-      const { data: attendedBookings } = await bookingQuery;
-
-      if (Array.isArray(attendedBookings)) {
-        // Also check if any tickets for these bookings are used
-        const bookingIdsToCheck = attendedBookings.map((b: any) => b.id).filter((id: string) => !seenBookingIds.has(id));
-        if (bookingIdsToCheck.length > 0) {
-          const { data: usedTickets } = await supabase
-            .from('tickets')
-            .select('booking_id, status, used_at')
-            .in('booking_id', bookingIdsToCheck)
-            .in('status', ['used', 'partially_used']);
-
-          if (Array.isArray(usedTickets) && usedTickets.length > 0) {
-            const usedMap = new Map<string, any>();
-            usedTickets.forEach((t: any) => usedMap.set(t.booking_id, t));
-
-            for (const b of attendedBookings) {
-              const ticketInfo = usedMap.get(b.id);
-              if (ticketInfo && !seenBookingIds.has(b.id)) {
-                seenBookingIds.add(b.id);
-                formattedLogs.push({
-                  id: `fallback-${b.id}`,
-                  booking_id: b.id,
-                  ticket_id: null,
-                  event_id: b.event_id,
-                  scanned_by: 'Gate Staff',
-                  gate: 'Main Gate',
-                  result: 'success',
-                  quantity_checked_in: b.quantity || 1,
-                  scanned_at: ticketInfo.used_at || b.updated_at || new Date().toISOString(),
-                  booking: b,
-                });
-              }
-            }
+      // 2. Add any booking IDs found from used tickets or attended status that weren't in attendance_logs
+      for (const bId of Array.from(bookingIdsToFetch)) {
+        if (!seenBookingIds.has(bId)) {
+          seenBookingIds.add(bId);
+          const b = bookingsMap.get(bId);
+          if (b) {
+            formattedLogs.push({
+              id: `attended-${b.id}`,
+              booking_id: b.id,
+              ticket_id: null,
+              event_id: b.event_id,
+              scanned_by: 'Gate Staff',
+              gate: 'Main Gate',
+              result: 'success',
+              quantity_checked_in: b.quantity || 1,
+              scanned_at: b.updated_at || new Date().toISOString(),
+              booking: b,
+            });
           }
         }
       }
 
-      return Response.json({
-        success: true,
-        data: formattedLogs,
-      } satisfies ApiResponse);
+      return Response.json({ success: true, data: formattedLogs } satisfies ApiResponse);
     }
 
     // Action: Lookup ticket / booking details without marking as used
@@ -401,32 +410,18 @@ export async function POST(request: NextRequest) {
       await supabase.from('bookings').update({ status: 'partially_used', updated_at: now }).eq('id', ticket.booking_id);
     }
 
-    // Insert attendance log safely with error catch
+    // Insert attendance log safely matching exact schema columns
     try {
       const { error: logErr } = await supabase.from('attendance_logs').insert({
         booking_id: ticket.booking_id,
         ticket_id: ticket.id,
         event_id: booking?.event_id || ticket.event_id,
-        scanned_by: scanner_name,
-        scanner_name,
-        gate,
-        result: 'success',
-        quantity_checked_in: actualCheckInQty,
+        gate: gate || 'Main Gate',
         scanned_at: now,
       });
 
       if (logErr) {
         console.warn('attendance_logs insert warning:', logErr.message);
-        // Fallback insert matching strict 001_initial_schema
-        await supabase.from('attendance_logs').insert({
-          booking_id: ticket.booking_id,
-          ticket_id: ticket.id,
-          event_id: booking?.event_id || ticket.event_id,
-          scanner_name: scanner_name,
-          gate: gate,
-          result: 'success',
-          scanned_at: now,
-        });
       }
     } catch (e) {
       console.error('Failed to insert attendance log:', e);
@@ -458,5 +453,79 @@ export async function POST(request: NextRequest) {
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'QR Scan failed';
     return Response.json({ success: false, error: msg, result: 'invalid' } satisfies ApiResponse, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/ideofest/scan?booking_id=...&ticket_id=...
+ * - Un-validates / resets a pass check-in entry.
+ * - Restores ticket & booking status back to 'confirmed'.
+ * - Deletes associated attendance_logs entries.
+ */
+export async function DELETE(request: NextRequest) {
+  const supabase = createAdminClient();
+  const { searchParams } = new URL(request.url);
+  const bookingId = searchParams.get('booking_id') || searchParams.get('bookingId');
+  const ticketId = searchParams.get('ticket_id') || searchParams.get('ticketId');
+  const logId = searchParams.get('log_id') || searchParams.get('id');
+
+  try {
+    if (!bookingId && !ticketId && !logId) {
+      return Response.json(
+        { success: false, error: 'booking_id, ticket_id, or log_id is required to un-validate pass' } satisfies ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    let targetBookingId = bookingId;
+
+    if (logId) {
+      const cleanLogId = logId.replace(/^(attended|fallback)-/, '');
+      if (cleanLogId.includes('-') && cleanLogId.length === 36) {
+        if (!targetBookingId) {
+          const { data: b } = await supabase.from('bookings').select('id').eq('id', cleanLogId).maybeSingle();
+          if (b?.id) {
+            targetBookingId = b.id;
+          } else {
+            const { data: l } = await supabase.from('attendance_logs').select('booking_id').eq('id', cleanLogId).maybeSingle();
+            if (l?.booking_id) targetBookingId = l.booking_id;
+          }
+        }
+      }
+    }
+
+    if (!targetBookingId && ticketId) {
+      const { data: t } = await supabase.from('tickets').select('booking_id').eq('id', ticketId).maybeSingle();
+      if (t?.booking_id) targetBookingId = t.booking_id;
+    }
+
+    if (!targetBookingId) {
+      return Response.json({ success: false, error: 'Target booking not found for un-validation' } satisfies ApiResponse, { status: 404 });
+    }
+
+    const now = new Date().toISOString();
+
+    // 1. Reset tickets status for this booking back to 'confirmed'
+    await supabase
+      .from('tickets')
+      .update({ status: 'confirmed', used_at: null, updated_at: now })
+      .eq('booking_id', targetBookingId);
+
+    // 2. Reset main booking status back to 'confirmed'
+    await supabase
+      .from('bookings')
+      .update({ status: 'confirmed', updated_at: now })
+      .eq('id', targetBookingId);
+
+    // 3. Delete attendance logs for this booking
+    await supabase.from('attendance_logs').delete().eq('booking_id', targetBookingId);
+
+    return Response.json({
+      success: true,
+      message: 'Pass validation reset successfully. Ticket is now active and can be scanned again.',
+    } satisfies ApiResponse);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Un-validation failed';
+    return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
   }
 }

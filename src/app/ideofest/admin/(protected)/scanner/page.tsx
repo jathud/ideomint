@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import jsQR from 'jsqr';
 import {
   QrCode, Camera, CameraOff, CheckCircle, XCircle, Loader2, ShieldCheck,
-  Users, Ticket, RefreshCw, UserCheck, Phone, FileText, Search, Download, Calendar, Clock, Filter
+  Users, Ticket, RefreshCw, UserCheck, Phone, FileText, Search, Download, Calendar, Clock, Filter, RotateCcw
 } from 'lucide-react';
 import type { IEvent } from '@/lib/ideofest/types';
 
@@ -90,9 +90,8 @@ export default function AdminScannerPage() {
     loadEvents();
   }, []);
 
-  // Fetch Attended List logs when Attended Tab is active or eventId changes
+  // Fetch Attended List logs on mount and when eventId changes
   useEffect(() => {
-    if (activeTab !== 'attended') return;
     let active = true;
 
     async function fetchAttendedLogs() {
@@ -113,7 +112,7 @@ export default function AdminScannerPage() {
 
     fetchAttendedLogs();
     return () => { active = false; };
-  }, [activeTab, selectedEventId]);
+  }, [selectedEventId]);
 
   // Lookup & Inspect pass details without consuming
   const handleLookup = async (codeToLookup: string) => {
@@ -135,6 +134,39 @@ export default function AdminScannerPage() {
       setResult({ success: false, error: 'Network error performing lookup.' });
     } finally {
       setInspecting(false);
+    }
+  };
+
+  const [unvalidating, setUnvalidating] = useState(false);
+
+  // Un-validate pass and reset gate entry
+  const handleUnvalidatePass = async (bookingOrTicketId: string) => {
+    if (!bookingOrTicketId || unvalidating) return;
+    if (!confirm('Are you sure you want to un-validate this pass? This will reset gate entry and allow the pass to be scanned again.')) {
+      return;
+    }
+    setUnvalidating(true);
+    try {
+      const res = await fetch(`/api/ideofest/scan?booking_id=${encodeURIComponent(bookingOrTicketId)}&log_id=${encodeURIComponent(bookingOrTicketId)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setResult({ success: true, message: 'Pass un-validated successfully. Ticket is now active for re-entry.' });
+        setInspection(null);
+        // Refresh attended logs
+        const refRes = await fetch(`/api/ideofest/scan?action=attended_list&event_id=${encodeURIComponent(selectedEventId)}`);
+        const refJson = await refRes.json();
+        if (refJson.success && Array.isArray(refJson.data)) {
+          setAttendedLogs(refJson.data);
+        }
+      } else {
+        alert(`Failed to un-validate: ${data.error || 'Unknown error'}`);
+      }
+    } catch {
+      alert('Network error un-validating pass');
+    } finally {
+      setUnvalidating(false);
     }
   };
 
@@ -498,8 +530,17 @@ export default function AdminScannerPage() {
                   </button>
                 </div>
               ) : (
-                <div className="bg-amber-500/15 border border-amber-500/30 p-4 rounded-2xl text-center text-amber-300 font-bold text-xs">
-                  All {inspection.totalQty} pass(es) for this booking have already entered the venue.
+                <div className="bg-amber-500/15 border border-amber-500/30 p-4 rounded-2xl text-center space-y-3">
+                  <p className="text-amber-300 font-bold text-xs">
+                    All {inspection.totalQty} pass(es) for this booking have already entered the venue.
+                  </p>
+                  <button
+                    onClick={() => handleUnvalidatePass(inspection.bookingId || inspection.ticketId || '')}
+                    disabled={unvalidating}
+                    className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-400 disabled:opacity-40 text-section-ink px-4 py-2 rounded-xl font-extrabold text-xs transition-all shadow-md"
+                  >
+                    {unvalidating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />} Un-validate / Reset Gate Entry
+                  </button>
                 </div>
               )}
             </div>
@@ -676,6 +717,7 @@ export default function AdminScannerPage() {
                       <th className="py-3 px-4">Admitted Qty</th>
                       <th className="py-3 px-4">Gate</th>
                       <th className="py-3 px-4">Scan Time</th>
+                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -709,6 +751,16 @@ export default function AdminScannerPage() {
                               minute: '2-digit',
                               second: '2-digit',
                             })}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <button
+                              onClick={() => handleUnvalidatePass(log.booking_id || log.id)}
+                              disabled={unvalidating}
+                              className="inline-flex items-center gap-1.5 bg-amber-500/15 hover:bg-amber-500 text-amber-300 hover:text-section-ink border border-amber-500/30 px-2.5 py-1.5 rounded-xl font-bold text-[11px] transition-all shadow-sm"
+                              title="Un-validate pass and reset gate entry"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" /> Un-validate
+                            </button>
                           </td>
                         </tr>
                       );

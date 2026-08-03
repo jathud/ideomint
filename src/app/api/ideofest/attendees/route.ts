@@ -103,23 +103,52 @@ export async function DELETE(request: NextRequest) {
   try {
     const supabase = createAdminClient();
     const { searchParams } = new URL(request.url);
-    const bookingId = searchParams.get('booking_id') || searchParams.get('bookingId') || searchParams.get('id');
-    const bookingRef = searchParams.get('booking_ref') || searchParams.get('bookingRef');
+    const bookingIdParam = searchParams.get('booking_id') || searchParams.get('bookingId') || searchParams.get('id');
+    const bookingRefParam = searchParams.get('booking_ref') || searchParams.get('bookingRef');
+    const attendeeIdParam = searchParams.get('attendee_id') || searchParams.get('attendeeId');
 
-    if (!bookingId && !bookingRef) {
-      return Response.json({ success: false, error: 'booking_id or booking_ref is required' } satisfies ApiResponse, { status: 400 });
+    let targetBookingId: string | null = null;
+
+    // 1. Try resolving booking_id directly from bookings table
+    if (bookingIdParam) {
+      const { data: b } = await supabase.from('bookings').select('id').eq('id', bookingIdParam).maybeSingle();
+      if (b?.id) {
+        targetBookingId = b.id;
+      }
     }
 
-    let targetBookingId = bookingId;
+    // 2. Try resolving via attendee_id or if bookingIdParam was actually an attendee ID
+    if (!targetBookingId) {
+      const idToSearch = attendeeIdParam || bookingIdParam;
+      if (idToSearch) {
+        const { data: att } = await supabase.from('attendees').select('booking_id').eq('id', idToSearch).maybeSingle();
+        if (att?.booking_id) {
+          targetBookingId = att.booking_id;
+        }
+      }
+    }
 
-    if (!targetBookingId && bookingRef) {
-      const cleanRef = bookingRef.split('-')[0];
-      const { data: b } = await supabase.from('bookings').select('id').ilike('booking_ref', cleanRef).maybeSingle();
-      if (b?.id) targetBookingId = b.id;
+    // 3. Try resolving via booking_ref
+    if (!targetBookingId && bookingRefParam) {
+      const { data: bExact } = await supabase.from('bookings').select('id').eq('booking_ref', bookingRefParam).maybeSingle();
+      if (bExact?.id) {
+        targetBookingId = bExact.id;
+      } else {
+        const baseRef = bookingRefParam.replace(/-\d+$/, '');
+        const { data: bBase } = await supabase.from('bookings').select('id').eq('booking_ref', baseRef).maybeSingle();
+        if (bBase?.id) {
+          targetBookingId = bBase.id;
+        } else {
+          const { data: bList } = await supabase.from('bookings').select('id').ilike('booking_ref', `${baseRef}%`).limit(1);
+          if (bList && bList.length > 0) {
+            targetBookingId = bList[0].id;
+          }
+        }
+      }
     }
 
     if (!targetBookingId) {
-      return Response.json({ success: false, error: 'Target booking not found' } satisfies ApiResponse, { status: 404 });
+      return Response.json({ success: false, error: 'Target booking record not found' } satisfies ApiResponse, { status: 404 });
     }
 
     // 1. Delete associated attendance logs
@@ -131,7 +160,7 @@ export async function DELETE(request: NextRequest) {
     // 3. Delete associated attendees
     await supabase.from('attendees').delete().eq('booking_id', targetBookingId);
 
-    // 4. Delete the booking row
+    // 4. Delete the main booking row
     const { error: delErr } = await supabase.from('bookings').delete().eq('id', targetBookingId);
 
     if (delErr) {

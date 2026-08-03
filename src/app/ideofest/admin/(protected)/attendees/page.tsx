@@ -105,15 +105,30 @@ export default function AdminAttendeesPage() {
     if (!deleteConfirmTarget) return;
     setDeleting(true);
     try {
-      const res = await fetch(`/api/ideofest/attendees?booking_ref=${encodeURIComponent(deleteConfirmTarget.booking_ref)}`, {
-        method: 'DELETE',
-      });
+      const bId = deleteConfirmTarget.booking_id || deleteConfirmTarget.id || '';
+      const bRef = deleteConfirmTarget.booking_ref || '';
+      const aId = deleteConfirmTarget.id || '';
+      const res = await fetch(
+        `/api/ideofest/attendees?booking_id=${encodeURIComponent(bId)}&booking_ref=${encodeURIComponent(bRef)}&attendee_id=${encodeURIComponent(aId)}`,
+        { method: 'DELETE' }
+      );
       const data = await res.json();
       if (data.success) {
-        const cleanRef = (deleteConfirmTarget.booking_ref || '').split('-')[0];
-        setBookings((prev) => prev.filter((b) => (b.booking_ref || '').split('-')[0] !== cleanRef));
-        setActionSuccess(`Ticket pass ${deleteConfirmTarget.booking_ref} deleted successfully`);
+        setActionSuccess(`Ticket pass ${deleteConfirmTarget.booking_ref || deleteConfirmTarget.attendee_name || ''} deleted successfully`);
         setTimeout(() => setActionSuccess(null), 4000);
+
+        // Re-fetch fresh attendee records from backend
+        try {
+          const attRes = await fetch('/api/ideofest/attendees');
+          const attData = await attRes.json();
+          if (attData.success && Array.isArray(attData.data)) {
+            setBookings(attData.data);
+          } else {
+            setBookings((prev) => prev.filter((b) => b.id !== deleteConfirmTarget.id && b.booking_id !== bId));
+          }
+        } catch {
+          setBookings((prev) => prev.filter((b) => b.id !== deleteConfirmTarget.id && b.booking_id !== bId));
+        }
       } else {
         alert(`Failed to delete ticket: ${data.error || 'Unknown error'}`);
       }
