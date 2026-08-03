@@ -85,11 +85,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable}`} suppressHydrationWarning>
       <head>
-        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com; font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com" />
+        <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com https://cdn.fontshare.com; font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com" />
         <link rel="icon" type="image/svg+xml" href="/ideomint-dp.svg" />
         <link rel="apple-touch-icon" href="/ideomint-dp.svg" />
-        <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="anonymous" />
-        <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400,800&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-section-ink">
         <JsonLd data={{

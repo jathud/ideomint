@@ -138,7 +138,7 @@ export default function Header() {
 
             <Link
               href={isHome ? '#contact' : '/#contact'}
-              className="hidden md:flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-white px-5 py-2.5 rounded-full text-xs font-bold transition-all"
+              className="hidden md:flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-section-ink px-5 py-2.5 rounded-full text-xs font-black transition-all shadow-md"
             >
               Let's work together
             </Link>

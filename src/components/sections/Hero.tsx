@@ -55,19 +55,19 @@ export default function Hero() {
               <Image src="/hero_concert.png" alt="Concert crowd" fill priority sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
             </div>
             <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_stationery.png" alt="Brand stationery" fill priority sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
+              <Image src="/hero_stationery.png" alt="Brand stationery" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
             </div>
             <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_camera.png" alt="Video camera" fill priority sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
+              <Image src="/hero_camera.png" alt="Video camera" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
             </div>
             <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_performer.png" alt="Live performer" fill priority sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
+              <Image src="/hero_performer.png" alt="Live performer" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
             </div>
           </div>
         </div>
 
         {/* Vertical Indicator */}
-        <div className="hidden lg:flex flex-col text-[11px] font-bold text-white/40 ml-12 relative">
+        <div className="hidden lg:flex flex-col text-[11px] font-extrabold text-white/80 ml-12 relative">
           {/* Continuous Line */}
           <div className="absolute top-3 bottom-3 left-[5px] w-px bg-white/20 z-0" />
           
