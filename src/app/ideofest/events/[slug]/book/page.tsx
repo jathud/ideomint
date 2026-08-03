@@ -113,6 +113,9 @@ export default function BookingPage({ params }: { params: Promise<{ slug: string
     details: '',
   });
 
+  // Media & Social Media Consent state
+  const [mediaConsent, setMediaConsent] = useState(false);
+
   // Copy feedback state
   const [copiedRef, setCopiedRef] = useState(false);
 
@@ -299,6 +302,10 @@ Ideomint — Perfectly Minted Events.
         e[`extra_phone_${i}`] = 'Enter valid phone number';
       }
     });
+
+    if (!mediaConsent) {
+      e.mediaConsent = 'You must agree to the event photo & video shooting consent to proceed';
+    }
 
     setErrors(e);
 
@@ -878,6 +885,50 @@ Ideomint — Perfectly Minted Events.
               </div>
             </div>
           )}
+
+          {/* Media & Social Media Consent Agreement */}
+          <div className={`border rounded-3xl p-6 backdrop-blur-xl transition-all ${
+            errors.mediaConsent
+              ? 'border-red-500 bg-red-500/10 ring-2 ring-red-500/50 shadow-[0_0_25px_rgba(251,44,54,0.25)]'
+              : mediaConsent
+              ? 'border-[#c1e527]/50 bg-[#c1e527]/5'
+              : 'border-white/12 bg-white/4'
+          }`}>
+            <label className="flex items-start gap-3.5 cursor-pointer group">
+              <div className="relative flex items-center justify-center mt-0.5 shrink-0">
+                <input
+                  type="checkbox"
+                  id="mediaConsent"
+                  required
+                  checked={mediaConsent}
+                  onChange={(e) => {
+                    setMediaConsent(e.target.checked);
+                    if (errors.mediaConsent) {
+                      setErrors((prev) => ({ ...prev, mediaConsent: '' }));
+                    }
+                  }}
+                  className="w-5.5 h-5.5 rounded-lg border-2 border-white/40 bg-white/10 checked:bg-[#c1e527] checked:border-[#c1e527] focus:outline-none transition-all cursor-pointer accent-[#c1e527]"
+                />
+              </div>
+              <div className="text-xs text-white/90 leading-relaxed">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <span className="font-extrabold text-white text-sm">Media Consent & Photography Agreement</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 border border-red-500/40">
+                    Required *
+                  </span>
+                </div>
+                <p className="text-white/70 text-xs leading-relaxed">
+                  I agree and consent that photos, audio, and video recordings taken during the event may be captured, published, and used by Ideofest & Ideomint for social media highlights, marketing campaigns, and official promotional channels.
+                </p>
+              </div>
+            </label>
+            {errors.mediaConsent && (
+              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-red-500/30 text-red-400 font-bold text-xs">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>{errors.mediaConsent}</span>
+              </div>
+            )}
+          </div>
 
           {/* Total Bar */}
           {selectedTier && (

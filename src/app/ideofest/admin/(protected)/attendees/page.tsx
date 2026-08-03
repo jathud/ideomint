@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, CheckCircle, Clock, Download, Loader2, Ticket, X, Printer, Eye, Share2, FileText, Check, Settings2, CheckSquare, Square } from 'lucide-react';
+import { Search, CheckCircle, Clock, Download, Loader2, Ticket, X, Printer, Eye, Share2, FileText, Check, Settings2, CheckSquare, Square, Trash2, AlertTriangle } from 'lucide-react';
 import type { IBooking, IEvent } from '@/lib/ideofest/types';
 import QRTicket from '@/components/ideofest/QRTicket';
 
@@ -40,6 +40,8 @@ export default function AdminAttendeesPage() {
 
   // Selected attendee for "Get Ticket" pass modal
   const [activeTicketAttendee, setActiveTicketAttendee] = useState<any | null>(null);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
@@ -97,6 +99,31 @@ export default function AdminAttendeesPage() {
     loadData();
     return () => { active = false; };
   }, []);
+
+  // Handle Delete Ticket & Attendee Record
+  const handleDeleteTicket = async () => {
+    if (!deleteConfirmTarget) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/ideofest/attendees?booking_ref=${encodeURIComponent(deleteConfirmTarget.booking_ref)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        const cleanRef = (deleteConfirmTarget.booking_ref || '').split('-')[0];
+        setBookings((prev) => prev.filter((b) => (b.booking_ref || '').split('-')[0] !== cleanRef));
+        setActionSuccess(`Ticket pass ${deleteConfirmTarget.booking_ref} deleted successfully`);
+        setTimeout(() => setActionSuccess(null), 4000);
+      } else {
+        alert(`Failed to delete ticket: ${data.error || 'Unknown error'}`);
+      }
+    } catch {
+      alert('Network error deleting ticket');
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmTarget(null);
+    }
+  };
 
   // Filter logic across Search, Event, Status, and Pass Tier
   const filtered = useMemo(() => {
@@ -446,12 +473,21 @@ export default function AdminAttendeesPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <button
-                            onClick={() => setActiveTicketAttendee(a)}
-                            className="inline-flex items-center gap-1.5 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all shadow-md hover:scale-105"
-                          >
-                            <Ticket className="w-3.5 h-3.5" /> Get Ticket
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setActiveTicketAttendee(a)}
+                              className="inline-flex items-center gap-1.5 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all shadow-md hover:scale-105"
+                            >
+                              <Ticket className="w-3.5 h-3.5" /> Get Ticket
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmTarget(a)}
+                              className="inline-flex items-center gap-1 bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 px-2.5 py-1.5 rounded-xl font-bold text-xs transition-all shadow-sm"
+                              title="Delete Ticket Pass & Attendee Record"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -650,6 +686,59 @@ export default function AdminAttendeesPage() {
                   Close Pass Preview
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── DELETE CONFIRMATION MODAL ── */}
+      {deleteConfirmTarget && (
+        <div
+          className="fixed inset-0 z-[99999] overflow-y-auto bg-black/85 backdrop-blur-xl p-4 sm:p-6 flex items-center justify-center animate-in fade-in"
+          onClick={() => !deleting && setDeleteConfirmTarget(null)}
+        >
+          <div
+            className="bg-[#121624] border border-red-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-5 text-left my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/30">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base sm:text-lg text-white">Delete Ticket & Attendee</h3>
+                <p className="text-xs text-white/50">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 space-y-2">
+              <p className="text-xs text-white/90">
+                Are you sure you want to permanently delete ticket pass{' '}
+                <strong className="text-signal-lime font-mono">{deleteConfirmTarget.booking_ref}</strong> for{' '}
+                <strong className="text-white">{deleteConfirmTarget.name || deleteConfirmTarget.attendee_name}</strong>?
+              </p>
+              <p className="text-[11px] text-white/50">
+                This will purge all booking records, issued passes, gate scan history, and attendee data from Supabase.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTarget(null)}
+                disabled={deleting}
+                className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 rounded-xl text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTicket}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl text-xs transition-all shadow-lg hover:shadow-red-500/30"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Delete Permanently</>}
+              </button>
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ import TicketPrintModal from '@/components/ideofest/TicketPrintModal';
 import {
   CheckCircle2, XCircle, Search, ExternalLink, ShieldCheck,
   Loader2, RefreshCw, Eye, Landmark, CreditCard, AlertCircle,
-  Clock, Check, X, Printer, FileText,
+  Clock, Check, X, Printer, FileText, Trash2, AlertTriangle,
 } from 'lucide-react';
 
 type FilterTab = 'pending_verification' | 'all' | 'confirmed' | 'rejected';
@@ -61,6 +61,30 @@ export default function AdminVerificationsPage() {
   const [loadingSlip, setLoadingSlip] = useState(false);
 
   const [printBooking, setPrintBooking] = useState<IBooking | null>(null);
+  const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<IBooking | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteBooking = async () => {
+    if (!deleteConfirmTarget?.id && !deleteConfirmTarget?.booking_ref) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/ideofest/attendees?booking_id=${encodeURIComponent(deleteConfirmTarget.id || '')}&booking_ref=${encodeURIComponent(deleteConfirmTarget.booking_ref)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setBookings((prev) => prev.filter((b) => b.id !== deleteConfirmTarget.id && b.booking_ref !== deleteConfirmTarget.booking_ref));
+        if (selectedBooking?.id === deleteConfirmTarget.id) setSelectedBooking(null);
+      } else {
+        alert(`Failed to delete booking: ${data.error || 'Unknown error'}`);
+      }
+    } catch {
+      alert('Network error deleting booking');
+    } finally {
+      setDeleting(false);
+      setDeleteConfirmTarget(null);
+    }
+  };
 
   // Lock ALL scrollable ancestors when modal is open
   useEffect(() => {
@@ -309,6 +333,14 @@ export default function AdminVerificationsPage() {
                       </button>
                     </>
                   )}
+                  <button
+                    onClick={() => setDeleteConfirmTarget(booking)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white text-sm font-bold transition-all border border-red-500/20"
+                    title="Delete Booking & Passes"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="hidden md:inline">Delete</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -529,6 +561,59 @@ export default function AdminVerificationsPage() {
           booking={printBooking}
           onClose={() => setPrintBooking(null)}
         />
+      )}
+
+      {/* ── DELETE CONFIRMATION MODAL ── */}
+      {deleteConfirmTarget && (
+        <div
+          className="fixed inset-0 z-[99999] overflow-y-auto bg-black/85 backdrop-blur-xl p-4 sm:p-6 flex items-center justify-center animate-in fade-in"
+          onClick={() => !deleting && setDeleteConfirmTarget(null)}
+        >
+          <div
+            className="bg-[#121624] border border-red-500/30 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative space-y-5 text-left my-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+              <div className="w-10 h-10 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center border border-red-500/30">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-base sm:text-lg text-white">Delete Booking & Tickets</h3>
+                <p className="text-xs text-white/50">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 space-y-2">
+              <p className="text-xs text-white/90">
+                Are you sure you want to permanently delete booking{' '}
+                <strong className="text-signal-lime font-mono">{deleteConfirmTarget.booking_ref}</strong> for{' '}
+                <strong className="text-white">{deleteConfirmTarget.attendee_name}</strong>?
+              </p>
+              <p className="text-[11px] text-white/50">
+                This will purge all booking records, issued passes, gate scan history, and attendee data from Supabase.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmTarget(null)}
+                disabled={deleting}
+                className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 rounded-xl text-xs transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteBooking}
+                disabled={deleting}
+                className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl text-xs transition-all shadow-lg hover:shadow-red-500/30"
+              >
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Delete Permanently</>}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

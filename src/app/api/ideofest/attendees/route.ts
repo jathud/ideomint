@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
 
       // Attendee 1 (Lead Booker)
       attendees.push({
+        booking_id: b.id,
+        ticket_id: ticket?.id,
         booking_ref: b.booking_ref,
         event_id: b.event_id,
         event_title: b.event_title,
@@ -56,6 +58,8 @@ export async function GET(request: NextRequest) {
         extras.forEach((extra: { name?: string; nic?: string; phone?: string }, idx: number) => {
           if (extra.name || extra.nic || extra.phone) {
             attendees.push({
+              booking_id: b.id,
+              ticket_id: ticket?.id,
               booking_ref: `${b.booking_ref}-${idx + 2}`,
               event_id: b.event_id,
               event_title: b.event_title,
@@ -90,6 +94,56 @@ export async function GET(request: NextRequest) {
     return Response.json({ success: true, data: filteredAttendees } satisfies ApiResponse<IAttendee[]>);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to fetch attendees';
+    return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
+  }
+}
+
+// ── DELETE: Delete ticket / booking & associated attendee entries ────────────────
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = createAdminClient();
+    const { searchParams } = new URL(request.url);
+    const bookingId = searchParams.get('booking_id') || searchParams.get('bookingId') || searchParams.get('id');
+    const bookingRef = searchParams.get('booking_ref') || searchParams.get('bookingRef');
+
+    if (!bookingId && !bookingRef) {
+      return Response.json({ success: false, error: 'booking_id or booking_ref is required' } satisfies ApiResponse, { status: 400 });
+    }
+
+    let targetBookingId = bookingId;
+
+    if (!targetBookingId && bookingRef) {
+      const cleanRef = bookingRef.split('-')[0];
+      const { data: b } = await supabase.from('bookings').select('id').ilike('booking_ref', cleanRef).maybeSingle();
+      if (b?.id) targetBookingId = b.id;
+    }
+
+    if (!targetBookingId) {
+      return Response.json({ success: false, error: 'Target booking not found' } satisfies ApiResponse, { status: 404 });
+    }
+
+    // 1. Delete associated attendance logs
+    await supabase.from('attendance_logs').delete().eq('booking_id', targetBookingId);
+
+    // 2. Delete associated tickets
+    await supabase.from('tickets').delete().eq('booking_id', targetBookingId);
+
+    // 3. Delete associated attendees
+    await supabase.from('attendees').delete().eq('booking_id', targetBookingId);
+
+    // 4. Delete the booking row
+    const { error: delErr } = await supabase.from('bookings').delete().eq('id', targetBookingId);
+
+    if (delErr) {
+      throw new Error(delErr.message);
+    }
+
+    return Response.json({
+      success: true,
+      message: 'Booking, tickets, and attendee details deleted successfully',
+    } satisfies ApiResponse);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete ticket / attendee';
     return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
   }
 }

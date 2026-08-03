@@ -1,13 +1,4 @@
 import type { NextConfig } from "next";
-import dns from "dns";
-
-// Configure Node.js DNS resolvers for MongoDB Atlas
-try {
-  dns.setServers(['8.8.8.8', '1.1.1.1']);
-  dns.setDefaultResultOrder('ipv4first');
-} catch {
-  // Ignore
-}
 
 const securityHeaders = [
   {

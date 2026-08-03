@@ -246,22 +246,6 @@ export default async function EventDetailPage({ params }: Props) {
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
               <h3 className="text-xl font-black mb-2">Get Tickets</h3>
 
-              {/* Sold progress */}
-              {totalCap > 0 && (
-                <div className="mb-5">
-                  <div className="flex items-center justify-between text-xs text-white/40 mb-2">
-                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {totalSold} attending</span>
-                    <span>{soldPct}% sold</span>
-                  </div>
-                  <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#c1e527] rounded-full transition-all"
-                      style={{ width: `${soldPct}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-
               {/* Tiers */}
               <div className="flex flex-col gap-3 mb-6">
                 {tiers.length === 0 ? (
