@@ -223,6 +223,20 @@ export interface IAttendee {
   payment_status: PaymentStatus;
   payment_method: PaymentMethod;
   payment_slip_url?: string;
+  address_line_1?: string;
+  address_line_2?: string;
+  city?: string;
+  district?: string;
+  country?: string;
+  company?: string;
+  job_title?: string;
+  special_notes?: string;
+  additional_attendees?: Array<{ name?: string; nic?: string; phone?: string }>;
+  special_event_request?: {
+    enabled?: boolean;
+    type?: string;
+    details?: string;
+  };
   created_at?: string;
 }
 

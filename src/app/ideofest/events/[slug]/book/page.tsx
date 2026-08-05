@@ -10,7 +10,7 @@ import {
   ArrowLeft, ArrowRight, Loader2, ShieldCheck, Ticket, Upload,
   CreditCard, Landmark, ChevronDown, ChevronUp, MapPin,
   AlertTriangle, Building2, FileText, Copy, Check, Download, Mail, Share2,
-  Sparkles, CheckCircle2, Phone, Calendar, Clock, Lock
+  Sparkles, CheckCircle2, Phone, Calendar, Clock, Lock, MessageSquare
 } from 'lucide-react';
 
 const STEPS = [
@@ -714,30 +714,61 @@ Ideomint — Perfectly Minted Events.
           ))}
 
           {/* Special Celebration Request Card */}
-          <div className="bg-gradient-to-r from-[#c1e527]/12 via-white/5 to-[#c1e527]/12 border border-[#c1e527]/35 rounded-3xl p-6 backdrop-blur-xl shadow-lg">
+          <div className="bg-gradient-to-r from-[#c1e527]/12 via-white/5 to-[#c1e527]/12 border border-[#c1e527]/35 rounded-3xl p-4 sm:p-6 backdrop-blur-xl shadow-lg">
             <div
-              className="flex items-center justify-between cursor-pointer select-none"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none"
               onClick={() => setSpecialEvent({ ...specialEvent, enabled: !specialEvent.enabled })}
             >
-              <div className="flex items-center gap-3.5">
-                <div className="p-3 rounded-2xl bg-[#c1e527]/20 border border-[#c1e527]/40 text-[#c1e527]">
-                  <Sparkles className="w-6 h-6" />
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-[#c1e527]/20 border border-[#c1e527]/40 text-[#c1e527] shrink-0 mt-0.5 sm:mt-0">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <div>
-                  <p className="font-extrabold text-white text-base">Planning a Special Celebration?</p>
-                  <p className="text-xs text-white/60">Cake cutting, Birthday surprise, Anniversary, VIP arrangement</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                    <p className="font-extrabold text-white text-sm sm:text-base leading-tight">Planning a Special Celebration?</p>
+                    <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+                      Optional
+                    </span>
+                  </div>
+                  <p className="text-[11px] sm:text-xs text-white/60 leading-snug">Cake cutting, Birthday surprise, Anniversary, Special requests</p>
                 </div>
               </div>
-              <input
-                type="checkbox"
-                checked={specialEvent.enabled}
-                onChange={(e) => setSpecialEvent({ ...specialEvent, enabled: e.target.checked })}
-                className="w-5 h-5 accent-[#c1e527] rounded cursor-pointer"
-              />
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSpecialEvent({ ...specialEvent, enabled: !specialEvent.enabled });
+                }}
+                className={`self-start sm:self-center px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all border shrink-0 ${
+                  specialEvent.enabled
+                    ? 'bg-[#c1e527] text-section-ink border-[#c1e527]'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20 border-white/15'
+                }`}
+              >
+                {specialEvent.enabled ? '✓ Added' : '+ Add Request'}
+              </button>
+            </div>
+
+            {/* Direct WhatsApp Concierge Chat Bar */}
+            <div className="mt-4 pt-3.5 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              <div className="flex items-start sm:items-center gap-2 text-white/70">
+                <MessageSquare className="w-4 h-4 text-[#c1e527] shrink-0 mt-0.5 sm:mt-0" />
+                <span className="text-[11px] sm:text-xs">Have a special request or surprise plan? Chat directly with our event team:</span>
+              </div>
+              <a
+                href={`https://wa.me/${cleanWhatsapp}?text=${encodeURIComponent('Hi Ideofest Team 👋 I want to arrange a special celebration (Birthday / Cake Cutting / Special Request) for an upcoming event.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-section-ink font-black px-3.5 py-2 rounded-xl text-xs transition-all shadow-md shrink-0"
+              >
+                <Phone className="w-3.5 h-3.5" /> Chat on WhatsApp (+94 78 689 2649) ↗
+              </a>
             </div>
 
             {specialEvent.enabled && (
-              <div className="mt-6 border-t border-white/10 pt-5 flex flex-col gap-4">
+              <div className="mt-5 border-t border-white/10 pt-5 flex flex-col gap-4">
                 <FormField id="specialType" label="Celebration Type">
                   <select
                     id="specialType"
@@ -748,7 +779,7 @@ Ideomint — Perfectly Minted Events.
                     <option value="Birthday / Cake Cutting" className="bg-zinc-900">🎂 Birthday & Cake Cutting</option>
                     <option value="Birthday Surprise" className="bg-zinc-900">🎁 Special Birthday Surprise</option>
                     <option value="Anniversary Celebration" className="bg-zinc-900">🥂 Anniversary Celebration</option>
-                    <option value="VIP Proposal" className="bg-zinc-900">💍 VIP Proposal / Special Moment</option>
+                    <option value="Proposal & Special Moments" className="bg-zinc-900">💍 Proposal & Special Moments</option>
                     <option value="Custom Surprise" className="bg-zinc-900">✨ Custom Surprise Request</option>
                   </select>
                 </FormField>

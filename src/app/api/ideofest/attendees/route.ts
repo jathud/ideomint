@@ -27,12 +27,14 @@ export async function GET(request: NextRequest) {
     (bookings || []).forEach((b: any) => {
       const ticket = b.tickets?.[0];
       const isCheckedIn = ticket?.status === 'used' || b.status === 'confirmed';
+      const qty = Math.max(1, b.quantity || 1);
+      const extras = Array.isArray(b.additional_attendees) ? b.additional_attendees : [];
 
-      // Attendee 1 (Lead Booker)
+      // Pass 1 (Lead Booker)
       attendees.push({
         booking_id: b.id,
         ticket_id: ticket?.id,
-        booking_ref: b.booking_ref,
+        booking_ref: qty > 1 ? `${b.booking_ref}-1` : b.booking_ref,
         event_id: b.event_id,
         event_title: b.event_title,
         name: b.attendee_name,
@@ -40,8 +42,8 @@ export async function GET(request: NextRequest) {
         phone: b.attendee_phone || '—',
         nic_number: b.attendee_nic || '—',
         tier_name: b.tier_name,
-        tier_label: b.tier_label,
-        quantity: b.quantity,
+        tier_label: qty > 1 ? `${b.tier_label} (Pass 1/${qty})` : b.tier_label,
+        quantity: 1,
         total_amount: b.total_amount || 0,
         checked_in: isCheckedIn,
         checked_in_at: ticket?.used_at,
@@ -49,37 +51,53 @@ export async function GET(request: NextRequest) {
         payment_status: b.payment_status,
         payment_method: b.payment_method,
         payment_slip_url: b.payment_slip_url,
+        address_line_1: b.address_line_1,
+        address_line_2: b.address_line_2,
+        city: b.city,
+        district: b.district,
+        country: b.country,
+        company: b.company,
+        job_title: b.job_title,
+        special_notes: b.special_notes,
+        additional_attendees: b.additional_attendees,
+        special_event_request: b.special_event_request,
         created_at: b.created_at,
       });
 
-      // Additional Attendees (Attendee 2, 3, etc.)
-      const extras = b.additional_attendees;
-      if (Array.isArray(extras) && extras.length > 0) {
-        extras.forEach((extra: { name?: string; nic?: string; phone?: string }, idx: number) => {
-          if (extra.name || extra.nic || extra.phone) {
-            attendees.push({
-              booking_id: b.id,
-              ticket_id: ticket?.id,
-              booking_ref: `${b.booking_ref}-${idx + 2}`,
-              event_id: b.event_id,
-              event_title: b.event_title,
-              name: extra.name || `Attendee ${idx + 2}`,
-              email: b.attendee_email,
-              phone: extra.phone || b.attendee_phone || '—',
-              nic_number: extra.nic || '—',
-              tier_name: b.tier_name,
-              tier_label: `${b.tier_label} (Pass ${idx + 2}/${b.quantity})`,
-              quantity: 1,
-              total_amount: 0,
-              checked_in: isCheckedIn,
-              checked_in_at: ticket?.used_at,
-              booking_status: b.status,
-              payment_status: b.payment_status,
-              payment_method: b.payment_method,
-              payment_slip_url: b.payment_slip_url,
-              created_at: b.created_at,
-            });
-          }
+      // Additional Passes (Pass 2, 3... up to Qty)
+      for (let i = 1; i < qty; i++) {
+        const extra = extras[i - 1] || {};
+        attendees.push({
+          booking_id: b.id,
+          ticket_id: ticket?.id,
+          booking_ref: `${b.booking_ref}-${i + 1}`,
+          event_id: b.event_id,
+          event_title: b.event_title,
+          name: extra.name || `${b.attendee_name} (Guest ${i + 1})`,
+          email: b.attendee_email,
+          phone: extra.phone || b.attendee_phone || '—',
+          nic_number: extra.nic || '—',
+          tier_name: b.tier_name,
+          tier_label: `${b.tier_label} (Pass ${i + 1}/${qty})`,
+          quantity: 1,
+          total_amount: 0,
+          checked_in: isCheckedIn,
+          checked_in_at: ticket?.used_at,
+          booking_status: b.status,
+          payment_status: b.payment_status,
+          payment_method: b.payment_method,
+          payment_slip_url: b.payment_slip_url,
+          address_line_1: b.address_line_1,
+          address_line_2: b.address_line_2,
+          city: b.city,
+          district: b.district,
+          country: b.country,
+          company: b.company,
+          job_title: b.job_title,
+          special_notes: b.special_notes,
+          additional_attendees: b.additional_attendees,
+          special_event_request: b.special_event_request,
+          created_at: b.created_at,
         });
       }
     });

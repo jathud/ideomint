@@ -924,15 +924,48 @@ export default function AdminAttendeesPage() {
                   </div>
                 </div>
 
-                {/* 5. Special Notes & Celebration Requests */}
-                {activeDetailsAttendee.special_notes && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
-                    <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">
-                      📝 Special Notes / Celebration Requests
+                {/* 5. Special Celebration Request */}
+                {(activeDetailsAttendee.special_event_request?.enabled || activeDetailsAttendee.special_event_request?.type || activeDetailsAttendee.special_notes) && (
+                  <div className="bg-gradient-to-r from-amber-500/15 to-purple-500/15 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+                    <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
+                      ✨ Special Celebration Request
                     </p>
-                    <p className="text-white/90 whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
-                      {activeDetailsAttendee.special_notes}
+                    {activeDetailsAttendee.special_event_request?.type && (
+                      <div>
+                        <span className="text-white/40 block text-[11px]">Celebration Type</span>
+                        <strong className="text-amber-300 text-xs font-bold">
+                          {activeDetailsAttendee.special_event_request.type}
+                        </strong>
+                      </div>
+                    )}
+                    {(activeDetailsAttendee.special_event_request?.details || activeDetailsAttendee.special_notes) && (
+                      <div>
+                        <span className="text-white/40 block text-[11px]">Surprise Instructions & Details</span>
+                        <p className="text-white/90 whitespace-pre-wrap leading-relaxed text-xs">
+                          {activeDetailsAttendee.special_event_request?.details || activeDetailsAttendee.special_notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 6. Group Attendees & Guests List */}
+                {Array.isArray(activeDetailsAttendee.additional_attendees) && activeDetailsAttendee.additional_attendees.length > 0 && (
+                  <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                    <p className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5">
+                      👥 Additional Group Attendees ({activeDetailsAttendee.additional_attendees.length})
                     </p>
+                    <div className="divide-y divide-white/8 space-y-2">
+                      {activeDetailsAttendee.additional_attendees.map((guest: { name?: string; nic?: string; phone?: string }, idx: number) => (
+                        <div key={idx} className="pt-2 first:pt-0 flex items-center justify-between text-xs">
+                          <div>
+                            <span className="text-white font-bold block">{guest.name || `Guest ${idx + 2}`}</span>
+                            <span className="text-white/40 text-[11px]">NIC: {guest.nic || '—'}</span>
+                          </div>
+                          <span className="text-[#c1e527] font-mono text-[11px]">{guest.phone || '—'}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
