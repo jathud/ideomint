@@ -38,8 +38,9 @@ export default function AdminAttendeesPage() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Selected attendee for "Get Ticket" pass modal
+  // Selected attendee for "Get Ticket" pass modal & Full Details Modal
   const [activeTicketAttendee, setActiveTicketAttendee] = useState<any | null>(null);
+  const [activeDetailsAttendee, setActiveDetailsAttendee] = useState<any | null>(null);
   const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [verifying, setVerifying] = useState(false);
@@ -57,7 +58,7 @@ export default function AdminAttendeesPage() {
 
   // Lock ALL scrollable ancestors when any modal popup is open
   useEffect(() => {
-    const isOpen = !!(activeTicketAttendee || showColumnModal);
+    const isOpen = !!(activeTicketAttendee || showColumnModal || activeDetailsAttendee || deleteConfirmTarget);
     // Lock body
     document.body.style.overflow = isOpen ? 'hidden' : '';
     // Also lock the nearest <main> and any scrollable sibling (sidebar nav)
@@ -490,6 +491,13 @@ export default function AdminAttendeesPage() {
                         <td className="px-5 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
+                              onClick={() => setActiveDetailsAttendee(a)}
+                              className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-all border border-white/15 shadow-sm"
+                              title="View All Attendee & Registration Details"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-[#c1e527]" /> View Details
+                            </button>
+                            <button
                               onClick={() => setActiveTicketAttendee(a)}
                               className="inline-flex items-center gap-1.5 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink px-3 py-1.5 rounded-xl font-extrabold text-xs transition-all shadow-md hover:scale-105"
                             >
@@ -754,6 +762,200 @@ export default function AdminAttendeesPage() {
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4" /> Delete Permanently</>}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── USER ALL DETAILS MODAL ── */}
+      {activeDetailsAttendee && (
+        <div
+          className="fixed inset-0 z-[9999] overflow-y-auto bg-black/85 backdrop-blur-xl p-4 sm:p-6"
+          onClick={() => setActiveDetailsAttendee(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div className="min-h-full flex items-center justify-center py-6">
+            <div
+              className="bg-[#0e121e] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative space-y-6 text-left my-auto animate-in fade-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3 text-white">
+                  <div className="w-10 h-10 rounded-2xl bg-[#c1e527]/15 border border-[#c1e527]/30 text-[#c1e527] flex items-center justify-center font-black">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-lg text-white">Attendee Complete Profile</h3>
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30">
+                        {activeDetailsAttendee.booking_ref}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/50">Full registration details & booking audit record</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveDetailsAttendee(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Grid Sections */}
+              <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1 text-xs">
+                {/* 1. Personal & Contact Info */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-[#c1e527] uppercase tracking-widest flex items-center gap-1.5">
+                    👤 Attendee Personal Information
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Full Legal Name</span>
+                      <strong className="text-white text-sm">{activeDetailsAttendee.attendee_name || activeDetailsAttendee.name}</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Email Address</span>
+                      <strong className="text-white font-mono">{activeDetailsAttendee.attendee_email || activeDetailsAttendee.email || '—'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Phone Number</span>
+                      <strong className="text-white font-mono">{activeDetailsAttendee.attendee_phone || activeDetailsAttendee.phone || '—'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">NIC / Passport Number</span>
+                      <strong className="text-white font-mono">{activeDetailsAttendee.attendee_nic || activeDetailsAttendee.nic_number || '—'}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Event & Booking Tier */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-[#c1e527] uppercase tracking-widest flex items-center gap-1.5">
+                    🎟️ Event & Pass Details
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Event Title</span>
+                      <strong className="text-white">{activeDetailsAttendee.event_title || 'Ideofest Event'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Pass Tier & Index</span>
+                      <span className="inline-block px-2.5 py-0.5 rounded-full bg-[#c1e527]/15 text-[#c1e527] font-bold border border-[#c1e527]/30 text-[11px] mt-0.5">
+                        {activeDetailsAttendee.tier_label || activeDetailsAttendee.tier_name || 'Standard'} (Pass {activeDetailsAttendee.pass_index || 1} of {activeDetailsAttendee.quantity || 1})
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Total Paid Amount</span>
+                      <strong className="text-[#c1e527] font-mono text-sm">
+                        LKR {(activeDetailsAttendee.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 })}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Registration Date</span>
+                      <strong className="text-white/80 font-mono">
+                        {activeDetailsAttendee.created_at ? new Date(activeDetailsAttendee.created_at).toLocaleString('en-LK') : '—'}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Address & Location */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5">
+                    📍 Address Information
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <span className="text-white/40 block text-[11px]">Street Address</span>
+                      <strong className="text-white">
+                        {[activeDetailsAttendee.address_line_1, activeDetailsAttendee.address_line_2].filter(Boolean).join(', ') || '—'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">City & District</span>
+                      <strong className="text-white">
+                        {[activeDetailsAttendee.city, activeDetailsAttendee.district].filter(Boolean).join(', ') || '—'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Country</span>
+                      <strong className="text-white">{activeDetailsAttendee.country || 'Sri Lanka'}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Payment Method & Slip */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5">
+                    💳 Payment Status & Verification
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Payment Gateway</span>
+                      <strong className="text-white capitalize">
+                        {activeDetailsAttendee.payment_method === 'bank_transfer' ? 'Direct Bank Transfer' : activeDetailsAttendee.payment_method || 'Online'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-white/40 block text-[11px]">Verification Status</span>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full capitalize mt-0.5 ${
+                        activeDetailsAttendee.status === 'confirmed' || activeDetailsAttendee.payment_status === 'paid'
+                          ? 'bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30'
+                          : 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                      }`}>
+                        {activeDetailsAttendee.status === 'confirmed' || activeDetailsAttendee.payment_status === 'paid' ? 'Paid & Confirmed' : 'Pending Verification'}
+                      </span>
+                    </div>
+                    {activeDetailsAttendee.payment_slip_url && (
+                      <div className="sm:col-span-2 pt-2 border-t border-white/8">
+                        <span className="text-amber-400 font-bold block mb-1">Transfer Receipt / Payment Slip:</span>
+                        <a
+                          href={activeDetailsAttendee.payment_slip_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 bg-[#c1e527]/15 hover:bg-[#c1e527] text-[#c1e527] hover:text-section-ink border border-[#c1e527]/30 px-3 py-1.5 rounded-xl font-bold transition-all"
+                        >
+                          <FileText className="w-4 h-4" /> Open High-Res Slip Image ↗
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 5. Special Notes & Celebration Requests */}
+                {activeDetailsAttendee.special_notes && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-2">
+                    <p className="text-[10px] font-black text-amber-300 uppercase tracking-widest">
+                      📝 Special Notes / Celebration Requests
+                    </p>
+                    <p className="text-white/90 whitespace-pre-wrap leading-relaxed font-mono text-[11px]">
+                      {activeDetailsAttendee.special_notes}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Actions */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    const att = activeDetailsAttendee;
+                    setActiveDetailsAttendee(null);
+                    setActiveTicketAttendee(att);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-3 rounded-xl text-xs transition-all shadow-lg"
+                >
+                  <Ticket className="w-4 h-4" /> View QR Pass Ticket
+                </button>
+                <button
+                  onClick={() => setActiveDetailsAttendee(null)}
+                  className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 rounded-xl text-xs transition-colors border border-white/15"
+                >
+                  Close Details
+                </button>
+              </div>
             </div>
           </div>
         </div>

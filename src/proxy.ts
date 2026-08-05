@@ -72,6 +72,14 @@ export async function proxy(request: NextRequest) {
   const pathname = url.pathname;
   const method = request.method;
 
+  // ── Canonical Domain Enforcement: 301 Redirect www.ideomint.com -> ideomint.com ──
+  const hostname = host.split(':')[0].toLowerCase();
+  if (hostname === 'www.ideomint.com') {
+    url.hostname = 'ideomint.com';
+    url.protocol = 'https';
+    return NextResponse.redirect(url, { status: 301 });
+  }
+
   // ── DoS / Rate Limit Protection ──────────────────────────────────────────
   // All checks run before any route handler. Keyed by real client IP.
   // Skip in development — dev server has no real IPs and hot-reloads would
