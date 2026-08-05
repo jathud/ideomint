@@ -275,20 +275,6 @@ Ideomint — Perfectly Minted Events.
     if (!form.city.trim()) e.city = 'City is required';
     if (!form.district) e.district = 'District selection is required';
 
-    if (!form.postal.trim()) {
-      e.postal = 'Postal code is required';
-    } else if (!isValidPostal(form.postal)) {
-      e.postal = 'Enter valid 5-digit postal code (e.g. 00300 or 10100)';
-    }
-
-    if (!form.emergencyName.trim()) e.emergencyName = 'Emergency contact name is required';
-
-    if (!form.emergencyPhone.trim()) {
-      e.emergencyPhone = 'Emergency contact phone is required';
-    } else if (!isValidPhone(form.emergencyPhone)) {
-      e.emergencyPhone = 'Enter valid phone number (e.g. 0771234567)';
-    }
-
     additionalAttendees.forEach((a, i) => {
       if (!a.name.trim()) e[`extra_name_${i}`] = 'Full name is required';
       if (!a.nic.trim()) {
@@ -823,27 +809,6 @@ Ideomint — Perfectly Minted Events.
                 </select>
                 {errors.district && <p className="text-red-400 text-xs mt-1">{errors.district}</p>}
               </FormField>
-              <FormField id="postal" label="Postal Code" required error={errors.postal}>
-                <InputField id="postal" placeholder="00300" value={form.postal}
-                  onChange={(v) => setForm({ ...form, postal: v })} error={errors.postal} />
-              </FormField>
-            </div>
-          </div>
-
-          {/* Emergency Contact */}
-          <div className="bg-white/4 border border-white/10 rounded-3xl p-6 backdrop-blur-xl">
-            <p className="text-xs font-black text-white/40 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-amber-400" /> Emergency Contact
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField id="emergencyName" label="Contact Name" required error={errors.emergencyName}>
-                <InputField id="emergencyName" placeholder="Full name" value={form.emergencyName}
-                  onChange={(v) => setForm({ ...form, emergencyName: v })} error={errors.emergencyName} />
-              </FormField>
-              <FormField id="emergencyPhone" label="Contact Phone" required error={errors.emergencyPhone}>
-                <InputField id="emergencyPhone" type="tel" placeholder="+94 77 000 0000" value={form.emergencyPhone}
-                  onChange={(v) => setForm({ ...form, emergencyPhone: v })} error={errors.emergencyPhone} />
-              </FormField>
             </div>
           </div>
 
@@ -1031,13 +996,39 @@ Ideomint — Perfectly Minted Events.
                   Transfer to our official bank account and upload your payment slip for 24-hour verification.
                 </p>
                 {paymentMethod === 'bank_transfer' && (
-                  <button
-                    onClick={handleBankTransfer}
-                    disabled={loading}
-                    className="mt-5 w-full flex items-center justify-center gap-2 bg-white/10 hover:bg-white/15 disabled:opacity-60 text-white font-black py-4 rounded-xl text-sm transition-all border border-white/15"
-                  >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Reserve & View Bank Transfer Details →</>}
-                  </button>
+                  <div className="mt-5 space-y-4 pt-4 border-t border-white/10" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-black/50 border border-white/12 rounded-2xl p-4 text-xs">
+                      <p className="text-[10px] font-black text-[#c1e527] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                        <Landmark className="w-3.5 h-3.5" /> Official Bank Account Details
+                      </p>
+                      {[
+                        ['Bank Name', bankName],
+                        ['Account Name', bankAccountName],
+                        ['Account Number', bankAccountNo],
+                        ['Branch', bankBranch],
+                      ].map(([label, value]) => (
+                        <div key={label} className="flex justify-between items-center py-1.5 border-b border-white/5 last:border-0">
+                          <span className="text-white/50 font-medium">{label}</span>
+                          <span className="text-white font-bold font-mono">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-[#c1e527]/10 border border-[#c1e527]/30 rounded-xl p-3 text-xs text-[#c1e527] font-semibold flex items-start gap-2.5">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0 text-[#c1e527]" />
+                      <span>
+                        Please transfer <strong>{formatLKR(totalAmount)}</strong> to the bank account above. On the next page, you will upload your transfer receipt to complete your booking.
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={handleBankTransfer}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] disabled:opacity-60 text-section-ink font-black py-4 rounded-xl text-sm transition-all shadow-lg"
+                    >
+                      {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Continue & Upload Slip on Next Page →</>}
+                    </button>
+                  </div>
                 )}
               </div>
             )}

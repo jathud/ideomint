@@ -112,7 +112,7 @@ export default function AdminScannerPage() {
 
     fetchAttendedLogs();
     return () => { active = false; };
-  }, [selectedEventId]);
+  }, [activeTab, selectedEventId]);
 
   // Lookup & Inspect pass details without consuming
   const handleLookup = async (codeToLookup: string) => {

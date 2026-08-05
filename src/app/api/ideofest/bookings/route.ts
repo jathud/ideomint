@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
       special_event_request,
     } = body;
 
+    const finalEmergencyName = emergency_contact_name?.trim() || attendee_name?.trim() || 'Self';
+    const finalEmergencyPhone = emergency_contact_phone?.trim() || attendee_phone?.trim() || 'N/A';
+
     // Combine special notes with special event request (Cake Cutting, Birthday Surprise, etc.) for admin visibility
     let combinedNotes = special_notes || '';
     if (special_event_request?.enabled) {
@@ -74,9 +77,6 @@ export async function POST(request: NextRequest) {
     }
     if (!address_line_1?.trim() || !city?.trim() || !district?.trim()) {
       return Response.json({ success: false, error: 'Address (line 1, city, district) is required' } satisfies ApiResponse, { status: 400 });
-    }
-    if (!emergency_contact_name?.trim() || !emergency_contact_phone?.trim()) {
-      return Response.json({ success: false, error: 'Emergency contact name and phone are required' } satisfies ApiResponse, { status: 400 });
     }
     const qty = Number(quantity) || 1;
     if (qty < 1 || qty > 10) {
@@ -140,7 +140,8 @@ export async function POST(request: NextRequest) {
           address_line_1, address_line_2,
           city, district, postal_code,
           country: country || 'Sri Lanka',
-          emergency_contact_name, emergency_contact_phone,
+          emergency_contact_name: finalEmergencyName,
+          emergency_contact_phone: finalEmergencyPhone,
           company, job_title,
           is_guest: true,
         })
@@ -172,7 +173,8 @@ export async function POST(request: NextRequest) {
         address_line_1, address_line_2,
         city, district, postal_code,
         country: country || 'Sri Lanka',
-        emergency_contact_name, emergency_contact_phone,
+        emergency_contact_name: finalEmergencyName,
+        emergency_contact_phone: finalEmergencyPhone,
         company, job_title, special_notes: combinedNotes,
         additional_attendees: additional_attendees || [],
         // Ticket

@@ -120,11 +120,16 @@ export default async function EventDetailPage({ params }: Props) {
       name: 'Ideomint',
       url: 'https://ideomint.com',
     },
+    performer: {
+      '@type': 'PerformingGroup',
+      name: `${event.title} Performers`,
+    },
     offers: tiers.map((t) => ({
       '@type': 'Offer',
       name: t.label,
       price: t.price,
       priceCurrency: 'LKR',
+      validFrom: event.created_at || '2026-01-01T00:00:00Z',
       availability: (t.capacity - (t.sold || 0)) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
       url: `https://ideomint.com/ideofest/events/${event.slug}/book`,
     })),
