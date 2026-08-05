@@ -1,8 +1,8 @@
 import { type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 import { generateSecureQRToken, qrExpiryFromEventDate } from '@/lib/ideofest/qr-security';
-import { sendBookingConfirmationEmail } from '@/lib/ideofest/email';
-import type { ApiResponse, IBooking } from '@/lib/ideofest/types';
+import { sendBookingConfirmationEmail, sendPaymentApprovedEmail } from '@/lib/ideofest/email';
+import type { ApiResponse, IBooking, ITicket } from '@/lib/ideofest/types';
 
 // ── Helpers ──────────────────────────────────────────────────
 function normalisePhone(raw: string): string {
@@ -326,3 +326,218 @@ export async function GET(request: NextRequest) {
     return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
   }
 }
+
+// ── PATCH: Update booking & attendee details (admin / authorized) ────────
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = createAdminClient();
+    const body = await request.json();
+    const {
+      id,
+      booking_id,
+      booking_ref,
+      attendee_name,
+      attendee_email,
+      attendee_phone,
+      attendee_nic,
+      address_line_1,
+      address_line_2,
+      city,
+      district,
+      postal_code,
+      country,
+      emergency_contact_name,
+      emergency_contact_phone,
+      company,
+      job_title,
+      special_notes,
+      additional_attendees,
+      tier_name,
+      tier_label,
+      quantity,
+      unit_price,
+      total_amount,
+      payment_method,
+      payment_status,
+      status,
+      admin_notes,
+    } = body;
+
+    const targetBookingId = id || booking_id;
+
+    if (!targetBookingId && !booking_ref) {
+      return Response.json(
+        { success: false, error: 'Target booking id or booking_ref is required' } satisfies ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    // Resolve target booking with event details
+    let query = supabase.from('bookings').select('*, events(*)').limit(1);
+    if (targetBookingId) {
+      query = query.eq('id', targetBookingId);
+    } else {
+      query = query.eq('booking_ref', booking_ref);
+    }
+
+    const { data: existingList, error: fetchErr } = await query;
+    if (fetchErr || !existingList || existingList.length === 0) {
+      return Response.json(
+        { success: false, error: 'Booking record not found' } satisfies ApiResponse,
+        { status: 404 }
+      );
+    }
+
+    const existingBooking = existingList[0];
+    const bId = existingBooking.id;
+    const wasConfirmedOrPaid = existingBooking.status === 'confirmed' || existingBooking.payment_status === 'paid';
+
+    // Prepare update object for bookings table
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (attendee_name !== undefined) updates.attendee_name = attendee_name.trim();
+    if (attendee_email !== undefined) updates.attendee_email = attendee_email.toLowerCase().trim();
+    if (attendee_phone !== undefined) updates.attendee_phone = normalisePhone(attendee_phone);
+    if (attendee_nic !== undefined) updates.attendee_nic = attendee_nic.trim();
+    if (address_line_1 !== undefined) updates.address_line_1 = address_line_1;
+    if (address_line_2 !== undefined) updates.address_line_2 = address_line_2;
+    if (city !== undefined) updates.city = city;
+    if (district !== undefined) updates.district = district;
+    if (postal_code !== undefined) updates.postal_code = postal_code;
+    if (country !== undefined) updates.country = country;
+    if (emergency_contact_name !== undefined) updates.emergency_contact_name = emergency_contact_name;
+    if (emergency_contact_phone !== undefined) updates.emergency_contact_phone = emergency_contact_phone;
+    if (company !== undefined) updates.company = company;
+    if (job_title !== undefined) updates.job_title = job_title;
+    if (special_notes !== undefined) updates.special_notes = special_notes;
+    if (additional_attendees !== undefined) updates.additional_attendees = additional_attendees;
+    if (tier_name !== undefined) updates.tier_name = tier_name;
+    if (tier_label !== undefined) updates.tier_label = tier_label;
+    if (quantity !== undefined) updates.quantity = Number(quantity);
+    if (unit_price !== undefined) updates.unit_price = Number(unit_price);
+    if (total_amount !== undefined) updates.total_amount = Number(total_amount);
+    if (payment_method !== undefined) updates.payment_method = payment_method;
+    if (payment_status !== undefined) updates.payment_status = payment_status;
+    if (status !== undefined) updates.status = status;
+    if (admin_notes !== undefined) updates.admin_notes = admin_notes;
+
+    const isNowConfirmedOrPaid = (updates.status === 'confirmed' || updates.payment_status === 'paid');
+
+    // Update bookings table
+    const { data: updatedBooking, error: updateErr } = await supabase
+      .from('bookings')
+      .update(updates)
+      .eq('id', bId)
+      .select('*, events(*)')
+      .single();
+
+    if (updateErr) throw updateErr;
+
+    // Sync changes to attendees table if present
+    const attendeeUpdates: Record<string, any> = {};
+    if (attendee_name !== undefined) attendeeUpdates.full_name = attendee_name.trim();
+    if (attendee_email !== undefined) attendeeUpdates.email = attendee_email.toLowerCase().trim();
+    if (attendee_phone !== undefined) attendeeUpdates.phone = normalisePhone(attendee_phone);
+    if (attendee_nic !== undefined) attendeeUpdates.nic_number = attendee_nic.trim();
+    if (status !== undefined || payment_status !== undefined) {
+      attendeeUpdates.status = (status === 'confirmed' || payment_status === 'paid') ? 'issued' : 'pending';
+    }
+
+    if (Object.keys(attendeeUpdates).length > 0) {
+      await supabase.from('attendees').update(attendeeUpdates).eq('booking_id', bId);
+    }
+
+    // Sync changes to tickets table if present
+    const ticketUpdates: Record<string, any> = {};
+    if (attendee_name !== undefined) ticketUpdates.attendee_name = attendee_name.trim();
+    if (attendee_phone !== undefined) ticketUpdates.attendee_phone = normalisePhone(attendee_phone);
+    if (attendee_nic !== undefined) ticketUpdates.attendee_nic = attendee_nic.trim();
+
+    if (Object.keys(ticketUpdates).length > 0) {
+      await supabase.from('tickets').update(ticketUpdates).eq('booking_id', bId);
+    }
+
+    // If booking was newly approved/confirmed via PATCH, issue tickets and dispatch confirmation email!
+    if (isNowConfirmedOrPaid && !wasConfirmedOrPaid) {
+      try {
+        const eventDate = updatedBooking.events?.date || updatedBooking.event_date || new Date().toISOString();
+        const eventSlug = updatedBooking.event_slug || 'event';
+        const expiresAt = qrExpiryFromEventDate(eventDate);
+        const qty = Math.max(1, updatedBooking.quantity || 1);
+        const extras = Array.isArray(updatedBooking.additional_attendees) ? updatedBooking.additional_attendees : [];
+
+        let issuedTicket: ITicket | undefined;
+
+        // Check if tickets already exist
+        const { data: existingTickets } = await supabase.from('tickets').select('*').eq('booking_id', bId);
+
+        if (!existingTickets || existingTickets.length === 0) {
+          for (let i = 0; i < qty; i++) {
+            const passIndex = i + 1;
+            const attendeeName = i === 0 ? updatedBooking.attendee_name : (extras[i - 1]?.name || `Attendee ${passIndex}`);
+            const attendeeNic = i === 0 ? updatedBooking.attendee_nic : (extras[i - 1]?.nic || updatedBooking.attendee_nic);
+            const attendeePhone = i === 0 ? updatedBooking.attendee_phone : (extras[i - 1]?.phone || updatedBooking.attendee_phone);
+
+            const tempToken = generateSecureQRToken(`TEMP-${updatedBooking.booking_ref}-${passIndex}`, eventSlug, expiresAt);
+
+            const { data: ticket } = await supabase
+              .from('tickets')
+              .insert({
+                booking_id: bId,
+                customer_id: updatedBooking.customer_id,
+                qr_token: tempToken,
+                qr_expires_at: expiresAt.toISOString(),
+                status: 'issued',
+                attendee_name: attendeeName,
+                attendee_nic: attendeeNic,
+                attendee_phone: attendeePhone,
+                pass_index: passIndex,
+              })
+              .select()
+              .single();
+
+            if (ticket) {
+              const finalQR = generateSecureQRToken(ticket.ticket_number || `${updatedBooking.booking_ref}-${passIndex}`, eventSlug, expiresAt);
+              await supabase.from('tickets').update({ qr_token: finalQR }).eq('id', ticket.id);
+
+              await supabase.from('attendees').insert({
+                booking_id: bId,
+                ticket_id: ticket.id,
+                event_id: updatedBooking.event_id,
+                pass_index: passIndex,
+                full_name: attendeeName,
+                nic_number: attendeeNic,
+                phone: attendeePhone,
+                email: updatedBooking.attendee_email,
+                status: 'issued',
+              });
+
+              if (i === 0) issuedTicket = ticket as ITicket;
+            }
+          }
+        } else {
+          issuedTicket = existingTickets[0] as ITicket;
+        }
+
+        // Dispatch confirmation email
+        sendPaymentApprovedEmail(updatedBooking as IBooking, issuedTicket).catch((err) =>
+          console.error('[sendPaymentApprovedEmail Error in PATCH]:', err)
+        );
+      } catch (issueErr) {
+        console.error('[Ticket Issuance Error in PATCH]:', issueErr);
+      }
+    }
+
+    return Response.json({
+      success: true,
+      data: updatedBooking,
+      message: 'Booking & attendee details updated successfully',
+    } satisfies ApiResponse);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to update booking';
+    return Response.json({ success: false, error: msg } satisfies ApiResponse, { status: 500 });
+  }
+}
+

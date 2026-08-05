@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { Search, CheckCircle, Clock, Download, Loader2, Ticket, X, Printer, Eye, Share2, FileText, Check, Settings2, CheckSquare, Square, Trash2, AlertTriangle } from 'lucide-react';
+import { Search, CheckCircle, Clock, Download, Loader2, Ticket, X, Printer, Eye, Share2, FileText, Check, Settings2, CheckSquare, Square, Trash2, AlertTriangle, Edit, Save } from 'lucide-react';
 import type { IBooking, IEvent } from '@/lib/ideofest/types';
 import QRTicket from '@/components/ideofest/QRTicket';
 
@@ -38,13 +38,119 @@ export default function AdminAttendeesPage() {
   const [events, setEvents] = useState<IEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Selected attendee for "Get Ticket" pass modal & Full Details Modal
+  // Selected attendee for "Get Ticket" pass modal, Full Details Modal, and Edit Modal
   const [activeTicketAttendee, setActiveTicketAttendee] = useState<any | null>(null);
   const [activeDetailsAttendee, setActiveDetailsAttendee] = useState<any | null>(null);
+  const [activeEditAttendee, setActiveEditAttendee] = useState<any | null>(null);
   const [deleteConfirmTarget, setDeleteConfirmTarget] = useState<any | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const [editForm, setEditForm] = useState<any>({
+    attendee_name: '',
+    attendee_email: '',
+    attendee_phone: '',
+    attendee_nic: '',
+    tier_label: '',
+    tier_name: '',
+    quantity: 1,
+    total_amount: 0,
+    payment_method: 'bank_transfer',
+    payment_status: 'pending_verification',
+    status: 'pending_verification',
+    address_line_1: '',
+    address_line_2: '',
+    city: '',
+    district: '',
+    postal_code: '',
+    country: 'Sri Lanka',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    company: '',
+    job_title: '',
+    special_notes: '',
+    additional_attendees: [],
+  });
+
+  const openEditModal = (attendee: any) => {
+    setActiveEditAttendee(attendee);
+    setEditForm({
+      attendee_name: attendee.attendee_name || attendee.name || '',
+      attendee_email: attendee.attendee_email || attendee.email || '',
+      attendee_phone: attendee.attendee_phone || attendee.phone || '',
+      attendee_nic: attendee.attendee_nic || attendee.nic_number || '',
+      tier_label: attendee.tier_label || attendee.tier_name || 'Standard Pass',
+      tier_name: attendee.tier_name || 'standard',
+      quantity: attendee.quantity || 1,
+      total_amount: attendee.total_amount || 0,
+      payment_method: attendee.payment_method || 'bank_transfer',
+      payment_status: attendee.payment_status || 'pending_verification',
+      status: attendee.status || attendee.booking_status || 'pending_verification',
+      address_line_1: attendee.address_line_1 || '',
+      address_line_2: attendee.address_line_2 || '',
+      city: attendee.city || '',
+      district: attendee.district || '',
+      postal_code: attendee.postal_code || '',
+      country: attendee.country || 'Sri Lanka',
+      emergency_contact_name: attendee.emergency_contact_name || '',
+      emergency_contact_phone: attendee.emergency_contact_phone || '',
+      company: attendee.company || '',
+      job_title: attendee.job_title || '',
+      special_notes: attendee.special_notes || '',
+      additional_attendees: Array.isArray(attendee.additional_attendees)
+        ? attendee.additional_attendees.map((g: any) => ({
+            name: g.name || '',
+            nic: g.nic || '',
+            phone: g.phone || '',
+          }))
+        : [],
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!activeEditAttendee) return;
+    setSavingEdit(true);
+    try {
+      const bId = activeEditAttendee.booking_id || activeEditAttendee.id;
+      const bRef = activeEditAttendee.booking_ref;
+
+      const res = await fetch('/api/ideofest/bookings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: bId,
+          booking_ref: bRef,
+          ...editForm,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setActionSuccess(`Booking & attendee details for ${editForm.attendee_name} updated successfully!`);
+        setTimeout(() => setActionSuccess(null), 4000);
+        setActiveEditAttendee(null);
+
+        // Refresh attendee data from backend
+        try {
+          const attRes = await fetch('/api/ideofest/attendees');
+          const attData = await attRes.json();
+          if (attData.success && Array.isArray(attData.data)) {
+            setBookings(attData.data);
+          }
+        } catch (err) {
+          console.error('Failed to reload attendees:', err);
+        }
+      } else {
+        alert(`Failed to save edits: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert('Error saving edits: ' + (err.message || 'Network error'));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   // Column Selector Modal State
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -58,7 +164,7 @@ export default function AdminAttendeesPage() {
 
   // Lock ALL scrollable ancestors when any modal popup is open
   useEffect(() => {
-    const isOpen = !!(activeTicketAttendee || showColumnModal || activeDetailsAttendee || deleteConfirmTarget);
+    const isOpen = !!(activeTicketAttendee || showColumnModal || activeDetailsAttendee || activeEditAttendee || deleteConfirmTarget);
     // Lock body
     document.body.style.overflow = isOpen ? 'hidden' : '';
     // Also lock the nearest <main> and any scrollable sibling (sidebar nav)
@@ -72,7 +178,8 @@ export default function AdminAttendeesPage() {
         el.style.overflow = '';
       });
     };
-  }, [activeTicketAttendee, showColumnModal]);
+  }, [activeTicketAttendee, showColumnModal, activeDetailsAttendee, activeEditAttendee, deleteConfirmTarget]);
+
 
   // Fetch real events and expanded attendees from Supabase
   useEffect(() => {
@@ -257,7 +364,7 @@ export default function AdminAttendeesPage() {
     setShowColumnModal(false);
   };
 
-  // Helper to approve payment directly from Get Ticket Modal
+  // Helper to approve payment directly from Get Ticket / View Details Modal
   const handleApproveFromModal = async (bookingId: string) => {
     setVerifying(true);
     try {
@@ -269,13 +376,13 @@ export default function AdminAttendeesPage() {
       const json = await res.json();
       if (!json.success) throw new Error(json.error || 'Verification failed');
 
-      setActionSuccess('Payment approved and ticket issued successfully!');
+      setActionSuccess('Payment approved and ticket issued successfully! Confirmation email sent.');
       setTimeout(() => setActionSuccess(null), 4000);
 
       // Update local state
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === bookingId || b.booking_ref === activeTicketAttendee?.booking_ref
+          b.id === bookingId || b.booking_id === bookingId || b.booking_ref === activeTicketAttendee?.booking_ref || b.booking_ref === activeDetailsAttendee?.booking_ref
             ? { ...b, status: 'confirmed', payment_status: 'paid', booking_status: 'confirmed' }
             : b
         )
@@ -284,6 +391,15 @@ export default function AdminAttendeesPage() {
       if (activeTicketAttendee) {
         setActiveTicketAttendee({
           ...activeTicketAttendee,
+          status: 'confirmed',
+          payment_status: 'paid',
+          booking_status: 'confirmed',
+        });
+      }
+
+      if (activeDetailsAttendee) {
+        setActiveDetailsAttendee({
+          ...activeDetailsAttendee,
           status: 'confirmed',
           payment_status: 'paid',
           booking_status: 'confirmed',
@@ -496,6 +612,13 @@ export default function AdminAttendeesPage() {
                               title="View All Attendee & Registration Details"
                             >
                               <Eye className="w-3.5 h-3.5 text-[#c1e527]" /> View Details
+                            </button>
+                            <button
+                              onClick={() => openEditModal(a)}
+                              className="inline-flex items-center gap-1.5 bg-blue-500/15 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl font-bold text-xs transition-all shadow-sm"
+                              title="Edit Booking & Attendee Details"
+                            >
+                              <Edit className="w-3.5 h-3.5" /> Edit
                             </button>
                             <button
                               onClick={() => setActiveTicketAttendee(a)}
@@ -972,21 +1095,403 @@ export default function AdminAttendeesPage() {
 
               {/* Modal Footer Actions */}
               <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-white/10">
+                {(activeDetailsAttendee.status !== 'confirmed' && activeDetailsAttendee.payment_status !== 'paid') && (
+                  <button
+                    onClick={() => handleApproveFromModal(activeDetailsAttendee.booking_id || activeDetailsAttendee.id)}
+                    disabled={verifying}
+                    className="flex-1 flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-3 rounded-xl text-xs transition-all shadow-lg"
+                  >
+                    {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Approve & Issue Ticket ✓</>}
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    const att = activeDetailsAttendee;
+                    setActiveDetailsAttendee(null);
+                    openEditModal(att);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/40 font-bold py-3 rounded-xl text-xs transition-all"
+                >
+                  <Edit className="w-4 h-4" /> Edit Details
+                </button>
                 <button
                   onClick={() => {
                     const att = activeDetailsAttendee;
                     setActiveDetailsAttendee(null);
                     setActiveTicketAttendee(att);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-3 rounded-xl text-xs transition-all shadow-lg"
+                  className="flex-1 flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-extrabold py-3 rounded-xl text-xs transition-all border border-white/15"
                 >
-                  <Ticket className="w-4 h-4" /> View QR Pass Ticket
+                  <Ticket className="w-4 h-4 text-[#c1e527]" /> View QR Pass Ticket
                 </button>
                 <button
                   onClick={() => setActiveDetailsAttendee(null)}
-                  className="flex-1 bg-white/10 hover:bg-white/15 text-white font-bold py-3 rounded-xl text-xs transition-colors border border-white/15"
+                  className="bg-white/10 hover:bg-white/15 text-white font-bold py-3 px-5 rounded-xl text-xs transition-colors border border-white/15"
                 >
                   Close Details
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── EDIT ATTENDEE & BOOKING DETAILS MODAL ── */}
+      {activeEditAttendee && (
+        <div
+          className="fixed inset-0 z-[99999] overflow-y-auto bg-black/85 backdrop-blur-xl p-4 sm:p-6"
+          onClick={() => !savingEdit && setActiveEditAttendee(null)}
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div className="min-h-full flex items-center justify-center py-6">
+            <div
+              className="bg-[#0e121e] border border-blue-500/30 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl relative space-y-6 text-left my-auto animate-in fade-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3 text-white">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-500/15 border border-blue-500/30 text-blue-400 flex items-center justify-center font-black">
+                    <Edit className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-lg text-white">Edit Booking & Attendee Details</h3>
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-[#c1e527]/15 text-[#c1e527] border border-[#c1e527]/30">
+                        {activeEditAttendee.booking_ref}
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/50">Update user registration details & booking properties in Supabase</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => !savingEdit && setActiveEditAttendee(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Form Content */}
+              <div className="space-y-5 max-h-[65vh] overflow-y-auto pr-1 text-xs">
+                {/* 1. Personal Info */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-1.5">
+                    👤 Attendee Personal Information
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Full Legal Name *</label>
+                      <input
+                        type="text"
+                        value={editForm.attendee_name}
+                        onChange={(e) => setEditForm({ ...editForm, attendee_name: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Email Address *</label>
+                      <input
+                        type="email"
+                        value={editForm.attendee_email}
+                        onChange={(e) => setEditForm({ ...editForm, attendee_email: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Phone Number</label>
+                      <input
+                        type="text"
+                        value={editForm.attendee_phone}
+                        onChange={(e) => setEditForm({ ...editForm, attendee_phone: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">NIC / Passport Number *</label>
+                      <input
+                        type="text"
+                        value={editForm.attendee_nic}
+                        onChange={(e) => setEditForm({ ...editForm, attendee_nic: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white font-mono focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Booking & Status Info */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-[#c1e527] uppercase tracking-widest flex items-center gap-1.5">
+                    🎟️ Booking & Ticket Status
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Pass Tier Label</label>
+                      <input
+                        type="text"
+                        value={editForm.tier_label}
+                        onChange={(e) => setEditForm({ ...editForm, tier_label: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Tier Category</label>
+                      <select
+                        value={editForm.tier_name}
+                        onChange={(e) => setEditForm({ ...editForm, tier_name: e.target.value })}
+                        className="w-full bg-neutral-900 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      >
+                        <option value="standard">Standard</option>
+                        <option value="early_bird">Early Bird</option>
+                        <option value="vip">VIP</option>
+                        <option value="free">Free</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Pass Quantity</label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        value={editForm.quantity}
+                        onChange={(e) => setEditForm({ ...editForm, quantity: parseInt(e.target.value) || 1 })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Total Amount (LKR)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editForm.total_amount}
+                        onChange={(e) => setEditForm({ ...editForm, total_amount: parseFloat(e.target.value) || 0 })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-[#c1e527] font-mono font-bold focus:border-[#c1e527] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Payment Method</label>
+                      <select
+                        value={editForm.payment_method}
+                        onChange={(e) => setEditForm({ ...editForm, payment_method: e.target.value })}
+                        className="w-full bg-neutral-900 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      >
+                        <option value="bank_transfer">Direct Bank Transfer</option>
+                        <option value="payhere">PayHere Online Gateway</option>
+                        <option value="free">Free Pass</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Payment Status</label>
+                      <select
+                        value={editForm.payment_status}
+                        onChange={(e) => setEditForm({ ...editForm, payment_status: e.target.value })}
+                        className="w-full bg-neutral-900 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      >
+                        <option value="paid">Paid & Verified</option>
+                        <option value="pending_verification">Pending Verification</option>
+                        <option value="pending">Pending Slip</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Gate / Booking Status</label>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value })}
+                        className="w-full bg-neutral-900 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-[#c1e527] focus:outline-none"
+                      >
+                        <option value="confirmed">Confirmed & Issued</option>
+                        <option value="pending_verification">Pending Review</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Address Info */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-white/50 uppercase tracking-widest flex items-center gap-1.5">
+                    📍 Address & Contact Location
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="sm:col-span-2">
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Street Address Line 1</label>
+                      <input
+                        type="text"
+                        value={editForm.address_line_1}
+                        onChange={(e) => setEditForm({ ...editForm, address_line_1: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">City</label>
+                      <input
+                        type="text"
+                        value={editForm.city}
+                        onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">District</label>
+                      <input
+                        type="text"
+                        value={editForm.district}
+                        onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Postal Code</label>
+                      <input
+                        type="text"
+                        value={editForm.postal_code}
+                        onChange={(e) => setEditForm({ ...editForm, postal_code: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Country</label>
+                      <input
+                        type="text"
+                        value={editForm.country}
+                        onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-blue-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Emergency & Special Notes */}
+                <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                    🚨 Emergency Contact & Special Notes
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Emergency Contact Name</label>
+                      <input
+                        type="text"
+                        value={editForm.emergency_contact_name}
+                        onChange={(e) => setEditForm({ ...editForm, emergency_contact_name: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Emergency Contact Phone</label>
+                      <input
+                        type="text"
+                        value={editForm.emergency_contact_phone}
+                        onChange={(e) => setEditForm({ ...editForm, emergency_contact_phone: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white font-mono focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Company / Organization</label>
+                      <input
+                        type="text"
+                        value={editForm.company}
+                        onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Job Title</label>
+                      <input
+                        type="text"
+                        value={editForm.job_title}
+                        onChange={(e) => setEditForm({ ...editForm, job_title: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl px-3 py-2 text-white focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-white/60 block text-[11px] font-semibold mb-1">Special Instructions & Notes</label>
+                      <textarea
+                        rows={3}
+                        value={editForm.special_notes}
+                        onChange={(e) => setEditForm({ ...editForm, special_notes: e.target.value })}
+                        className="w-full bg-white/5 border border-white/12 rounded-xl p-3 text-white focus:border-amber-400 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Additional Group Guests */}
+                {Array.isArray(editForm.additional_attendees) && editForm.additional_attendees.length > 0 && (
+                  <div className="bg-white/4 border border-white/10 rounded-2xl p-4 space-y-3">
+                    <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5">
+                      👥 Additional Group Attendees ({editForm.additional_attendees.length})
+                    </p>
+                    <div className="space-y-3">
+                      {editForm.additional_attendees.map((guest: any, gIdx: number) => (
+                        <div key={gIdx} className="bg-white/5 border border-white/10 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-white/40 block text-[10px]">Guest {gIdx + 2} Name</label>
+                            <input
+                              type="text"
+                              value={guest.name || ''}
+                              onChange={(e) => {
+                                const list = [...editForm.additional_attendees];
+                                list[gIdx].name = e.target.value;
+                                setEditForm({ ...editForm, additional_attendees: list });
+                              }}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-white/40 block text-[10px]">NIC / Passport</label>
+                            <input
+                              type="text"
+                              value={guest.nic || ''}
+                              onChange={(e) => {
+                                const list = [...editForm.additional_attendees];
+                                list[gIdx].nic = e.target.value;
+                                setEditForm({ ...editForm, additional_attendees: list });
+                              }}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-white/40 block text-[10px]">Phone Number</label>
+                            <input
+                              type="text"
+                              value={guest.phone || ''}
+                              onChange={(e) => {
+                                const list = [...editForm.additional_attendees];
+                                list[gIdx].phone = e.target.value;
+                                setEditForm({ ...editForm, additional_attendees: list });
+                              }}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-white font-mono text-xs"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-3 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#c1e527] hover:bg-[#b0d420] text-section-ink font-black py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-lg hover:scale-[1.02]"
+                >
+                  {savingEdit ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save Booking Changes</>}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveEditAttendee(null)}
+                  disabled={savingEdit}
+                  className="bg-white/10 hover:bg-white/15 text-white font-bold py-3.5 px-6 rounded-xl text-xs sm:text-sm transition-colors border border-white/15"
+                >
+                  Cancel
                 </button>
               </div>
             </div>
