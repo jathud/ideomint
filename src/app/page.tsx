@@ -10,6 +10,7 @@ const Services = dynamic(() => import("@/components/sections/Services"));
 const Teardown = dynamic(() => import("@/components/sections/Teardown"));
 const Sandbox = dynamic(() => import("@/components/sections/Sandbox"));
 const Stats = dynamic(() => import("@/components/sections/Stats"));
+const ExperienceReel = dynamic(() => import("@/components/sections/ExperienceReel"));
 
 const Comparison = dynamic(() => import("@/components/sections/Comparison"));
 const Process = dynamic(() => import("@/components/sections/Process"));
@@ -42,6 +43,7 @@ export default function Home() {
       <Teardown />
       <Sandbox />
       <Stats />
+      <ExperienceReel />
 
       <AnimatedSection><Comparison /></AnimatedSection>
       <Process />
