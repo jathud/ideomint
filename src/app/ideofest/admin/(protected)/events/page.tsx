@@ -3,8 +3,10 @@ import { PlusCircle } from 'lucide-react';
 import type { IEvent } from '@/lib/ideofest/types';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 import AdminEventsTable from '@/components/ideofest/AdminEventsTable';
+import { connection } from 'next/server';
 
 export default async function AdminEventsPage() {
+  await connection();
   let events: IEvent[] = [];
   try {
     const supabase = createAdminClient();

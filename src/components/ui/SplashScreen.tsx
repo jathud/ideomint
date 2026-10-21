@@ -1,8 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function SplashScreen({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  // The homepage hero is immediately usable; other routes retain their existing splash.
+  if (pathname === '/') return <>{children}</>;
+  return <RouteSplash>{children}</RouteSplash>;
+}
+
+function RouteSplash({ children }: { children: React.ReactNode }) {
   const [phase, setPhase] = useState<'loading' | 'exiting' | 'done'>('done');
 
   useEffect(() => {

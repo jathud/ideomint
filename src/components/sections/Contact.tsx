@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, MapPin, ChevronDown, Check } from 'lucide-react';
+import { Mail, MapPin, Check } from 'lucide-react';
 
 export default function Contact() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedService, setSelectedService] = useState('Select a service');
 
   const [name, setName] = useState('');
@@ -15,19 +14,14 @@ export default function Contact() {
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
-  const serviceOptions = [
-    'Brand Strategy & Identity',
-    'Web & Digital Design',
-    'Live Events & Experiences',
-    'Content Production',
-    'Other'
-  ];
+  const serviceOptions = ['Websites', 'Marketing', 'Content & Creative', 'Personal Branding', 'Not sure yet'];
 
   const validateEmail = (value: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Honeypot check — if filled, silently reject
@@ -49,15 +43,19 @@ export default function Contact() {
     setErrors({});
     setIsSubmitting(true);
 
-    // Fake submit — simulate network delay
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, service: selectedService, message, company_url: honeypot }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Unable to send. Please email hello@ideomint.com.');
       setIsSubmitted(true);
-      setName('');
-      setEmail('');
-      setMessage('');
-      setSelectedService('Select a service');
-    }, 1500);
+      setName(''); setEmail(''); setMessage(''); setSelectedService('Select a service');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Unable to send. Please email hello@ideomint.com.');
+    } finally { setIsSubmitting(false); }
   };
 
   return (
@@ -77,21 +75,21 @@ export default function Contact() {
             </div>
             
             <h2 className="text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-8">
-              Let's mint something <span className="text-creative-flame">exceptional.</span>
+              Let’s mint something <span className="text-creative-flame">exceptional.</span>
             </h2>
             
             <p className="text-lg text-white/90 max-w-md leading-relaxed mb-12">
-              Whether you're looking to build a brand from scratch, launch a campaign, or design an unforgettable physical experience—we're ready.
+              Whether you need a website, a marketing campaign, or content that brings your brand to life, we’re ready to listen.
             </p>
             
             <div className="flex flex-col gap-8 mt-auto">
-              <a href="mailto:ideomint@gmail.com" className="flex items-start gap-4 group">
+              <a href="mailto:hello@ideomint.com" className="flex items-start gap-4 group">
                 <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-section-ink transition-colors shrink-0">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
                   <p className="text-sm text-white/70 font-bold mb-1 uppercase tracking-wider">Email Us</p>
-                  <p className="text-xl font-medium group-hover:text-creative-flame transition-colors">ideomint@gmail.com</p>
+                  <p className="text-xl font-medium group-hover:text-creative-flame transition-colors">hello@ideomint.com</p>
                 </div>
               </a>
               
@@ -119,8 +117,8 @@ export default function Contact() {
                 <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-6">
                   <Check className="w-8 h-8 text-green-400" />
                 </div>
-                <h4 className="text-xl font-bold mb-2">Request Sent!</h4>
-                <p className="text-white/60 max-w-sm">Thank you for reaching out. We'll get back to you within 24 hours.</p>
+                <h4 role="status" className="text-xl font-bold mb-2">Request sent</h4>
+                <p className="text-white/60 max-w-sm">Thank you for reaching out. Our team will review your enquiry and get back to you.</p>
                 <button
                   type="button"
                   onClick={() => setIsSubmitted(false)}
@@ -147,10 +145,13 @@ export default function Contact() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="name" className="text-xs font-bold text-white/50 uppercase tracking-widest">Your Name *</label>
+                  <label htmlFor="name" className="text-xs font-bold text-white/75 uppercase tracking-widest">Your Name *</label>
                   <input 
                     type="text" 
                     id="name"
+                    aria-invalid={!!errors.name}
+                    aria-describedby={errors.name ? "contact-name-error" : undefined}
+                    maxLength={120}
                     required
                     autoComplete="name"
                     value={name}
@@ -158,14 +159,17 @@ export default function Contact() {
                     className={`bg-white/5 border rounded-xl px-4 py-4 text-white focus:outline-none transition-colors ${errors.name ? 'border-red-500 focus:border-red-400' : 'border-white/10 focus:border-creative-flame'}`}
                     placeholder="Your full name"
                   />
-                  {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                  {errors.name && <p id="contact-name-error" role="alert" className="text-red-400 text-xs mt-1">{errors.name}</p>}
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="email" className="text-xs font-bold text-white/50 uppercase tracking-widest">Email Address *</label>
+                  <label htmlFor="email" className="text-xs font-bold text-white/75 uppercase tracking-widest">Email Address *</label>
                   <input 
                     type="email" 
                     id="email"
+                    aria-invalid={!!errors.email}
+                    aria-describedby={errors.email ? "contact-email-error" : undefined}
+                    maxLength={254}
                     required
                     autoComplete="email"
                     value={email}
@@ -173,43 +177,22 @@ export default function Contact() {
                     className={`bg-white/5 border rounded-xl px-4 py-4 text-white focus:outline-none transition-colors ${errors.email ? 'border-red-500 focus:border-red-400' : 'border-white/10 focus:border-creative-flame'}`}
                     placeholder="hello@company.com"
                   />
-                  {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                  {errors.email && <p id="contact-email-error" role="alert" className="text-red-400 text-xs mt-1">{errors.email}</p>}
                 </div>
                 
-                <div className="flex flex-col gap-2 relative z-20">
-                  <label className="text-xs font-bold text-white/50 uppercase tracking-widest">I'm interested in...</label>
-                  <div className="relative">
-                    <button 
-                      type="button"
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-creative-flame transition-colors flex justify-between items-center"
-                    >
-                      <span className={selectedService === 'Select a service' ? 'text-white/50' : 'text-white'}>{selectedService}</span>
-                      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {isDropdownOpen && (
-                      <ul className="absolute top-full left-0 w-full mt-2 bg-[#1A1C23] border border-white/10 rounded-xl overflow-hidden shadow-2xl z-50 animate-[loadingFadeUp_0.2s_ease-out_forwards]">
-                        {serviceOptions.map((opt) => (
-                          <li key={opt}>
-                            <button
-                              type="button"
-                              onClick={() => { setSelectedService(opt); setIsDropdownOpen(false); }}
-                              className="w-full text-left px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                            >
-                              {opt}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="contact-service" className="text-xs font-bold text-white/75 uppercase tracking-widest">I’m interested in...</label>
+                  <select id="contact-service" value={selectedService} onChange={e => setSelectedService(e.target.value)} className="w-full bg-[#14161d] border border-white/20 rounded-xl px-4 py-4 text-white focus-visible:outline-2 focus-visible:outline-creative-flame">
+                    <option disabled>Select a service</option>
+                    {serviceOptions.map(option => <option key={option}>{option}</option>)}
+                  </select>
                 </div>
 
                 <div className="flex flex-col gap-2 mb-4">
-                  <label htmlFor="message" className="text-xs font-bold text-white/50 uppercase tracking-widest">Project Details</label>
+                  <label htmlFor="message" className="text-xs font-bold text-white/75 uppercase tracking-widest">Project Details</label>
                   <textarea 
                     id="message"
+                    maxLength={6000}
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -218,10 +201,12 @@ export default function Contact() {
                   />
                 </div>
 
+                {submitError && <p role="alert" className="text-sm text-red-300 leading-relaxed">{submitError} <a href="mailto:hello@ideomint.com" className="underline">Email us directly</a>.</p>}
+                <p className="text-xs text-white/75">We use your details to respond to this enquiry. <a href="/privacy" className="underline">Privacy policy</a></p>
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-creative-flame hover:bg-[#E54D30] disabled:opacity-70 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors min-h-[56px] cursor-pointer"
+                  className="w-full bg-creative-flame hover:bg-[#E54D30] disabled:opacity-70 text-section-ink font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors min-h-[56px] cursor-pointer"
                 >
                   {isSubmitting ? (
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

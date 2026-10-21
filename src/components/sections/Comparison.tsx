@@ -5,20 +5,20 @@ import { XCircle, CheckCircle2 } from 'lucide-react';
 
 const comparisons = [
   {
-    old: "Huge teams with slow turnaround times.",
-    new: "Lean team powered by AI for extreme speed.",
+    old: "Unclear ownership and too many handovers.",
+    new: "A connected team with clear responsibility.",
   },
   {
-    old: "Guessing what works based on opinions.",
-    new: "Testing what works based on data and algorithms.",
+    old: "Creative work without a clear brief.",
+    new: "A shared direction shaped around your goals.",
   },
   {
-    old: "Complex pricing and hidden retainer fees.",
-    new: "Clear packages and transparent pricing upfront.",
+    old: "Unclear scope and unexpected extras.",
+    new: "Clear packages and an agreed scope before we begin.",
   },
   {
-    old: "Treating you like just another client in the system.",
-    new: "Treating your brand exactly like our own startup.",
+    old: "Delivery without context or a clear handover.",
+    new: "Thoughtful delivery with guidance on what comes next.",
   }
 ];
 
@@ -30,15 +30,15 @@ export default function Comparison() {
         <div className="max-w-5xl mb-16 mx-auto text-center">
           <div className="flex items-center justify-center gap-4 mb-6">
             <div className="h-px bg-white/20 w-12" />
-            <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">05 / How We Are Different</span>
+            <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">Why IdeoMint</span>
             <div className="h-px bg-white/20 w-12" />
           </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight">
-            The Old Way vs. <span className="text-creative-flame">The Ideomint Way</span>
+            Clear thinking. <span className="text-creative-flame">Connected delivery.</span>
           </h2>
           <p className="text-lg text-white/70 mt-6 font-medium tracking-wide max-w-2xl mx-auto">
-            Why we rebuilt the agency model from the ground up.
+            What you can expect when we work together.
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function Comparison() {
 
           {/* Table Header (Hidden on small mobile, visible on sm+) */}
           <div className="hidden sm:grid grid-cols-2 gap-4 md:gap-8 mb-6 px-4 md:px-8 relative z-20">
-            <div className="text-white/40 font-bold tracking-widest text-sm uppercase">The Traditional Agency</div>
+            <div className="text-white/60 font-bold tracking-widest text-sm uppercase">Common frustrations</div>
             <div className="text-creative-flame font-bold tracking-widest text-sm uppercase">Ideomint</div>
           </div>
 
@@ -63,7 +63,7 @@ export default function Comparison() {
                 <div className="p-6 md:p-8 flex items-start gap-4 border-b sm:border-b-0 sm:border-r border-white/10 opacity-70">
                   <XCircle className="w-6 h-6 text-white/30 shrink-0 mt-0.5" strokeWidth={2} />
                   <div>
-                    <span className="sm:hidden text-white/40 font-bold tracking-widest text-xs uppercase mb-2 block">Traditional Agency</span>
+                    <span className="sm:hidden text-white/60 font-bold tracking-widest text-xs uppercase mb-2 block">The challenge</span>
                     <p className="text-base md:text-lg font-medium leading-relaxed">{row.old}</p>
                   </div>
                 </div>

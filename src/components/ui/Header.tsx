@@ -2,22 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Ticket, Sparkles } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Menu, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function Header() {
   const pathname = usePathname();
   const isHome = pathname === '/';
   const [activeSection, setActiveSection] = useState('home');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const navItems = [
-    { label: 'About', id: 'manifesto' },
+    { label: 'Home', id: 'home' },
     { label: 'Services', id: 'services' },
-    { label: 'Case Studies', id: 'teardown' },
+    { label: 'Work', id: 'work' },
     { label: 'The Lab', id: 'sandbox' },
-    { label: 'Ideofest', href: '/ideofest', badge: 'Live Events' },
-    { label: 'Contact', id: 'contact' },
+    { label: 'About', id: 'about' },
+    { label: 'IdeoFest', href: '/ideofest' },
   ];
 
   useEffect(() => {
@@ -50,11 +52,40 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (!isMobileMenuOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    menuRef.current?.querySelector<HTMLAnchorElement>('a')?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
+      if (event.key === 'Tab') {
+        const links = Array.from(menuRef.current?.querySelectorAll<HTMLAnchorElement>('a') ?? []);
+        const first = links[0];
+        const last = links[links.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          menuButtonRef.current?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          menuButtonRef.current?.focus();
+        } else if (document.activeElement === menuButtonRef.current) {
+          event.preventDefault();
+          (event.shiftKey ? last : first)?.focus();
+        }
+      }
+    };
+    const desktop = window.matchMedia('(min-width: 1280px)');
+    const closeOnDesktop = () => { if (desktop.matches) setIsMobileMenuOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+      desktop.removeEventListener('change', closeOnDesktop);
+    };
   }, [isMobileMenuOpen]);
 
   return (
@@ -64,7 +95,7 @@ export default function Header() {
           {/* Logo */}
           <Link
             href="/"
-            className="flex items-center gap-3 group relative z-50"
+            className="flex items-center gap-2 min-[360px]:gap-3 group relative z-50"
             onClick={(e) => {
               setIsMobileMenuOpen(false);
               if (isHome) {
@@ -79,13 +110,13 @@ export default function Header() {
               <div className="absolute bottom-0 left-0 w-[14px] h-[14px] border-b-[4px] border-l-[4px] border-white transition-colors" />
               <div className="absolute bottom-0 right-0 w-[14px] h-[14px] border-b-[4px] border-r-[4px] border-creative-flame transition-colors" />
             </div>
-            <span className="text-[22px] font-black text-white tracking-widest uppercase">
+            <span className="text-base min-[360px]:text-[22px] font-black text-white tracking-widest uppercase">
               Ideo<span className="text-creative-flame">Mint</span>
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-6">
+          <nav aria-label="Main navigation" className="hidden xl:flex items-center gap-6">
             {navItems.map((item) => {
               if (item.href) {
                 const isActive = pathname.startsWith('/ideofest');
@@ -123,29 +154,18 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3 relative z-50">
-            {/* Graceful Ideofest CTA Button */}
-            <Link
-              href="/ideofest"
-              className="relative group inline-flex items-center gap-1.5 sm:gap-2.5 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-full text-[10px] sm:text-xs font-black tracking-wider uppercase transition-all duration-300 shadow-[0_0_20px_rgba(193,229,39,0.25)] hover:shadow-[0_0_30px_rgba(193,229,39,0.5)] hover:scale-105 active:scale-95 shrink-0"
-            >
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-section-ink opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-section-ink"></span>
-              </span>
-              <Ticket className="w-3.5 h-3.5 shrink-0" />
-              <span className="whitespace-nowrap">Book Tickets</span>
-            </Link>
-
             <Link
               href={isHome ? '#contact' : '/#contact'}
-              className="hidden md:flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-section-ink px-5 py-2.5 rounded-full text-xs font-black transition-all shadow-md"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2 bg-creative-flame hover:bg-[#E54D30] text-section-ink px-3 sm:px-5 py-2.5 min-h-11 rounded-full text-xs font-black transition-all shadow-md whitespace-nowrap"
             >
-              Let's work together
+              Start a Project
             </Link>
 
             {/* Mobile Menu Toggle */}
             <button
-              className="lg:hidden flex items-center gap-1.5 text-white hover:text-creative-flame transition-colors p-1.5 -mr-1"
+              ref={menuButtonRef}
+              className="xl:hidden flex items-center gap-1.5 text-white hover:text-creative-flame transition-colors p-2.5 -mr-1"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-expanded={isMobileMenuOpen}
               aria-controls="mobile-menu"
@@ -161,7 +181,10 @@ export default function Header() {
       {/* Mobile Menu Overlay */}
       <div
         id="mobile-menu"
-        className={`fixed inset-0 bg-section-ink z-40 transition-all duration-500 ease-in-out lg:hidden flex flex-col justify-start px-8 overflow-y-auto pt-24 pb-8 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        ref={menuRef}
+        inert={!isMobileMenuOpen}
+        aria-hidden={!isMobileMenuOpen}
+        className={`fixed inset-0 bg-section-ink z-40 transition-all duration-500 ease-in-out xl:hidden flex flex-col justify-start px-8 overflow-y-auto pt-24 pb-8 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
       >
         <nav aria-label="Mobile navigation" className="flex flex-col gap-6 mt-12 pl-2">
@@ -171,14 +194,10 @@ export default function Header() {
                 <Link
                   key={item.label}
                   href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-2xl sm:text-3xl font-black tracking-wider uppercase transition-colors text-[#c1e527] flex items-center gap-3"
+                  onClick={() => { setIsMobileMenuOpen(false); menuButtonRef.current?.focus(); }}
+                  className="text-2xl sm:text-3xl font-semibold tracking-wider uppercase transition-colors text-white/80 hover:text-white"
                 >
-                  <Ticket className="w-7 h-7" />
                   <span>{item.label}</span>
-                  <span className="text-xs bg-[#c1e527]/20 text-[#c1e527] px-2.5 py-0.5 rounded-full font-extrabold border border-[#c1e527]/40">
-                    Live Events
-                  </span>
                 </Link>
               );
             }
@@ -191,11 +210,16 @@ export default function Header() {
                 href={href}
                 onClick={(e) => {
                   setIsMobileMenuOpen(false);
+                  menuButtonRef.current?.focus();
                   if (isHome) {
                     e.preventDefault();
                     setTimeout(() => {
                       const element = document.getElementById(item.id!);
-                      if (element) element.scrollIntoView({ behavior: 'smooth' });
+                      if (element) {
+                        element.tabIndex = -1;
+                        element.focus({ preventScroll: true });
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      }
                     }, 50);
                   }
                 }}
@@ -209,29 +233,25 @@ export default function Header() {
 
           <div className="mt-8 pt-8 border-t border-white/10 flex flex-col gap-4">
             <Link
-              href="/ideofest"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#c1e527] to-[#d4ff33] text-section-ink px-8 py-4 rounded-full text-base font-black shadow-lg shadow-[#c1e527]/20 w-full"
-            >
-              <Ticket className="w-5 h-5" />
-              <span>Explore & Book Event Tickets</span>
-            </Link>
-
-            <Link
               href={isHome ? '#contact' : '/#contact'}
               onClick={(e) => {
                 setIsMobileMenuOpen(false);
+                menuButtonRef.current?.focus();
                 if (isHome) {
                   e.preventDefault();
                   setTimeout(() => {
                     const element = document.getElementById('contact');
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
+                    if (element) {
+                      element.tabIndex = -1;
+                      element.focus({ preventScroll: true });
+                      element.scrollIntoView({ behavior: 'smooth' });
+                    }
                   }, 50);
                 }
               }}
-              className="inline-flex items-center justify-center gap-2 bg-creative-flame text-white px-8 py-4 rounded-full text-base font-bold w-full"
+              className="inline-flex items-center justify-center gap-2 bg-creative-flame text-section-ink px-8 py-4 rounded-full text-base font-bold w-full"
             >
-              Let's work together
+              Start a Project
             </Link>
           </div>
         </nav>

@@ -309,3 +309,13 @@ html {
     margin: 10mm;
   }
 }
+
+/* Keep anchored content clear of the fixed navigation and keyboard focus visible. */
+section[id] { scroll-margin-top: 6rem; }
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-creative-flame);
+  outline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-iteration-count: 1 !important; }
+}

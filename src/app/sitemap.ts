@@ -60,5 +60,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Failed to fetch events for sitemap:', err);
   }
 
-  return [...staticPages, ...eventPages];
+  const studioPages: MetadataRoute.Sitemap = ['privacy', 'terms', 'careers'].map(path => ({ url: `${baseUrl}/${path}`, changeFrequency: 'monthly', priority: 0.3 }));
+  return [...staticPages, ...studioPages, ...eventPages];
 }

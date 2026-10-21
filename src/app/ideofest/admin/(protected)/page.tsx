@@ -2,6 +2,7 @@ import AnalyticsChart from '@/components/ideofest/AnalyticsChart';
 import { TrendingUp, Users, CalendarDays, PlusCircle, ShieldCheck, Download, FileCheck, QrCode, Clock, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
+import { connection } from 'next/server';
 
 function formatLKR(n: number) {
   if (n >= 1_000_000) return `LKR ${(n / 1_000_000).toFixed(1)}M`;
@@ -10,6 +11,8 @@ function formatLKR(n: number) {
 }
 
 export default async function AdminDashboardPage() {
+  // Live admin data belongs to a request, not to the deployment build.
+  await connection();
   const supabase = createAdminClient();
 
   // Fetch live stats from Supabase

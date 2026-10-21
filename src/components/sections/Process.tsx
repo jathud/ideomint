@@ -8,33 +8,33 @@ export default function Process() {
   const steps = [
     {
       id: '01',
-      title: 'The Download',
+      title: 'Discover',
       subtitle: 'Strategy & Discovery',
       icon: Network,
       textColor: 'text-creative-flame',
       borderColor: 'border-creative-flame/50',
       glowColor: 'bg-creative-flame/20',
-      description: 'We sit with you to extract your vision. We define your exact target audience, brand voice, and visual direction. No guesswork—just deep, human understanding of your goals.',
+      description: 'We listen to your goals, understand your audience, and agree on a clear brief, scope, and creative direction.',
     },
     {
       id: '02',
-      title: 'The Generation',
-      subtitle: 'AI-Powered Execution',
+      title: 'Create & Refine',
+      subtitle: 'Creative Development',
       icon: Cpu,
       textColor: 'text-digital-pulse',
       borderColor: 'border-digital-pulse/50',
       glowColor: 'bg-digital-pulse/20',
-      description: 'Our human experts use advanced AI workflows to instantly generate, test, and iterate on designs, copy, and campaigns. What takes traditional agencies weeks, we build in days.',
+      description: 'We develop the work, share it at agreed milestones, and refine it with your feedback. Strategy and craft guide each decision.',
     },
     {
       id: '03',
-      title: 'The Deployment',
+      title: 'Launch & Support',
       subtitle: 'Launch & Scale',
       icon: Rocket,
       textColor: 'text-signal-lime',
       borderColor: 'border-signal-lime/50',
       glowColor: 'bg-signal-lime/20',
-      description: 'We deliver polished, market-ready assets. You launch faster, look more professional, and grow your brand without the bloated costs or endless waiting periods.',
+      description: 'We prepare the final assets, check the details, and support a clear handover. Any ongoing support is agreed as part of your project.',
     }
   ];
 
@@ -48,64 +48,34 @@ export default function Process() {
         
         {/* Section Header */}
         <AnimatedSection>
-          <div className="max-w-5xl mb-24 mx-auto text-center">
+          <div className="max-w-5xl mb-8 md:mb-12 mx-auto text-center">
             <div className="flex items-center justify-center gap-4 mb-6">
               <div className="h-px bg-white/20 w-12" />
-              <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">06 / The Process</span>
+              <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">Our Process</span>
               <div className="h-px bg-white/20 w-12" />
             </div>
             
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-white lg:whitespace-nowrap">
-              How we build <span className="text-creative-flame">faster than anyone else.</span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight text-white ">
+              From first conversation <span className="text-creative-flame">to final delivery.</span>
             </h2>
           </div>
         </AnimatedSection>
 
-        {/* Vertical Flow Diagram */}
-        <div className="relative max-w-4xl mx-auto">
-          
-          {/* Vertical Connecting Line */}
-          <div className="absolute left-[39px] md:left-1/2 md:-translate-x-1/2 top-[50px] bottom-[50px] w-0.5 bg-white/10 z-0">
-            {/* Animated Pulse Line */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-transparent w-full h-1/3 animate-[pulse_3s_ease-in-out_infinite]" />
-          </div>
-
-          <div className="flex flex-col gap-12 relative z-10">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              const isEven = index % 2 === 1;
-              
-              return (
-                <AnimatedSection key={step.id}>
-                  <div className={`flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16 group ${isEven ? 'md:flex-row-reverse' : ''}`}>
-                    
-                    {/* The Node (Mobile: Left aligned | Desktop: Center aligned) */}
-                    <div className="relative shrink-0 flex items-center justify-center w-20 h-20 md:absolute md:left-1/2 md:-translate-x-1/2 md:w-24 md:h-24">
-                      <div className={`absolute inset-0 ${step.glowColor} rounded-full blur-[30px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none`} />
-                      <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-section-ink border-2 ${step.borderColor} flex items-center justify-center relative z-10 shadow-[0_0_30px_rgba(0,0,0,0.5)]`}>
-                        <Icon className={`w-8 h-8 md:w-10 md:h-10 ${step.textColor}`} strokeWidth={1.5} />
-                        <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white text-section-ink font-black text-sm flex items-center justify-center shadow-lg">
-                          {step.id}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Content Card */}
-                    <div className={`bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-8 w-full md:w-[calc(50%-4rem)] ${isEven ? 'md:text-right md:ml-auto' : 'md:text-left md:mr-auto'}`}>
-                      <h3 className="text-2xl font-black mb-2 text-white">{step.title}</h3>
-                      <p className={`${step.textColor} font-bold tracking-widest text-xs uppercase mb-4`}>{step.subtitle}</p>
-                      <p className="text-base text-white/70 leading-relaxed font-medium">
-                        {step.description}
-                      </p>
-                    </div>
-
-                  </div>
-                </AnimatedSection>
-              );
-            })}
-          </div>
-
-        </div>
+        <ol className="grid md:grid-cols-3 gap-4 md:gap-6">
+          {steps.map(step => {
+            const Icon = step.icon;
+            return (
+              <li key={step.id} className="rounded-2xl border border-white/10 bg-white/5 p-5 md:p-7">
+                <div className="flex items-center justify-between mb-4 md:mb-6">
+                  <Icon aria-hidden="true" className={`h-7 w-7 ${step.textColor}`} strokeWidth={1.5} />
+                  <span className="text-sm font-bold text-white/60">{step.id}</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-black tracking-tight mb-3">{step.title}</h3>
+                <p className="text-sm md:text-base text-white/75 leading-relaxed">{step.description}</p>
+              </li>
+            );
+          })}
+        </ol>
 
       </div>
     </section>

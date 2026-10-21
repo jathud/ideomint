@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { refreshPortfolioSession } from '@/lib/portfolio/session';
 import {
   globalApiLimiter,
   bookingLimiter,
@@ -115,6 +116,9 @@ export async function proxy(request: NextRequest) {
   // ─────────────────────────────────────────────────────────────────────────
 
   // Pass through static assets and API routes
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    return refreshPortfolioSession(request);
+  }
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api/') ||

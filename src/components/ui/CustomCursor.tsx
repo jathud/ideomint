@@ -1,12 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+
+const pointerQuery = '(hover: hover) and (pointer: fine)';
+function subscribePointer(update: () => void) {
+  const query = window.matchMedia(pointerQuery);
+  query.addEventListener('change', update);
+  return () => query.removeEventListener('change', update);
+}
 import { usePathname } from 'next/navigation';
-import { motion, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useMotionValue, useSpring, useReducedMotion } from 'framer-motion';
 
 export default function CustomCursor() {
   const pathname = usePathname();
-  const [isVisible, setIsVisible] = useState(false);
+  const reducedMotion = useReducedMotion();
+  const isVisible = useSyncExternalStore(subscribePointer, () => window.matchMedia(pointerQuery).matches, () => false);
   const [isHovering, setIsHovering] = useState(false);
 
   const isIdeofest = pathname?.startsWith('/ideofest');
@@ -22,10 +30,7 @@ export default function CustomCursor() {
 
   useEffect(() => {
     // Only show on devices with a mouse (hover supported)
-    const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
-    if (!mediaQuery.matches) return;
-
-    setIsVisible(true);
+    if (!isVisible || reducedMotion) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       cursorX.set(e.clientX - 16); // Center the 32px cursor
@@ -55,9 +60,9 @@ export default function CustomCursor() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseover', handleMouseOver);
     };
-  }, [cursorX, cursorY]);
+  }, [cursorX, cursorY, isVisible, reducedMotion]);
 
-  if (!isVisible) return null;
+  if (!isVisible || reducedMotion) return null;
 
   // Accent color depends on domain / page section
   const accentBorderClass = isIdeofest

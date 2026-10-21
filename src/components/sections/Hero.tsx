@@ -1,98 +1,37 @@
-import Image from 'next/image';
-import { Play } from 'lucide-react';
+import { ArrowDown, ArrowRight } from 'lucide-react';
+import MintingFrame from './MintingFrame';
 
 export default function Hero() {
   return (
-    <section id="home" className="relative min-h-screen text-white pt-24 lg:pt-32 pb-20 flex flex-col justify-center">
-      <div className="container-layout w-full grid lg:grid-cols-[1.2fr_1fr_auto] gap-8 lg:gap-12 items-center">
-        {/* Left Column */}
-        <div className="flex-1 relative z-10 flex flex-col justify-center max-w-2xl lg:max-w-3xl">
-          <p className="text-xs font-bold tracking-[0.1em] text-creative-flame uppercase mb-6">
-            Strategic Branding Agency
-          </p>
-          <h1 className="hero-title text-white mb-8">
-            <span>Exceptional Ideas.</span><br />
-            <span>Flawlessly <span className="text-creative-flame">Minted.</span></span>
-          </h1>
-          <p className="text-base md:text-lg text-white/80 max-w-xl leading-relaxed mt-2">
-            We take raw, exceptional ideas and forge them into pristine, highly valuable brands and experiences that people trust.
-          </p>
-          <div className="flex flex-wrap items-center gap-6 mt-8">
-            <a href="#services" className="bg-creative-flame hover:bg-[#E54D30] text-section-ink px-8 py-5 rounded-full font-black transition-all flex items-center justify-center group shadow-lg">
-              Explore Our Work
-            </a>
-            <a href="#services" className="flex items-center gap-3 group px-4 py-2 hover:bg-white/5 rounded-full transition-colors">
-              <div className="w-14 h-14 rounded-full border border-white/20 flex items-center justify-center group-hover:border-creative-flame/50 transition-colors bg-white/[0.02]">
-                <Play className="w-5 h-5 ml-1" />
-              </div>
-              <span className="font-bold text-sm tracking-widest uppercase">Watch Showreel</span>
-            </a>
-          </div>
+    <section id="home" className="relative isolate overflow-hidden bg-section-ink text-white min-h-[100svh] flex items-center pt-28 pb-12 lg:pt-36 lg:pb-20">
+      <div className="container-layout w-full">
+        <div className="flex items-center justify-between gap-5 mb-8 lg:mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-white/60">Creative & Digital Studio / Jaffna</p>
+          <p className="hidden lg:block text-xs font-bold uppercase tracking-[0.18em] text-white/65">From idea to impact</p>
         </div>
-
-        {/* Right Column (Collage) */}
-        <div className="relative w-[calc(100%-2rem)] max-w-[400px] lg:w-full lg:max-w-[560px] aspect-square lg:aspect-[1.1] xl:aspect-[4/3] flex items-center justify-center mx-auto lg:mr-0 mt-12 lg:mt-0">
-          {/* Geometric Corner Frames */}
-          <div className="absolute -top-3 -left-3 lg:-top-12 lg:-left-12 w-10 h-10 lg:w-24 lg:h-24 border-t-[4px] lg:border-t-[6px] border-l-[4px] lg:border-l-[6px] border-creative-flame z-20 pointer-events-none" />
-          <div className="absolute -top-3 -right-3 lg:-top-12 lg:-right-12 w-10 h-10 lg:w-24 lg:h-24 border-t-[4px] lg:border-t-[6px] border-r-[4px] lg:border-r-[6px] border-white z-20 pointer-events-none" />
-          <div className="absolute -bottom-3 -left-3 lg:-bottom-12 lg:-left-12 w-10 h-10 lg:w-24 lg:h-24 border-b-[4px] lg:border-b-[6px] border-l-[4px] lg:border-l-[6px] border-white z-20 pointer-events-none" />
-          <div className="absolute -bottom-3 -right-3 lg:-bottom-12 lg:-right-12 w-10 h-10 lg:w-24 lg:h-24 border-b-[4px] lg:border-b-[6px] border-r-[4px] lg:border-r-[6px] border-creative-flame z-20 pointer-events-none" />
-          
-          {/* Center Logo Icon */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-[60px] h-[60px] lg:w-[80px] lg:h-[80px] bg-section-ink flex items-center justify-center pointer-events-none">
-            <div className="relative w-8 h-8 lg:w-10 lg:h-10">
-              {/* Geometric Frame Icon */}
-              <div className="absolute top-0 left-0 w-[12px] lg:w-[16px] h-[12px] lg:h-[16px] border-t-[4px] lg:border-t-[5px] border-l-[4px] lg:border-l-[5px] border-creative-flame" />
-              <div className="absolute top-0 right-0 w-[12px] lg:w-[16px] h-[12px] lg:h-[16px] border-t-[4px] lg:border-t-[5px] border-r-[4px] lg:border-r-[5px] border-white" />
-              <div className="absolute bottom-0 left-0 w-[12px] lg:w-[16px] h-[12px] lg:h-[16px] border-b-[4px] lg:border-b-[5px] border-l-[4px] lg:border-l-[5px] border-white" />
-              <div className="absolute bottom-0 right-0 w-[12px] lg:w-[16px] h-[12px] lg:h-[16px] border-b-[4px] lg:border-b-[5px] border-r-[4px] lg:border-r-[5px] border-creative-flame" />
+        <div className="grid lg:grid-cols-12 gap-y-12 gap-x-10 items-center">
+          <div className="relative z-10 lg:col-span-7 min-w-0">
+            <h1 aria-label="Exceptional Ideas. Flawlessly Minted." className="font-black tracking-[-0.045em]">
+              <span className="block text-[clamp(1.625rem,5.5vw,5.25rem)] leading-[1.08]">Exceptional <span id="hero-idea-seed">Ideas.</span></span>
+              <span className="block text-[clamp(1.875rem,5.5vw,5.25rem)] leading-[1.08] mt-1">Flawlessly</span>
+              <span id="hero-minted-word" className="inline-block origin-bottom-left text-[clamp(4rem,19vw,5rem)] lg:text-[clamp(5rem,10.5vw,10rem)] leading-[0.98] text-creative-flame mt-1">Minted.</span>
+            </h1>
+            <p className="text-base md:text-lg text-white/70 leading-relaxed max-w-md mt-6 lg:mt-8">Websites, marketing and creative experiences that help businesses stand out and grow.</p>
+            <div className="flex flex-wrap items-center gap-4 sm:gap-6 mt-7 lg:mt-9">
+              <a href="#work" className="inline-flex min-h-14 items-center justify-center gap-3 bg-creative-flame hover:bg-[#E54D30] text-section-ink px-6 sm:px-7 py-4 rounded-full font-black text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white group">
+                Explore Our Work <ArrowRight aria-hidden="true" className="w-4 h-4 group-hover:translate-x-1 transition-transform motion-reduce:transform-none" />
+              </a>
+              <a href="https://wa.me/94786892649" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp (opens in a new tab)" className="inline-flex min-h-14 items-center justify-center gap-3 rounded-full border border-[#25D366] px-6 sm:px-7 py-4 text-sm font-bold text-[#25D366] hover:bg-[#25D366]/10 transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#25D366]">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 shrink-0"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.44 0 .07 5.37.06 11.97c0 2.11.55 4.17 1.6 5.99L0 24l6.18-1.62a11.97 11.97 0 0 0 5.85 1.49h.01c6.6 0 11.97-5.37 11.98-11.97a11.9 11.9 0 0 0-3.5-8.42ZM12.04 21.85a9.94 9.94 0 0 1-5.07-1.39l-.36-.21-3.67.96.98-3.58-.23-.37a9.92 9.92 0 0 1-1.52-5.29c0-5.48 4.46-9.94 9.95-9.94a9.88 9.88 0 0 1 7.03 2.92 9.88 9.88 0 0 1 2.91 7.04c0 5.48-4.46 9.86-9.94 9.86Zm5.45-7.43c-.3-.15-1.77-.87-2.04-.97-.28-.1-.48-.15-.68.15-.2.3-.77.97-.95 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.11 3.22 5.12 4.52.72.31 1.28.5 1.72.64.72.23 1.38.2 1.9.12.58-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35Z" /></svg>
+                Chat on WhatsApp
+              </a>
             </div>
           </div>
-
-          {/* Image Grid */}
-          <div className="grid grid-cols-2 grid-rows-2 gap-3 w-full h-full relative z-10">
-            <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_concert.png" alt="Concert crowd" fill priority sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_stationery.png" alt="Brand stationery" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_camera.png" alt="Video camera" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="relative w-full h-full overflow-hidden group">
-              <Image src="/hero_performer.png" alt="Live performer" fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover object-center group-hover:scale-105 transition-transform duration-700" />
-            </div>
-          </div>
+          <div className="lg:col-span-5 min-w-0 px-2 lg:px-0"><MintingFrame /></div>
         </div>
-
-        {/* Vertical Indicator */}
-        <div className="hidden lg:flex flex-col text-[11px] font-extrabold text-white/80 ml-12 relative">
-          {/* Continuous Line */}
-          <div className="absolute top-3 bottom-3 left-[5px] w-px bg-white/20 z-0" />
-          
-          <div className="flex items-center gap-6 py-4 relative z-10 w-full group">
-            <span className="text-creative-flame bg-section-ink py-1 relative">
-              01
-            </span>
-            <span className="text-white transition-colors">Strategy</span>
-          </div>
-          <div className="flex items-center gap-6 py-4 relative z-10 w-full group">
-            <span className="bg-section-ink py-1">02</span>
-            <span className="group-hover:text-white transition-colors">Design</span>
-          </div>
-          <div className="flex items-center gap-6 py-4 relative z-10 w-full group">
-            <span className="bg-section-ink py-1">03</span>
-            <span className="group-hover:text-white transition-colors">Marketing</span>
-          </div>
-          <div className="flex items-center gap-6 py-4 relative z-10 w-full group">
-            <span className="bg-section-ink py-1">04</span>
-            <span className="group-hover:text-white transition-colors">Events</span>
-          </div>
-          <div className="flex items-center gap-6 py-4 relative z-10 w-full group">
-            <span className="bg-section-ink py-1">05</span>
-            <span className="group-hover:text-white transition-colors">Community</span>
-          </div>
+        <div className="flex items-center justify-between gap-6 border-t border-white/10 mt-10 lg:mt-12 pt-5">
+          <p className="text-[9px] sm:text-xs font-bold uppercase tracking-[0.1em] text-white/65">Websites <span className="mx-1.5 text-creative-flame">/</span> Marketing <span className="mx-1.5 text-creative-flame">/</span> Content & Creative</p>
+          <a href="#services" className="hidden sm:inline-flex shrink-0 items-center gap-3 text-xs font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors">Explore <ArrowDown aria-hidden="true" className="w-3 h-3" /></a>
         </div>
       </div>
     </section>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Palette, Megaphone, Camera, User } from 'lucide-react';
+import { Globe, Megaphone, Camera } from 'lucide-react';
 import Header from '@/components/ui/Header';
 import Footer from '@/components/sections/Footer';
 import PricingCard from './PricingCard';
@@ -35,10 +35,9 @@ const addOns = [
    CATEGORY NAV ITEMS
    ──────────────────────────────────── */
 const categories = [
-  { icon: Palette, label: 'Build Your Brand', anchor: '#build-brand', color: 'text-creative-flame' },
-  { icon: Megaphone, label: 'Grow Your Presence', anchor: '#grow-presence', color: 'text-signal-lime' },
-  { icon: Camera, label: 'Create Better Content', anchor: '#create-content', color: 'text-digital-pulse' },
-  { icon: User, label: 'Build Your Personal Brand', anchor: '#personal-brand', color: 'text-creative-flame' },
+  { icon: Globe, label: 'Websites', anchor: '#websites', color: 'text-creative-flame' },
+  { icon: Megaphone, label: 'Marketing', anchor: '#grow-presence', color: 'text-signal-lime' },
+  { icon: Camera, label: 'Content & Creative', anchor: '#create-content', color: 'text-digital-pulse' },
 ];
 
 /* ════════════════════════════════════
@@ -71,18 +70,18 @@ export default function ServicesContent() {
 
             <p className="text-lg md:text-xl text-white/70 leading-relaxed max-w-2xl">
               Ideomint helps businesses and people become clear, visible, and
-              memorable through branding, content, social media, and personal
-              brand growth.
+              memorable through websites, marketing, content and creative work.
+              Explore the core services below, alongside branding and personal brand support.
             </p>
           </div>
 
           {/* Category Navigation Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mt-8 md:mt-12">
             {categories.map((cat) => (
               <a
                 key={cat.label}
                 href={cat.anchor}
-                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 min-h-[140px] flex flex-col items-center justify-center text-center gap-4 group hover:bg-white/[0.08] hover:border-white/20 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5 min-h-[100px] md:min-h-[140px] flex flex-col items-center justify-center text-center gap-4 group hover:bg-white/[0.08] hover:border-white/20 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
               >
                 <div className={`w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <cat.icon className={`w-6 h-6 ${cat.color}`} />
@@ -93,8 +92,27 @@ export default function ServicesContent() {
               </a>
             ))}
           </div>
+          <nav aria-label="Related creative services" className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            <span className="text-white/70">Also explore:</span>
+            <a href="#build-brand" className="inline-flex items-center min-h-11 underline underline-offset-4 text-white/85 hover:text-creative-flame">Brand strategy &amp; identity</a>
+            <a href="#personal-brand" className="inline-flex items-center min-h-11 underline underline-offset-4 text-white/85 hover:text-creative-flame">Personal branding</a>
+          </nav>
         </div>
       </section>
+
+      <AnimatedSection>
+        <section id="websites" className="section-spacing text-white scroll-mt-24">
+          <div className="container-layout grid lg:grid-cols-2 gap-10 items-start">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-creative-flame mb-6">Websites</p>
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-6">A digital home for <span className="text-creative-flame">your business.</span></h2>
+              <p className="text-lg text-white/75 leading-relaxed">From a focused landing page to a complete business website, we combine clear content, responsive design, and a straightforward enquiry journey.</p>
+              <p className="text-sm text-white/70 mt-5 leading-relaxed">We agree the pages, features, content responsibilities, timeline, and ongoing support before work begins. Domain, hosting, and third-party costs are confirmed separately.</p>
+            </div>
+            <PricingCard name="Website landing page" price="From LKR 45,000" description="A focused starting point for a business, campaign, or new offer." features={['Responsive layout for desktop and mobile', 'Clear presentation of your offer', 'A contact or enquiry route', 'Scope and delivery milestones agreed before work begins']} exclusions={['Domain and hosting unless agreed', 'Third-party subscriptions', 'Full website: custom scope and quote']} />
+          </div>
+        </section>
+      </AnimatedSection>
 
       {/* ━━━━ 01 / BUILD YOUR BRAND ━━━━ */}
       <AnimatedSection>
@@ -204,7 +222,7 @@ export default function ServicesContent() {
             <div className="max-w-3xl mb-12">
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">
-                  02 / Grow Your Presence
+                  Marketing / Grow Your Presence
                 </span>
                 <div className="h-px bg-white/20 w-12" />
               </div>
@@ -306,7 +324,7 @@ export default function ServicesContent() {
             <div className="max-w-3xl mb-12">
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-creative-flame font-bold tracking-widest text-xs uppercase">
-                  03 / Create Better Content
+                  Content & Creative / Create Better Content
                 </span>
                 <div className="h-px bg-white/20 w-12" />
               </div>
@@ -575,7 +593,7 @@ export default function ServicesContent() {
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {addOns.map((addon) => (
                 <div
                   key={addon.name}

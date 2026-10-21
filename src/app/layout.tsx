@@ -21,10 +21,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'Ideomint | Ideofest 2026 – Innovation Events, Branding & Digital Experiences',
-    template: '%s | Ideomint – Home of Ideofest',
+    default: 'IdeoMint — Websites, Marketing & Creative',
+    template: '%s | IdeoMint',
   },
-  description: 'Ideomint is the official home of Ideofest 2026, offering live innovation events, event ticketing, brand strategy, web development, and creative digital experiences.',
+  description: 'IdeoMint is a creative and digital agency in Jaffna, Sri Lanka. We build websites, marketing campaigns, brand identities and content that help businesses stand out and grow.',
   keywords: [
     'Ideomint', 'Ideofest', 'Ideofest 2026', 'Ideomint Sri Lanka', 'Ideofest Events',
     'Sing Along Jaffna', 'Event Tickets Sri Lanka', 'Brand Strategy', 'Web Design Sri Lanka',
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
     locale: 'en_US',
     url: 'https://ideomint.com',
     siteName: 'Ideomint',
-    title: 'Ideomint | Ideofest 2026 – Innovation Events, Branding & Digital Experiences',
-    description: 'Ideomint is the home of Ideofest 2026, offering live innovation events, ticketing, branding, and digital experiences.',
+    title: 'IdeoMint — Websites, Marketing & Creative',
+    description: 'Websites, marketing and creative experiences from IdeoMint, a creative and digital agency based in Jaffna, Sri Lanka.',
     images: [
       {
         url: '/og-image.png',
@@ -49,8 +49,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Ideomint | Ideofest 2026 – Innovation Events, Branding & Digital Experiences',
-    description: 'Ideomint is the home of Ideofest 2026, offering live innovation events, ticketing, branding, and digital experiences.',
+    title: 'IdeoMint — Websites, Marketing & Creative',
+    description: 'Websites, marketing and creative experiences from IdeoMint, a creative and digital agency based in Jaffna, Sri Lanka.',
     images: ['/og-image.png'],
   },
   robots: {

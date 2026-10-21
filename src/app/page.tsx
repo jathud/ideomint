@@ -1,23 +1,23 @@
 import Header from "@/components/ui/Header";
+import AgencyAbout from "@/components/sections/AgencyAbout";
 import Hero from "@/components/sections/Hero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
 import dynamic from 'next/dynamic';
 import JsonLd from "@/components/seo/JsonLd";
+import { homepagePortfolio } from '@/lib/portfolio/repository';
 
 // Lazy load everything below the fold
 const Manifesto = dynamic(() => import("@/components/sections/Manifesto"));
 const Services = dynamic(() => import("@/components/sections/Services"));
-const Teardown = dynamic(() => import("@/components/sections/Teardown"));
 const Sandbox = dynamic(() => import("@/components/sections/Sandbox"));
-const Stats = dynamic(() => import("@/components/sections/Stats"));
 const ExperienceReel = dynamic(() => import("@/components/sections/ExperienceReel"));
 
-const Comparison = dynamic(() => import("@/components/sections/Comparison"));
 const Process = dynamic(() => import("@/components/sections/Process"));
 const Contact = dynamic(() => import("@/components/sections/Contact"));
 const Footer = dynamic(() => import("@/components/sections/Footer"));
 
-export default function Home() {
+export default async function Home() {
+  const portfolioProjects = await homepagePortfolio();
   return (
     <main className="min-h-screen bg-section-ink selection:bg-creative-flame selection:text-white overflow-hidden w-full relative">
       <JsonLd data={[
@@ -38,15 +38,12 @@ export default function Home() {
       ]} />
       <Header />
       <Hero />
-      <Manifesto />
       <AnimatedSection><Services /></AnimatedSection>
-      <Teardown />
-      <Sandbox />
-      <Stats />
-      <ExperienceReel />
-
-      <AnimatedSection><Comparison /></AnimatedSection>
+      <ExperienceReel projects={portfolioProjects} />
+      <AgencyAbout />
+      <Manifesto />
       <Process />
+      <Sandbox />
       <AnimatedSection><Contact /></AnimatedSection>
       <Footer />
     </main>

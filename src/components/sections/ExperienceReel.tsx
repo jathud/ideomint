@@ -5,74 +5,13 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import AnimatedSection from '@/components/ui/AnimatedSection';
+import ServiceFilters from '@/components/work/ServiceFilters';
+import type { PortfolioService } from '@/lib/portfolio/categories';
+import { legacyProjects, type Project } from '@/lib/portfolio/legacy-projects';
 
-/* ─── Data ─────────────────────────────────────────────────────── */
+/* â”€â”€â”€ Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-interface ProjectPhoto {
-  src: string;
-  alt: string;
-  theme: string;
-}
-
-interface Project {
-  id: string;
-  index: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  role: string;
-  location: string;
-  label: string;
-  themes: string[];
-  photos: ProjectPhoto[];
-}
-
-const projects: Project[] = [
-  {
-    id: 'ideofest',
-    index: '01',
-    title: 'IdeoFest',
-    subtitle: 'Sing-Along Jaffna',
-    description:
-      'A live music and cultural experience built from the ground up — concept, visual identity, ticketing platform, and event production, all under one roof.',
-    role: 'Concept / Branding / Event Production / Platform',
-    location: 'Jaffna, Sri Lanka',
-    label: 'An IdeoMint Initiative',
-    themes: ['The Energy', 'The Experience', 'The Details'],
-    photos: [
-      { src: '/portfolio/ideofest/IMG_0889.WEBP', alt: 'IdeoFest organizing crew collaborating in official event gear', theme: 'The Energy' },
-      { src: '/portfolio/ideofest/IMG_0887.WEBP', alt: 'Full amphitheater crowd gathered at IdeoFest with stage illumination', theme: 'The Energy' },
-      { src: '/portfolio/ideofest/IMG_0885.WEBP', alt: 'Audience members cheering and clapping during live performances', theme: 'The Experience' },
-      { src: '/portfolio/ideofest/IMG_0888.WEBP', alt: 'Attendees engaged in the live atmosphere and showcase sessions', theme: 'The Experience' },
-      { src: '/portfolio/ideofest/IMG_0886.WEBP', alt: 'Host presenting on stage with the IdeoFest backdrop visual', theme: 'The Details' },
-      { src: '/portfolio/ideofest/IMG_0884.WEBP', alt: 'Keynote speaker addressing the audience during the event', theme: 'The Details' },
-    ],
-  },
-  {
-    id: 'choice-to-lead',
-    index: '02',
-    title: 'Choice to Lead',
-    subtitle: 'WUSC / GRIT',
-    description:
-      'Visual storytelling, media production, and experiential engagement for youth and women entrepreneurship initiatives across Sri Lanka.',
-    role: 'Media Production / Visual Storytelling / Event Coverage',
-    location: 'Sri Lanka',
-    label: 'In partnership with WUSC & GRIT',
-    themes: ['The Voices', 'The Commitments', 'The Interaction'],
-    photos: [
-      { src: '/portfolio/choice-to-lead/JK_D9587.JPG', alt: 'Production team capturing participant stories with professional camera rig', theme: 'The Voices' },
-      { src: '/portfolio/choice-to-lead/JK_D9461.JPG', alt: 'Young women entrepreneurs holding Choice to Lead future founder frame', theme: 'The Voices' },
-      { src: '/portfolio/choice-to-lead/JK_D9694.JPG', alt: 'Participant writing personal pledge on the Choice to Lead commitment board', theme: 'The Commitments' },
-      { src: '/portfolio/choice-to-lead/JK_D9497.JPG', alt: 'Women founders celebrating entrepreneurship milestones with project frame', theme: 'The Commitments' },
-      { src: '/portfolio/choice-to-lead/JK_D9420.JPG', alt: 'Event coordinators networking and discussing youth empowerment at the exhibition', theme: 'The Interaction' },
-      { src: '/portfolio/choice-to-lead/JK_D9568.JPG', alt: 'Media crew and field directors coordinating video interviews and coverage', theme: 'The Interaction' },
-      { src: '/portfolio/choice-to-lead/JK_D9582.JPG', alt: 'On-ground video production setup and interviews with aspiring founders', theme: 'The Interaction' },
-    ],
-  },
-];
-
-/* ─── Reduced-motion hook (useSyncExternalStore) ───────────────── */
-
+// Project content is separate from the gallery presentation.
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 function subscribeReducedMotion(callback: () => void) {
@@ -97,9 +36,15 @@ function usePrefersReducedMotion() {
   );
 }
 
-/* ─── Component ────────────────────────────────────────────────── */
+/* â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
-export default function ExperienceReel() {
+export default function ExperienceReel({ projects = legacyProjects }: { projects?: Project[] }) {
+  if (!projects.length) return <section id="work" className="section-spacing text-white"><div className="container-layout"><h2 className="text-4xl font-black tracking-tight">Selected Work</h2><p className="text-white/60 mt-5">Our portfolio is being updated. Please check back shortly.</p></div></section>;
+  return <ExperienceReelContent key={projects.map(project => `${project.id}:${project.revision ?? ''}`).join(',')} projects={projects} />;
+}
+
+function ExperienceReelContent({ projects }: { projects: Project[] }) {
+  const [selectedService, setSelectedService] = useState<PortfolioService | null>(null);
   const [activeProjectIdx, setActiveProjectIdx] = useState(0);
   const [activeTheme, setActiveTheme] = useState<string | null>(null); // null = all photos
   const [photoIdx, setPhotoIdx] = useState(0);
@@ -107,6 +52,7 @@ export default function ExperienceReel() {
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const project = projects[activeProjectIdx];
+  const visibleProjectIndices = projects.map((item, index) => ({ item, index })).filter(({ item }) => selectedService === null || item.services.includes(selectedService)).map(({ index }) => index);
 
   // Filtered photos by active theme
   const visiblePhotos =
@@ -116,7 +62,7 @@ export default function ExperienceReel() {
 
   const totalPhotos = visiblePhotos.length;
 
-  // visiblePhotos is derived from activeTheme — photoIdx/direction reset
+  // visiblePhotos is derived from activeTheme â€” photoIdx/direction reset
   // is handled inline in the theme and project switch handlers below.
 
   /* Navigation */
@@ -137,6 +83,7 @@ export default function ExperienceReel() {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
+      if (!visibleProjectIndices.length || (e.target as HTMLElement).closest('[data-service-controls]')) return;
       if (e.key === 'ArrowRight') {
         e.preventDefault();
         goNext();
@@ -145,7 +92,7 @@ export default function ExperienceReel() {
         goPrev();
       }
     },
-    [goNext, goPrev],
+    [goNext, goPrev, visibleProjectIndices.length],
   );
 
   /* Touch / swipe support */
@@ -204,7 +151,7 @@ export default function ExperienceReel() {
       className="section-spacing relative text-white"
       onKeyDown={handleKeyDown}
       tabIndex={-1}
-      aria-label="Portfolio — The Experience Reel"
+      aria-label="Portfolio â€” The Experience Reel"
     >
       {/* Background ambience */}
       <div className="absolute top-1/3 left-0 w-[500px] h-[500px] bg-creative-flame/5 rounded-full blur-[120px] -translate-x-1/3 pointer-events-none" />
@@ -222,43 +169,59 @@ export default function ExperienceReel() {
                 <div className="h-px bg-white/20 w-12" />
               </div>
               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight">
-                Real projects. <span className="text-creative-flame">Real impact.</span>
+                Selected projects. <span className="text-creative-flame">Thoughtfully delivered.</span>
               </h2>
             </div>
-            <p className="text-white/50 max-w-sm md:text-right pb-2 text-sm leading-relaxed">
-              From concept to execution — a look inside two signature projects that define how we work.
+            <p className="text-white/70 max-w-sm md:text-right pb-2 text-sm leading-relaxed">
+              A closer look at our work, our role, and the creative thinking behind each project.
             </p>
           </div>
         </AnimatedSection>
 
         {/* Experience Reel frame */}
+        <ServiceFilters selected={selectedService} onSelect={service => {
+          setSelectedService(service);
+          const nextIndex = projects.findIndex(item => service === null || item.services.includes(service));
+          if (nextIndex !== -1) switchProject(nextIndex);
+        }} />
+        <p role="status" className="sr-only">{visibleProjectIndices.length} projects in {selectedService ?? 'All Work'}</p>
+        <div id="work-gallery">
+        {!visibleProjectIndices.length && <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 md:p-12">
+          <p className="text-xs uppercase tracking-widest text-creative-flame font-bold mb-4">{selectedService}</p>
+          <h3 className="text-3xl md:text-4xl font-black tracking-tight mb-4">Work coming soon.</h3>
+          <p className="text-sm text-white/60 max-w-md leading-relaxed">We will share verified projects here when they are ready. In the meantime, explore our existing work.</p>
+          <button type="button" onClick={() => { setSelectedService(null); switchProject(0); sectionRef.current?.querySelector<HTMLButtonElement>('[data-service-controls] button')?.focus(); }} className="min-h-11 mt-6 text-sm font-bold text-creative-flame hover:text-white transition-colors">View All Work</button>
+        </div>}
+        <div hidden={!visibleProjectIndices.length}>
         <AnimatedSection>
           <div className="relative bg-white/[0.03] backdrop-blur-sm border border-white/10 rounded-2xl lg:rounded-3xl overflow-hidden">
-            {/* ── Project selector tabs ── */}
-            <div className="flex border-b border-white/10">
-              {projects.map((p, idx) => (
+            {/* â”€â”€ Project selector tabs â”€â”€ */}
+            <div className="flex overflow-x-auto border-b border-white/10" aria-label="Choose a project">
+              {visibleProjectIndices.map(idx => {
+                const p = projects[idx];
+                return (
                 <button
                   key={p.id}
                   onClick={() => switchProject(idx)}
-                  className={`flex-1 px-6 py-5 text-left transition-all duration-300 group relative ${
+                  className={`flex-1 shrink-0 min-w-[160px] px-6 py-5 text-left transition-all duration-300 group relative ${
                     activeProjectIdx === idx
                       ? 'bg-white/[0.04]'
                       : 'hover:bg-white/[0.02]'
                   }`}
                   aria-pressed={activeProjectIdx === idx}
-                  aria-label={`View project: ${p.title} — ${p.subtitle}`}
+                  aria-label={`View project: ${p.title} â€” ${p.subtitle}`}
                 >
                   <div className="flex items-baseline gap-3">
                     <span
                       className={`text-xs font-bold tracking-widest transition-colors ${
-                        activeProjectIdx === idx ? 'text-creative-flame' : 'text-white/30'
+                        activeProjectIdx === idx ? 'text-creative-flame' : 'text-white/65'
                       }`}
                     >
                       {p.index}
                     </span>
                     <span
                       className={`text-sm md:text-base font-bold transition-colors ${
-                        activeProjectIdx === idx ? 'text-white' : 'text-white/50 group-hover:text-white/70'
+                        activeProjectIdx === idx ? 'text-white' : 'text-white/70 group-hover:text-white/70'
                       }`}
                     >
                       {p.title}
@@ -273,10 +236,11 @@ export default function ExperienceReel() {
                     />
                   )}
                 </button>
-              ))}
+                );
+              })}
             </div>
 
-            {/* ── Main content area ── */}
+            {/* â”€â”€ Main content area â”€â”€ */}
             <div className="flex flex-col lg:flex-row">
               {/* Image viewer */}
               <div
@@ -301,6 +265,7 @@ export default function ExperienceReel() {
                     {currentPhoto && (
                       <Image
                         src={currentPhoto.src}
+                        unoptimized={currentPhoto.src.startsWith('/api/portfolio/media/')}
                         alt={currentPhoto.alt}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 65vw"
@@ -333,11 +298,11 @@ export default function ExperienceReel() {
                   </>
                 )}
 
-                {/* Photo counter — bottom-right */}
+                {/* Photo counter â€” bottom-right */}
                 <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 bg-section-ink/60 backdrop-blur-md rounded-full px-4 py-1.5 border border-white/10 z-20">
                   <span className="text-xs font-bold tracking-widest text-white/80">
                     {String(photoIdx + 1).padStart(2, '0')}{' '}
-                    <span className="text-white/30">/</span>{' '}
+                    <span className="text-white/65">/</span>{' '}
                     {String(totalPhotos).padStart(2, '0')}
                   </span>
                 </div>
@@ -347,13 +312,13 @@ export default function ExperienceReel() {
               <div className="flex-1 p-6 md:p-8 lg:p-10 flex flex-col justify-between min-h-[280px] lg:min-h-0">
                 <div>
                   {/* Theme tabs */}
-                  <div className="flex flex-wrap gap-2 mb-8">
+                  <div className="flex flex-wrap gap-2 mb-5 md:mb-8">
                     <button
                       onClick={() => { setActiveTheme(null); setPhotoIdx(0); setDirection(0); }}
-                      className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase transition-all duration-300 border ${
+                      className={`min-h-11 px-3.5 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all duration-300 border ${
                         activeTheme === null
                           ? 'bg-creative-flame/15 border-creative-flame/40 text-creative-flame'
-                          : 'bg-transparent border-white/10 text-white/40 hover:text-white/60 hover:border-white/20'
+                          : 'bg-transparent border-white/10 text-white/60 hover:text-white/60 hover:border-white/20'
                       }`}
                       aria-pressed={activeTheme === null}
                     >
@@ -363,10 +328,10 @@ export default function ExperienceReel() {
                       <button
                         key={theme}
                         onClick={() => { setActiveTheme(theme); setPhotoIdx(0); setDirection(0); }}
-                        className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase transition-all duration-300 border ${
+                        className={`min-h-11 px-3.5 py-2 rounded-full text-xs font-bold tracking-wider uppercase transition-all duration-300 border ${
                           activeTheme === theme
                             ? 'bg-creative-flame/15 border-creative-flame/40 text-creative-flame'
-                            : 'bg-transparent border-white/10 text-white/40 hover:text-white/60 hover:border-white/20'
+                            : 'bg-transparent border-white/10 text-white/60 hover:text-white/60 hover:border-white/20'
                         }`}
                         aria-pressed={activeTheme === theme}
                       >
@@ -391,14 +356,15 @@ export default function ExperienceReel() {
                       <p className="text-creative-flame font-bold text-sm mb-4">
                         {project.subtitle}
                       </p>
-                      <p className="text-white/60 text-sm leading-relaxed mb-6">
+                      <p className="text-xs font-bold uppercase tracking-wider text-white/65 mt-5 mb-2">Project overview</p>
+                      <p className="text-white/75 text-sm leading-relaxed mb-6">
                         {project.description}
                       </p>
                     </motion.div>
                   </AnimatePresence>
                 </div>
 
-                {/* Info strip — bottom */}
+                {/* Info strip â€” bottom */}
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={project.id + '-strip'}
@@ -410,16 +376,16 @@ export default function ExperienceReel() {
                     className="border-t border-white/10 pt-5 mt-auto"
                   >
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
-                          Role
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="text-xs font-bold tracking-widest uppercase text-white/65">
+                          Our role
                         </span>
                         <span className="text-xs text-white/60 font-medium">
                           {project.role}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold tracking-widest uppercase text-white/30">
+                      <div className="flex flex-col items-start gap-1">
+                        <span className="text-xs font-bold tracking-widest uppercase text-white/65">
                           Location
                         </span>
                         <span className="text-xs text-white/60 font-medium">
@@ -427,7 +393,7 @@ export default function ExperienceReel() {
                         </span>
                       </div>
                       <div className="mt-1">
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-creative-flame/10 border border-creative-flame/20 text-[10px] font-bold tracking-wider uppercase text-creative-flame/80">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-creative-flame/10 border border-creative-flame/20 text-xs font-bold tracking-wider uppercase text-creative-flame">
                           {project.label}
                         </span>
                       </div>
@@ -438,6 +404,8 @@ export default function ExperienceReel() {
             </div>
           </div>
         </AnimatedSection>
+        </div>
+        </div>
       </div>
     </section>
   );

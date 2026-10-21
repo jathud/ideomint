@@ -75,10 +75,11 @@ export default function PricingCard({
         <div className="mb-6">
           <button
             type="button"
+            aria-expanded={showExclusions}
             onClick={() => setShowExclusions(!showExclusions)}
-            className="flex items-center gap-2 text-xs font-bold text-white/40 uppercase tracking-widest hover:text-white/60 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-xs font-bold text-white/70 uppercase tracking-widest hover:text-white/60 transition-colors cursor-pointer"
           >
-            What's not included
+            What is not included
             <ChevronDown
               className={`w-3 h-3 transition-transform duration-300 ${
                 showExclusions ? 'rotate-180' : ''
@@ -90,7 +91,7 @@ export default function PricingCard({
               {exclusions.map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <Minus className="w-4 h-4 text-white/20 shrink-0 mt-0.5" />
-                  <span className="text-sm text-white/40 leading-relaxed">{item}</span>
+                  <span className="text-sm text-white/70 leading-relaxed">{item}</span>
                 </li>
               ))}
             </ul>
@@ -103,7 +104,7 @@ export default function PricingCard({
         href="#custom-plan"
         className={`w-full py-4 rounded-xl font-bold text-center transition-colors cursor-pointer block ${
           isFeatured
-            ? 'bg-creative-flame hover:bg-[#E54D30] text-white'
+            ? 'bg-creative-flame hover:bg-[#E54D30] text-section-ink'
             : 'bg-white/10 hover:bg-white/20 text-white border border-white/10'
         }`}
       >
