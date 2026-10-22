@@ -1,33 +1,27 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
-export default function AnimatedSection({ children, className }: { children: React.ReactNode, className?: string }) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
+export default function AnimatedSection({ children, className }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    
-    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
+    const element = ref.current;
+    if (!element || !('IntersectionObserver' in window)) return;
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let animation: Animation | undefined;
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      observer.disconnect();
+      if (!preference.matches) animation = element.animate([
+        { opacity: 0.65, transform: 'translateY(12px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ], { duration: 450, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+    }, { rootMargin: '0px 0px -30px 0px' });
+    const stop = () => { if (preference.matches) animation?.cancel(); };
+    preference.addEventListener('change', stop);
+    observer.observe(element);
+    return () => { observer.disconnect(); animation?.cancel(); preference.removeEventListener('change', stop); };
   }, []);
-
-  if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  );
+  // Content is visible before hydration and when JavaScript is unavailable.
+  return <div ref={ref} className={className}>{children}</div>;
 }

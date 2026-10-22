@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!event) return { title: 'Event Not Found' };
   const canonicalUrl = `https://ideomint.com/ideofest/events/${event.slug}`;
   return {
-    title: `${event.title} | Ideofest`,
+    title: { absolute: `${event.title} | IdeoFest` },
     description: event.tagline || event.description?.slice(0, 160),
     alternates: { canonical: canonicalUrl },
     openGraph: {

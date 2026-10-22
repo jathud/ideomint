@@ -14,18 +14,13 @@ function RouteSplash({ children }: { children: React.ReactNode }) {
   const [phase, setPhase] = useState<'loading' | 'exiting' | 'done'>('done');
 
   useEffect(() => {
-    // Detect Lighthouse / PageSpeed Insights / Bots to immediately show content for 100 PageSpeed score
-    if (typeof window !== 'undefined' && /Lighthouse|PageSpeed|Googlebot|HeadlessChrome|Chrome-Lighthouse/i.test(navigator.userAgent)) {
-      setPhase('done');
-      return;
-    }
-
-    setPhase('loading');
+    const startTimer = setTimeout(() => setPhase('loading'), 0);
     // Fast, crisp splash screen for real users (600ms load, 900ms total)
     const exitTimer = setTimeout(() => setPhase('exiting'), 600);
     const removeTimer = setTimeout(() => setPhase('done'), 900);
 
     return () => {
+      clearTimeout(startTimer);
       clearTimeout(exitTimer);
       clearTimeout(removeTimer);
     };

@@ -107,7 +107,7 @@ export default function Sandbox() {
             </div>
 
             {/* Dynamic Content Frame */}
-            <AnimatePresence mode="wait">
+            <AnimatePresence initial={false} mode="wait">
               <motion.div
                 key={activeTheme}
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}

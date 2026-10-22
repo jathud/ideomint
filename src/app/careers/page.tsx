@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import StudioPage from '@/components/ui/StudioPage';
 
-export const metadata: Metadata = { title: 'Careers & Collaborations', alternates: { canonical: '/careers' } };
+export const metadata = pageMetadata('Careers & Collaborations', 'Introduce yourself to IdeoMint and share your creative, development, marketing or production portfolio.', '/careers');
 
 export default function CareersPage() {
   return <StudioPage title="Good ideas start with people." intro="Interested in creating with IdeoMint? Introduce yourself and share the kind of work you would like to contribute."

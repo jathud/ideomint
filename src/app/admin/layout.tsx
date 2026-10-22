@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-export const metadata: Metadata = { title: 'Portfolio Admin | IdeoMint', robots: { index: false, follow: false }, alternates: { canonical: null } };
+export const metadata: Metadata = { title: 'Portfolio Admin', robots: { index: false, follow: false }, alternates: { canonical: null } };
 export const dynamic = 'force-dynamic';
 
 export default function PortfolioAdminLayout({ children }: { children: React.ReactNode }) {

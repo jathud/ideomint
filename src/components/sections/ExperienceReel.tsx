@@ -341,7 +341,7 @@ function ExperienceReelContent({ projects }: { projects: Project[] }) {
                   </div>
 
                   {/* Project info with crossfade */}
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence initial={false} mode="wait">
                     <motion.div
                       key={project.id}
                       variants={fadeVariants}
@@ -365,7 +365,7 @@ function ExperienceReelContent({ projects }: { projects: Project[] }) {
                 </div>
 
                 {/* Info strip â€” bottom */}
-                <AnimatePresence mode="wait">
+                <AnimatePresence initial={false} mode="wait">
                   <motion.div
                     key={project.id + '-strip'}
                     variants={fadeVariants}
@@ -406,6 +406,17 @@ function ExperienceReelContent({ projects }: { projects: Project[] }) {
         </AnimatedSection>
         </div>
         </div>
+        <noscript>
+          <div className="mt-8 space-y-6">
+            <p className="text-white/75">Project galleries use JavaScript. You can read every project overview below.</p>
+            {projects.map(item => <article key={item.id} className="border-t border-white/15 pt-5">
+              <h3 className="text-xl font-bold">{item.title}</h3>
+              <p className="text-creative-flame mt-1">{item.subtitle}</p>
+              <p className="text-white/75 mt-3">{item.description}</p>
+              <p className="text-sm text-white/70 mt-3">Our role: {item.role}. Location: {item.location}. {item.label}.</p>
+            </article>)}
+          </div>
+        </noscript>
       </div>
     </section>
   );

@@ -7,10 +7,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: '/',
+        allow: ['/', '/api/portfolio/media/'],
         disallow: [
-          '/ideofest/admin/',
-          '/ideofest/dashboard/',
+          '/ideofest/admin',
+          '/ideofest/dashboard',
+          '/admin',
           '/api/',
         ],
       },
@@ -18,16 +19,18 @@ export default function robots(): MetadataRoute.Robots {
         // Allow AI Crawlers for AEO (ChatGPT, Perplexity, Claude)
         userAgent: [
           'GPTBot',
+          'OAI-SearchBot',
           'ChatGPT-User',
           'PerplexityBot',
           'ClaudeBot',
           'Claude-Web',
           'Google-Extended',
         ],
-        allow: '/',
+        allow: ['/', '/api/portfolio/media/'],
         disallow: [
-          '/ideofest/admin/',
-          '/ideofest/dashboard/',
+          '/ideofest/admin',
+          '/ideofest/dashboard',
+          '/admin',
           '/api/',
         ],
       },

@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import StudioPage from '@/components/ui/StudioPage';
 
-export const metadata: Metadata = { title: 'Privacy Policy', alternates: { canonical: '/privacy' } };
+export const metadata = pageMetadata('Privacy Policy', 'How IdeoMint handles information shared through website project enquiries.', '/privacy');
 
 export default function PrivacyPage() {
   return <StudioPage title="Privacy policy" intro="This page explains how the IdeoMint studio website handles information you provide when discussing a project. For questions about your information, contact hello@ideomint.com."

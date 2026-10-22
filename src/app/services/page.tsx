@@ -1,19 +1,10 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
+import JsonLd from '@/components/seo/JsonLd';
+import { serviceGraph, breadcrumbs } from '@/lib/seo';
 import ServicesContent from '@/components/services/ServicesContent';
 
-export const metadata: Metadata = {
-  title: 'Services & Pricing',
-  alternates: { canonical: '/services' },
-  description:
-    'Ideomint helps businesses and people become clear, visible, and memorable through branding, content, social media, and personal brand growth. View our packages and pricing.',
-  openGraph: {
-    url: 'https://ideomint.com/services',
-    title: 'Services & Pricing | Ideomint',
-    description:
-      'Branding, social media, content creation, and personal brand growth packages for Sri Lankan businesses and creators.',
-  },
-};
+export const metadata = pageMetadata('Services & Pricing', 'Explore IdeoMint websites, marketing, content and creative services, plus brand identity and personal branding packages.', '/services');
 
 export default function ServicesPage() {
-  return <ServicesContent />;
+  return <><JsonLd data={[breadcrumbs('Services & Pricing', '/services'), ...serviceGraph()]} /><ServicesContent /></>;
 }

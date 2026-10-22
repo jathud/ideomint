@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Manrope } from 'next/font/google';
 import "./globals.css";
+import { organization } from '@/lib/seo';
 import JsonLd from "@/components/seo/JsonLd";
 import SplashScreen from "@/components/ui/SplashScreen";
 import SmoothScroll from "@/components/ui/SmoothScroll";
@@ -26,9 +27,8 @@ export const metadata: Metadata = {
   },
   description: 'IdeoMint is a creative and digital agency in Jaffna, Sri Lanka. We build websites, marketing campaigns, brand identities and content that help businesses stand out and grow.',
   keywords: [
-    'Ideomint', 'Ideofest', 'Ideofest 2026', 'Ideomint Sri Lanka', 'Ideofest Events',
-    'Sing Along Jaffna', 'Event Tickets Sri Lanka', 'Brand Strategy', 'Web Design Sri Lanka',
-    'Creative Experience Company'
+    'IdeoMint', 'Creative Agency Jaffna', 'Web Design Sri Lanka',
+    'Digital Marketing', 'Brand Identity', 'Content Production'
   ],
   metadataBase: new URL('https://ideomint.com'),
   openGraph: {
@@ -69,9 +69,6 @@ export const metadata: Metadata = {
     shortcut: '/ideomint-dp.svg',
     apple: '/ideomint-dp.svg',
   },
-  alternates: {
-    canonical: 'https://ideomint.com',
-  },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
   },
@@ -90,19 +87,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/ideomint-dp.svg" />
       </head>
       <body className="bg-section-ink">
-        <JsonLd data={{
-          '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'Ideomint',
-          description: 'Different Sections. One Creative Vision.',
-          url: 'https://ideomint.com',
-          logo: 'https://ideomint.com/logo.png',
-          contactPoint: {
-            '@type': 'ContactPoint',
-            email: 'hello@ideomint.com',
-            contactType: 'customer service',
-          },
-        }} />
+        <JsonLd data={organization} />
         <SmoothScroll>
           <SplashScreen>
             <CustomCursor />

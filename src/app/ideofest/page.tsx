@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { ArrowRight, Ticket, Zap, ShieldCheck, Sparkles, Calendar, MapPin, CheckCircle2, Clock } from 'lucide-react';
 import EventCard from '@/components/ideofest/EventCard';
 import CountdownTimer from '@/components/ideofest/CountdownTimer';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 import type { IEvent } from '@/lib/ideofest/types';
 import { MOCK_EVENTS, CATEGORY_LABELS } from '@/lib/ideofest/mock-data';
@@ -11,10 +11,7 @@ import { MOCK_EVENTS, CATEGORY_LABELS } from '@/lib/ideofest/mock-data';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export const metadata: Metadata = {
-  title: 'Ideofest — Live Events & Experiences',
-  description: "Discover Sri Lanka's most vibrant live events: music, tech, art, wellness, and more — curated by Ideomint.",
-};
+export const metadata = pageMetadata('IdeoFest — Live Events & Experiences', 'Discover live music, cultural events and creative experiences by IdeoMint in Sri Lanka.', '/ideofest');
 
 export default async function IdeofestPage() {
   let events: IEvent[] = [];

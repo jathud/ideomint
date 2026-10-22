@@ -2,44 +2,37 @@ import Header from "@/components/ui/Header";
 import AgencyAbout from "@/components/sections/AgencyAbout";
 import Hero from "@/components/sections/Hero";
 import AnimatedSection from "@/components/ui/AnimatedSection";
-import dynamic from 'next/dynamic';
+import type { Metadata } from 'next';
+import { pageMetadata, agencyDescription, siteUrl, serviceGraph } from '@/lib/seo';
 import JsonLd from "@/components/seo/JsonLd";
 import { homepagePortfolio } from '@/lib/portfolio/repository';
 
-// Lazy load everything below the fold
-const Manifesto = dynamic(() => import("@/components/sections/Manifesto"));
-const Services = dynamic(() => import("@/components/sections/Services"));
-const Sandbox = dynamic(() => import("@/components/sections/Sandbox"));
-const ExperienceReel = dynamic(() => import("@/components/sections/ExperienceReel"));
+// Render public copy in the initial HTML; hydrate interactions progressively.
+import Manifesto from "@/components/sections/Manifesto";
+import Services from "@/components/sections/Services";
+import Sandbox from "@/components/sections/Sandbox";
+import ExperienceReel from "@/components/sections/ExperienceReel";
 
-const Process = dynamic(() => import("@/components/sections/Process"));
-const Contact = dynamic(() => import("@/components/sections/Contact"));
-const Footer = dynamic(() => import("@/components/sections/Footer"));
+import Process from "@/components/sections/Process";
+import Contact from "@/components/sections/Contact";
+import Footer from "@/components/sections/Footer";
+
+export const metadata: Metadata = pageMetadata('IdeoMint — Websites, Marketing & Creative', agencyDescription, '/');
 
 export default async function Home() {
-  const portfolioProjects = await homepagePortfolio();
+  const projects = await homepagePortfolio();
   return (
     <main className="min-h-screen bg-section-ink selection:bg-creative-flame selection:text-white overflow-hidden w-full relative">
       <JsonLd data={[
-        {
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          name: 'Ideomint',
-          url: 'https://ideomint.com',
-        },
-        {
-          '@context': 'https://schema.org',
-          '@type': 'ProfessionalService',
-          name: 'Ideomint',
-          description: 'Creative experience company offering design, branding, and digital services.',
-          url: 'https://ideomint.com',
-          priceRange: '$$',
-        },
+        { '@context': 'https://schema.org', '@type': 'WebSite', '@id': `${siteUrl}/#website`, name: 'IdeoMint', url: siteUrl, publisher: { '@id': `${siteUrl}/#organization` } },
+        { '@context': 'https://schema.org', '@type': 'WebPage', '@id': `${siteUrl}/#webpage`, url: siteUrl, name: 'IdeoMint — Websites, Marketing & Creative', description: agencyDescription, isPartOf: { '@id': `${siteUrl}/#website` }, about: { '@id': `${siteUrl}/#organization` } },
+        ...serviceGraph(),
+        { '@context': 'https://schema.org', '@type': 'ItemList', name: 'Selected work by IdeoMint', itemListElement: projects.map((project, index) => ({ '@type': 'ListItem', position: index + 1, item: { '@type': 'CreativeWork', name: project.title, description: project.description, creditText: project.label, creator: { '@id': `${siteUrl}/#organization` } } })) },
       ]} />
       <Header />
       <Hero />
       <AnimatedSection><Services /></AnimatedSection>
-      <ExperienceReel projects={portfolioProjects} />
+      <ExperienceReel projects={projects} />
       <AgencyAbout />
       <Manifesto />
       <Process />

@@ -1,21 +1,20 @@
 import type { MetadataRoute } from 'next';
 import { createAdminClient } from '@/lib/ideofest/supabase/server';
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://ideomint.com';
-  const now = new Date();
 
   // Ideofest core pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/ideofest`,
-      lastModified: now,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/ideofest/events`,
-      lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
     },
@@ -33,7 +32,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (events && events.length > 0) {
       eventPages = events.map((ev: { slug: string; updated_at?: string; created_at?: string }) => ({
         url: `${baseUrl}/ideofest/events/${ev.slug}`,
-        lastModified: new Date(ev.updated_at || ev.created_at || Date.now()),
+        lastModified: ev.updated_at || ev.created_at ? new Date((ev.updated_at || ev.created_at)!) : undefined,
         changeFrequency: 'daily' as const,
         priority: 0.85,
       }));

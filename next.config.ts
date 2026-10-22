@@ -87,7 +87,7 @@ const nextConfig: NextConfig = {
   ],
 
   experimental: {
-    inlineCss: true,
+    inlineCss: false,
     viewTransition: true,
   },
 

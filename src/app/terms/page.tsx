@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/seo';
 import StudioPage from '@/components/ui/StudioPage';
 
-export const metadata: Metadata = { title: 'Terms of Service', alternates: { canonical: '/terms' } };
+export const metadata = pageMetadata('Terms of Service', 'Understand the IdeoMint enquiry process, project scope, proposals and working arrangements.', '/terms');
 
 export default function TermsPage() {
   return <StudioPage title="Working with IdeoMint" intro="A clear brief and an agreed scope are the starting point for every project. These website notes explain the enquiry process; your written proposal or project agreement sets out the terms of your commissioned work."
