@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'IdeoMint — Websites, Marketing & Creative',
+    default: 'IdeoMint | Websites, Marketing & Creative',
     template: '%s | IdeoMint',
   },
   description: 'IdeoMint is a creative and digital agency in Jaffna, Sri Lanka. We build websites, marketing campaigns, brand identities and content that help businesses stand out and grow.',
@@ -35,21 +35,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://ideomint.com',
-    siteName: 'Ideomint',
-    title: 'IdeoMint — Websites, Marketing & Creative',
+    siteName: 'IdeoMint',
+    title: 'IdeoMint | Websites, Marketing & Creative',
     description: 'Websites, marketing and creative experiences from IdeoMint, a creative and digital agency based in Jaffna, Sri Lanka.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Ideomint & Ideofest 2026',
+        alt: 'IdeoMint creative and digital agency',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'IdeoMint — Websites, Marketing & Creative',
+    title: 'IdeoMint | Websites, Marketing & Creative',
     description: 'Websites, marketing and creative experiences from IdeoMint, a creative and digital agency based in Jaffna, Sri Lanka.',
     images: ['/og-image.png'],
   },
@@ -65,9 +65,9 @@ export const metadata: Metadata = {
     },
   },
   icons: {
-    icon: '/ideomint-dp.svg',
-    shortcut: '/ideomint-dp.svg',
-    apple: '/ideomint-dp.svg',
+    icon: [{ url: '/ideomint-icon.png', type: 'image/png', sizes: '96x96' }, { url: '/favicon.ico', sizes: '96x96' }],
+    shortcut: '/favicon.ico',
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || '',
@@ -83,8 +83,6 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable}`} suppressHydrationWarning>
       <head>
         <meta httpEquiv="Content-Security-Policy" content="upgrade-insecure-requests; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.fontshare.com https://cdn.fontshare.com; font-src 'self' data: https://fonts.gstatic.com https://api.fontshare.com https://cdn.fontshare.com" />
-        <link rel="icon" type="image/svg+xml" href="/ideomint-dp.svg" />
-        <link rel="apple-touch-icon" href="/ideomint-dp.svg" />
       </head>
       <body className="bg-section-ink">
         <JsonLd data={organization} />

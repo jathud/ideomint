@@ -28,7 +28,7 @@ export default function Services() {
                 <span className="text-creative-flame">clear, visible, and memorable.</span>
               </h2>
               <p className="text-lg text-white/70 leading-relaxed font-medium max-w-2xl">
-                Explore our packages for websites, marketing, content, branding and personal branding.
+                Explore websites, marketing and creative support shaped around your business.
               </p>
             </div>
           </div>
@@ -37,7 +37,7 @@ export default function Services() {
             href="/services"
             className="hidden lg:flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-creative-flame/50 text-white px-8 py-4 rounded-full text-sm font-bold tracking-widest uppercase transition-all duration-300 group cursor-pointer"
           >
-            Explore Packages
+            Explore Services
             <ArrowRight className="w-4 h-4 text-creative-flame group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -70,7 +70,7 @@ export default function Services() {
             href="/services"
             className="flex items-center justify-center gap-3 w-full bg-creative-flame hover:bg-[#E54D30] text-section-ink px-8 py-5 rounded-2xl text-base font-bold transition-all duration-300 group cursor-pointer shadow-[0_0_30px_rgba(255,90,60,0.15)]"
           >
-            View All Pricing & Packages
+            Explore Our Services
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

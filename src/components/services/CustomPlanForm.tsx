@@ -164,13 +164,13 @@ export default function CustomPlanForm() {
         <div className="grid md:grid-cols-2 gap-6">
           <div className="flex flex-col gap-2">
             <label htmlFor="plan-budget" className="text-xs font-bold text-white/75 uppercase tracking-widest">
-              Approximate Budget
+              Approximate Budget (optional)
             </label>
             <input
             id="plan-budget" name="budget" maxLength={254}
               type="text"
               className="bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-creative-flame transition-colors"
-              placeholder="e.g. LKR 50,000 – 100,000"
+              placeholder="Your estimated budget, if known"
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -208,7 +208,7 @@ export default function CustomPlanForm() {
           disabled={sending}
           className="w-full bg-creative-flame hover:bg-[#E54D30] text-section-ink font-bold py-4 disabled:opacity-60 rounded-xl flex items-center justify-center transition-colors min-h-[56px] cursor-pointer"
         >
-          {sending ? 'Sending…' : 'Build My Custom Plan'}
+          {sending ? 'Sending…' : 'Request a Proposal'}
         </button>
       </form>
     </div>
